@@ -1,0 +1,38 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* CSS variables — single source of truth for the design system */
+:root {
+  /* Background layers */
+  --bg-base: #0a0a14;
+  --bg-elev: #14141f;
+  --bg-elev-2: #1f1f2e;
+
+  /* Accent (cool palette) */
+  --accent-1: #00d9ff; /* cyan */
+  --accent-2: #ff4dff; /* magenta */
+  --accent-3: #ffd60a; /* amber */
+
+  /* Text hierarchy */
+  --text-100: #f0f0f5;
+  --text-200: #b8b8c8;
+  --text-300: #6c6c80;
+
+  /* Border */
+  --border: #2a2a3a;
+}
+
+@layer base {
+  html {
+    @apply bg-bg-base text-text-200 font-sans antialiased;
+  }
+
+  body {
+    @apply min-h-screen;
+  }
+
+  h1, h2, h3, h4, h5, h6 {
+    @apply font-mono text-text-100;
+  }
+}
