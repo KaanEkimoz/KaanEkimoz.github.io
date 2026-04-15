@@ -1,0 +1,36 @@
+---
+import Tag from '@components/ui/Tag.astro';
+import type { CollectionEntry } from 'astro:content';
+
+interface Props {
+  project: CollectionEntry<'projects'>;
+}
+
+const { project } = Astro.props;
+const { title, description, platform, genres, year } = project.data;
+const platformVariant =
+  platform === 'Mobile' ? 'cyan' : platform === 'PC' ? 'magenta' : 'amber';
+---
+
+<a
+  href={`/projects/${project.id}`}
+  class="group block border border-border bg-bg-elev p-6 transition-all duration-200 hover:border-accent-1 hover:shadow-glow-cyan hover:-translate-y-0.5"
+>
+  <div class="flex items-start justify-between gap-4 mb-3">
+    <h3 class="font-mono font-semibold text-text-100 text-lg group-hover:text-accent-1 transition-colors">
+      {title}
+    </h3>
+    <span class="font-mono text-xs text-text-300 shrink-0">{year}</span>
+  </div>
+
+  <p class="text-text-200 text-sm mb-4 line-clamp-3">{description}</p>
+
+  <div class="flex flex-wrap items-center gap-2 mb-4">
+    <Tag variant={platformVariant}>{platform}</Tag>
+    {genres.slice(0, 2).map((g) => <Tag variant="muted">{g}</Tag>)}
+  </div>
+
+  <div class="font-mono text-xs uppercase tracking-widest text-text-300 group-hover:text-accent-1 transition-colors">
+    View →
+  </div>
+</a>

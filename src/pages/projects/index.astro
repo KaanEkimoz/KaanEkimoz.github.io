@@ -1,0 +1,26 @@
+---
+import { getCollection } from 'astro:content';
+import BaseLayout from '@layouts/BaseLayout.astro';
+import SectionHeading from '@components/SectionHeading.astro';
+import ProjectCard from '@components/ProjectCard.astro';
+
+const projects = (await getCollection('projects')).sort(
+  (a, b) => (a.data.order ?? 99) - (b.data.order ?? 99)
+);
+---
+
+<BaseLayout title="Projects" description="Games and prototypes by Y. Kaan Usta — mobile, PC, and VR.">
+  <div class="max-w-6xl mx-auto px-6 py-16">
+    <header class="mb-12">
+      <SectionHeading title="Projects" as="h1" />
+      <p class="text-text-200 max-w-xl">
+        A selection of games and prototypes — mobile, PC, and VR — spanning
+        hyper-casual sprints, jam builds, and multi-month roguelike systems.
+      </p>
+    </header>
+
+    <div class="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
+      {projects.map((project) => <ProjectCard project={project} />)}
+    </div>
+  </div>
+</BaseLayout>

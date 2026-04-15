@@ -1,154 +1,105 @@
 ---
+import { getCollection } from 'astro:content';
 import BaseLayout from '@layouts/BaseLayout.astro';
+import Hero from '@components/Hero.astro';
 import SectionHeading from '@components/SectionHeading.astro';
+import StatsCard from '@components/StatsCard.astro';
+import ProjectCard from '@components/ProjectCard.astro';
+import BlogCard from '@components/BlogCard.astro';
 import SocialLinks from '@components/SocialLinks.astro';
 import Button from '@components/ui/Button.astro';
-import Tag from '@components/ui/Tag.astro';
-import { SITE, STATS } from '@lib/constants';
+import { SOCIAL } from '@lib/constants';
 
-const palette = [
-  { name: '--bg-base', value: '#0a0a14' },
-  { name: '--bg-elev', value: '#14141f' },
-  { name: '--bg-elev-2', value: '#1f1f2e' },
-  { name: '--accent-1', value: '#00d9ff' },
-  { name: '--accent-2', value: '#ff4dff' },
-  { name: '--accent-3', value: '#ffd60a' },
-  { name: '--text-100', value: '#f0f0f5' },
-  { name: '--text-200', value: '#b8b8c8' },
-  { name: '--text-300', value: '#6c6c80' },
-  { name: '--border', value: '#2a2a3a' },
-];
+const allProjects = await getCollection('projects');
+const featuredProjects = allProjects
+  .filter((p) => p.data.featured)
+  .sort((a, b) => (a.data.order ?? 99) - (b.data.order ?? 99))
+  .slice(0, 3);
+
+const allPosts = await getCollection('blog', ({ data }) => !data.draft);
+const latestPosts = allPosts
+  .sort((a, b) => b.data.pubDate.getTime() - a.data.pubDate.getTime())
+  .slice(0, 3);
 ---
 
-<BaseLayout title="Design System">
-  <div class="max-w-6xl mx-auto px-6 py-16 space-y-20">
-    <!-- ========== HERO ========== -->
-    <section class="text-center pt-12 pb-8">
-      <h1
-        class="font-mono font-semibold tracking-widest text-4xl sm:text-6xl text-text-100"
-      >
-        Y. KAAN <span class="text-accent-1">USTA</span>
-      </h1>
-      <p
-        class="mt-3 font-mono uppercase tracking-widest text-sm text-accent-2"
-      >
-        Game Developer
-      </p>
-      <p class="mt-6 max-w-xl mx-auto text-text-200">
-        {SITE.description}
-      </p>
-      <div class="mt-8 flex items-center justify-center gap-3">
-        <Button href="/projects" variant="primary">
-          [ View Projects ]
-        </Button>
-        <Button href="/blog" variant="secondary">[ Read Blog ]</Button>
+<BaseLayout>
+  <!-- ======== HERO ======== -->
+  <Hero />
+
+  <!-- ======== ABOUT ======== -->
+  <section id="about" class="max-w-6xl mx-auto px-6 py-20 scroll-mt-20">
+    <SectionHeading title="About" />
+    <div class="grid md:grid-cols-[1fr_auto] gap-10 items-start">
+      <div class="space-y-4 text-text-200 leading-relaxed">
+        <p>
+          I've been part of the software and game development world since 2020.
+          My journey started with a degree in Digital Game Design — and what
+          began as curiosity about programming and game engines became my
+          primary focus.
+        </p>
+        <p>
+          I've worked on projects spanning mobile, PC, and VR, but I've chosen
+          to specialize in <span class="text-text-100">mobile game development</span>.
+          From hyper-casual prototypes built in two weeks to roguelike systems
+          developed over five months, I enjoy the full spectrum: gameplay
+          programming, system design, and the small details that make a game
+          feel alive.
+        </p>
+        <p>
+          Currently focused on <span class="text-accent-1">Unity</span> and
+          <span class="text-accent-1">C#</span>, with side interests in custom
+          engine work, VR physics, and ECS architecture.
+        </p>
       </div>
-    </section>
+      <StatsCard />
+    </div>
+  </section>
 
-    <!-- ========== DESIGN SYSTEM SHOWCASE ========== -->
-    <section>
-      <SectionHeading title="Design System Preview" />
-      <p class="text-text-300 text-sm font-mono">
-        Phase 2 review · this page replaces with real home in Phase 4
-      </p>
-    </section>
+  <!-- ======== FEATURED PROJECTS ======== -->
+  <section id="projects" class="max-w-6xl mx-auto px-6 py-12 scroll-mt-20">
+    <SectionHeading title="Featured Projects" />
+    <div class="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
+      {featuredProjects.map((project) => <ProjectCard project={project} />)}
+    </div>
+    <div class="mt-8">
+      <Button href="/projects" variant="ghost">[ See All Projects → ]</Button>
+    </div>
+  </section>
 
-    <!-- Color palette -->
-    <section>
-      <SectionHeading title="Palette" />
-      <div class="grid grid-cols-2 sm:grid-cols-5 gap-3">
-        {
-          palette.map((c) => (
-            <div class="border border-border bg-bg-elev p-3">
-              <div
-                class="h-16 mb-2 border border-border"
-                style={`background:${c.value}`}
-              />
-              <div class="font-mono text-[10px] text-text-200">{c.name}</div>
-              <div class="font-mono text-[10px] text-text-300">{c.value}</div>
-            </div>
-          ))
-        }
-      </div>
-    </section>
-
-    <!-- Typography -->
-    <section>
-      <SectionHeading title="Typography" />
-      <div class="space-y-6 border border-border bg-bg-elev p-6">
-        <div>
-          <div class="text-text-300 font-mono text-[10px] uppercase tracking-widest mb-1">
-            Display · JetBrains Mono Semibold
-          </div>
-          <div class="font-mono font-semibold text-3xl text-text-100 tracking-widest">
-            ABCDEFGHIJKLM 0123456789
+  <!-- ======== LATEST POSTS ======== -->
+  <section class="max-w-6xl mx-auto px-6 py-12">
+    <SectionHeading title="Latest Posts" />
+    {
+      latestPosts.length > 0 ? (
+        <div class="space-y-6">
+          {latestPosts.map((post) => (
+            <BlogCard post={post} />
+          ))}
+          <div class="pt-2">
+            <Button href="/blog" variant="ghost">[ All Posts → ]</Button>
           </div>
         </div>
-        <div>
-          <div class="text-text-300 font-mono text-[10px] uppercase tracking-widest mb-1">
-            Body · Inter Regular
-          </div>
-          <p class="text-text-200">
-            The quick brown fox jumps over the lazy dog. 1234567890. Inter is
-            optimized for screen readability with strong x-height, neutral
-            personality, and excellent legibility at small sizes.
-          </p>
+      ) : (
+        <div class="border border-border bg-bg-elev p-8 text-center font-mono text-text-300">
+          Coming soon.
         </div>
-        <div>
-          <div class="text-text-300 font-mono text-[10px] uppercase tracking-widest mb-1">
-            UI Accent · JetBrains Mono UPPERCASE
-          </div>
-          <div class="font-mono uppercase tracking-widest text-accent-1 text-sm">
-            UNITY · C# · ECS · MOBILE · VR
-          </div>
-        </div>
-      </div>
-    </section>
+      )
+    }
+  </section>
 
-    <!-- Buttons -->
-    <section>
-      <SectionHeading title="Buttons" />
-      <div class="border border-border bg-bg-elev p-6 flex flex-wrap gap-3">
-        <Button variant="primary">[ Primary CTA ]</Button>
-        <Button variant="secondary">[ Secondary ]</Button>
-        <Button variant="ghost">Ghost link →</Button>
-      </div>
-    </section>
-
-    <!-- Tags -->
-    <section>
-      <SectionHeading title="Tags" />
-      <div class="border border-border bg-bg-elev p-6 flex flex-wrap gap-2">
-        <Tag variant="cyan">Mobile</Tag>
-        <Tag variant="magenta">Roguelike</Tag>
-        <Tag variant="amber">VR</Tag>
-        <Tag variant="muted">2025</Tag>
-      </div>
-    </section>
-
-    <!-- Stats card preview -->
-    <section>
-      <SectionHeading title="Stats Card (game-UI accent)" />
-      <div
-        class="inline-block border border-accent-1/40 bg-bg-elev px-6 py-4 font-mono text-sm shadow-glow-cyan/0 hover:shadow-glow-cyan transition-shadow"
+  <!-- ======== CONTACT ======== -->
+  <section id="contact" class="max-w-6xl mx-auto px-6 py-20 scroll-mt-20">
+    <SectionHeading title="Let's Connect" />
+    <div class="border border-border bg-bg-elev p-8 sm:p-12">
+      <a
+        href={`mailto:${SOCIAL.email}`}
+        class="block font-mono text-2xl sm:text-3xl text-text-100 hover:text-accent-1 transition-colors break-all"
       >
-        {
-          STATS.map((s) => (
-            <div class="flex gap-6">
-              <span class="text-text-300 w-24">{s.label}</span>
-              <span class="text-text-100">{s.value}</span>
-            </div>
-          ))
-        }
-      </div>
-    </section>
-
-    <!-- Social -->
-    <section>
-      <SectionHeading title="Social" />
-      <div class="border border-border bg-bg-elev p-6">
+        {SOCIAL.email}
+      </a>
+      <div class="mt-8">
         <SocialLinks />
       </div>
-    </section>
-  </div>
+    </div>
+  </section>
 </BaseLayout>
