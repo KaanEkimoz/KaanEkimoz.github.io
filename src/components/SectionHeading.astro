@@ -1,0 +1,20 @@
+---
+interface Props {
+  /** Section title text — will be uppercased and prefixed with "///" */
+  title: string;
+  /** Optional id for in-page anchor linking */
+  id?: string;
+  /** HTML heading level (h2 default; use h1 only on the home hero) */
+  as?: 'h1' | 'h2' | 'h3';
+}
+
+const { title, id, as: Tag = 'h2' } = Astro.props;
+---
+
+<Tag
+  id={id}
+  class="font-mono uppercase tracking-widest text-text-100 text-sm sm:text-base mb-6"
+>
+  <span class="text-accent-1">///</span>
+  {title}
+</Tag>

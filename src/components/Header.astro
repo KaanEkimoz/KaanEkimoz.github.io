@@ -1,0 +1,41 @@
+---
+import { NAV, SITE } from '@lib/constants';
+
+const currentPath = Astro.url.pathname;
+const isActive = (href: string) =>
+  href === '/' ? currentPath === '/' : currentPath.startsWith(href);
+---
+
+<header
+  class="sticky top-0 z-40 backdrop-blur-md bg-bg-base/80 border-b border-border"
+>
+  <div class="max-w-6xl mx-auto px-6 h-14 flex items-center justify-between">
+    <a
+      href="/"
+      class="font-mono text-text-100 text-sm tracking-widest hover:text-accent-1 transition-colors"
+      aria-label={`${SITE.name} — home`}
+    >
+      <span class="text-text-100">kaanusta</span><span class="text-accent-1">.dev</span>
+    </a>
+
+    <nav class="flex items-center gap-6">
+      {
+        NAV.map((item) => (
+          <a
+            href={item.href}
+            class:list={[
+              'font-mono text-xs uppercase tracking-widest transition-colors',
+              isActive(item.href)
+                ? 'text-accent-1'
+                : 'text-text-300 hover:text-text-100',
+            ]}
+          >
+            {item.label}
+          </a>
+        ))
+      }
+      {/* Sound toggle slot — populated in Phase 5 */}
+      <div id="sound-toggle-mount" class="w-6 h-6"></div>
+    </nav>
+  </div>
+</header>

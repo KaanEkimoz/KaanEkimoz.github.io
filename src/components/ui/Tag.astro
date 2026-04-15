@@ -1,0 +1,24 @@
+---
+interface Props {
+  /** Color accent — defaults to cyan */
+  variant?: 'cyan' | 'magenta' | 'amber' | 'muted';
+}
+
+const { variant = 'cyan' } = Astro.props;
+
+const variants = {
+  cyan: 'border-accent-1/40 text-accent-1',
+  magenta: 'border-accent-2/40 text-accent-2',
+  amber: 'border-accent-3/40 text-accent-3',
+  muted: 'border-border text-text-300',
+} as const;
+---
+
+<span
+  class:list={[
+    'inline-block px-2 py-0.5 border font-mono text-[10px] uppercase tracking-widest',
+    variants[variant],
+  ]}
+>
+  <slot />
+</span>

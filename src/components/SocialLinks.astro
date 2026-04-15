@@ -1,0 +1,47 @@
+---
+import { SOCIAL } from '@lib/constants';
+
+interface Props {
+  /** Optional list of channels to render (in order). Defaults to all. */
+  channels?: Array<keyof typeof links>;
+  size?: 'sm' | 'md';
+}
+
+const links = {
+  github: { label: 'GitHub', href: SOCIAL.github },
+  linkedin: { label: 'LinkedIn', href: SOCIAL.linkedin },
+  youtube: { label: 'YouTube', href: SOCIAL.youtube },
+  itchio: { label: 'Itch.io', href: SOCIAL.itchio },
+} as const;
+
+const {
+  channels = ['github', 'linkedin', 'youtube', 'itchio'],
+  size = 'md',
+} = Astro.props;
+
+const sizeCls = size === 'sm' ? 'text-[10px]' : 'text-xs';
+---
+
+<ul class="flex items-center gap-4">
+  {
+    channels.map((key) => {
+      const item = links[key];
+      return (
+        <li>
+          <a
+            href={item.href}
+            target="_blank"
+            rel="noopener noreferrer"
+            class:list={[
+              'font-mono uppercase tracking-widest text-text-300 hover:text-accent-1 transition-colors',
+              sizeCls,
+            ]}
+            aria-label={`${item.label} (opens in new tab)`}
+          >
+            {item.label}
+          </a>
+        </li>
+      );
+    })
+  }
+</ul>

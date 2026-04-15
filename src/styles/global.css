@@ -1,8 +1,16 @@
+/* Font imports — only the weights we use, to keep bundle small */
+@import '@fontsource/inter/400.css';
+@import '@fontsource/inter/500.css';
+@import '@fontsource/inter/600.css';
+@import '@fontsource/jetbrains-mono/400.css';
+@import '@fontsource/jetbrains-mono/600.css';
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
-/* CSS variables — single source of truth for the design system */
+/* CSS variables — single source of truth for the design system.
+   Tailwind theme reads these via tailwind.config.mjs. */
 :root {
   /* Background layers */
   --bg-base: #0a0a14;
@@ -26,6 +34,7 @@
 @layer base {
   html {
     @apply bg-bg-base text-text-200 font-sans antialiased;
+    scroll-behavior: smooth;
   }
 
   body {
@@ -34,5 +43,38 @@
 
   h1, h2, h3, h4, h5, h6 {
     @apply font-mono text-text-100;
+  }
+
+  a {
+    @apply transition-colors;
+  }
+
+  ::selection {
+    background-color: var(--accent-1);
+    color: var(--bg-base);
+  }
+
+  /* Subtle scrollbar */
+  ::-webkit-scrollbar {
+    width: 10px;
+    height: 10px;
+  }
+  ::-webkit-scrollbar-track {
+    background: var(--bg-base);
+  }
+  ::-webkit-scrollbar-thumb {
+    background: var(--bg-elev-2);
+    border-radius: 0;
+  }
+  ::-webkit-scrollbar-thumb:hover {
+    background: var(--accent-1);
+  }
+}
+
+@layer utilities {
+  /* ASCII-style section divider used in headings: /// SECTION */
+  .ascii-prefix::before {
+    content: '/// ';
+    @apply text-accent-1;
   }
 }
