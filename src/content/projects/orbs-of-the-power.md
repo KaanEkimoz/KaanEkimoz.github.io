@@ -11,6 +11,7 @@ links:
   github: "https://github.com/KaanEkimoz/Orbs-of-The-Power"
 coverImage: "../../assets/projects/orbs-of-the-power/cover.png"
 gallery:
+  - "../../assets/projects/orbs-of-the-power/cover.png"
   - "../../assets/projects/orbs-of-the-power/gallery/01.png"
 youtubeId: "0KpRHhH52hQ"
 featured: true
