@@ -111,8 +111,9 @@ const socialImage = new URL(image, SITE.url).href;
         var modal = document.getElementById('project-modal');
         var wrapper = document.getElementById('project-modal-wrapper');
         var closeBtn = document.getElementById('project-modal-close');
+        var fabBtn = document.getElementById('project-modal-fab');
         var contentEl = document.getElementById('project-modal-content');
-        if (!modal || !wrapper || !closeBtn || !contentEl) return;
+        if (!modal || !wrapper || !closeBtn || !fabBtn || !contentEl) return;
 
         var originalUrl = '';
         var isOpen = false;
@@ -196,6 +197,7 @@ const socialImage = new URL(image, SITE.url).href;
 
         // Close handlers
         closeBtn.addEventListener('click', function() { closeModal(); });
+        fabBtn.addEventListener('click', function() { closeModal(); });
 
         wrapper.addEventListener('click', function(e) {
           if (e.target === wrapper) closeModal();
