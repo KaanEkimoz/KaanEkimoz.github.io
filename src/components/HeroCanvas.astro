@@ -1,0 +1,841 @@
+---
+/**
+ * HeroCanvas
+ *
+ * Interactive canvas that replaces the decorative floating shapes in the hero.
+ *
+ * Mechanics:
+ * - Desktop: shapes flee from the cursor, click to destroy.
+ * - Mobile:  tap to destroy, or swipe through shapes for a fruit-ninja combo.
+ * - First hit starts a 30-second timer; when it runs out, a GAME OVER overlay
+ *   shows FINAL score + best and lets the user retry.
+ * - Shapes spawn in randomized positions within per-kind zones, at randomized
+ *   sizes (current size = minimum, up to ~1.4x).
+ * - Base 5 shapes always respawn. Every 5 hits, one BONUS shape is added to
+ *   the pool (capped at 8 total). Bonuses respawn like base shapes.
+ * - 15% chance on hit: an extra short-lived clone spawns too.
+ *
+ * Respects prefers-reduced-motion (renders static shapes, no interaction).
+ * Pauses the RAF loop when the hero scrolls out of view.
+ * Dispatches `fx:hit` on every destroy so SoundFx can play the feedback tone.
+ */
+---
+
+<div class="hero-canvas-wrap absolute inset-0 pointer-events-none">
+  <canvas
+    class="hero-canvas absolute inset-0 w-full h-full pointer-events-auto"
+    aria-hidden="true"
+  ></canvas>
+
+  <div
+    class="hero-score absolute top-6 right-6 font-mono text-xs uppercase tracking-widest text-text-300 opacity-0 transition-opacity duration-300"
+    aria-live="polite"
+  >
+    <span class="text-text-300">SCORE </span>
+    <span class="hero-score-value text-accent-1">0</span>
+    <span class="text-text-300"> · BEST </span>
+    <span class="hero-best-value text-text-200">0</span>
+    <span class="text-text-300"> · TIME </span>
+    <span class="hero-time-value text-accent-3">30.0s</span>
+  </div>
+
+  <div
+    class="hero-gameover absolute top-6 left-1/2 -translate-x-1/2 pointer-events-none opacity-0 transition-opacity duration-200"
+  >
+    <div
+      class="border border-border bg-bg-base/85 backdrop-blur-sm px-5 py-3 flex flex-col items-center gap-2 font-mono"
+    >
+      <div class="text-xs uppercase tracking-widest text-accent-2">GAME OVER</div>
+      <div class="flex items-center gap-3">
+        <span class="text-xs uppercase tracking-widest text-text-300">SCORE</span>
+        <span class="hero-final-value text-lg text-accent-1">0</span>
+        <button
+          type="button"
+          class="hero-retry-btn font-mono text-xs uppercase tracking-widest text-accent-1 border border-accent-1 px-3 py-1 hover:bg-accent-1 hover:text-bg-base transition-colors"
+        >
+          [ Retry ]
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<style>
+  .hero-canvas-wrap :global(canvas.hero-canvas) {
+    /* pan-y lets the user still scroll the page vertically by swiping over the
+       canvas. Taps always land and horizontal / diagonal gestures register. */
+    touch-action: pan-y;
+  }
+
+  .hero-score.is-visible {
+    opacity: 1;
+  }
+
+  @keyframes hero-best-flash {
+    0%, 100% { color: var(--accent-1); }
+    50% { color: var(--accent-2); }
+  }
+  .hero-score.best-flash .hero-score-value {
+    animation: hero-best-flash 500ms ease-in-out;
+  }
+
+  .hero-gameover.is-visible {
+    opacity: 1;
+    pointer-events: auto;
+  }
+</style>
+
+<script>
+  type ShapeKind = 'triangle' | 'circle' | 'hexagon' | 'square' | 'dots';
+
+  type Zone = { xMin: number; xMax: number; yMin: number; yMax: number };
+
+  type KindDef = {
+    kind: ShapeKind;
+    zones: Zone[];
+    sizeMin: number; // current size
+    color: string;
+  };
+
+  type Shape = {
+    kind: ShapeKind;
+    baseX: number;
+    baseY: number;
+    x: number;
+    y: number;
+    phaseX: number;
+    phaseY: number;
+    freqX: number;
+    freqY: number;
+    ampX: number;
+    ampY: number;
+    rot: number;
+    vrot: number;
+    fleeX: number;
+    fleeY: number;
+    size: number;
+    color: string;
+    opacity: number;
+    alive: boolean;
+    respawnAt: number;
+    entering: boolean;
+    entryFromX: number;
+    entryFromY: number;
+    entryStart: number;
+    pulse: number;
+    hitCooldownUntil: number;
+    permanent: boolean; // true = respawns forever, false = one-shot clone
+  };
+
+  type Particle = {
+    x: number;
+    y: number;
+    vx: number;
+    vy: number;
+    life: number;
+    decay: number;
+    color: string;
+    size: number;
+  };
+
+  type Shockwave = { x: number; y: number; radius: number; life: number; color: string };
+  type TrailPoint = { x: number; y: number; t: number };
+
+  // Tuning
+  const FLEE_RADIUS = 120;
+  const PANIC_RADIUS = 40;
+  const FLEE_FORCE = 0.72;            // +30% vs 0.55
+  const FLEE_DAMPING = 0.88;
+  // Clicks get a forgiving hit radius so fast flee doesn't rob the player.
+  const HIT_RADIUS_MULTIPLIER = 1.6;
+  const TAP_BONUS_RADIUS = 18;
+  // When the cursor is inside the shape's body the flee eases off — gives
+  // the player a "commit zone" to actually land the click.
+  const COMMIT_FLEE_DAMPING = 0.2;
+  const RESPAWN_DELAY_MS = 1200; // -40% on the previous 2000ms
+  const ENTRY_MS = 420;
+  const PARTICLE_COUNT = 12;
+  const PARTICLE_MAX = 140;
+  const TRAIL_MAX = 10;
+  const TRAIL_FADE_MS = 280;
+  const HIT_COOLDOWN_MS = 120;
+  const BEST_KEY = 'hero-best';
+  const TIMER_DURATION_MS = 20_000;
+  const DOUBLE_SPAWN_CHANCE = 0.23; // +8 pp
+  const HITS_PER_BONUS = 5;
+  const MAX_POOL = 10;
+  const BASE_POOL = 5;
+  const SIZE_JITTER = 0.4; // up to +40% over min
+
+  // Zones avoid the central text block — roughly x 0.22–0.78, y 0.24–0.80 on
+  // desktop. Safe areas: left column, right column, top strip, bottom strip
+  // (above the scroll indicator ~y 0.92).
+  const KINDS: KindDef[] = [
+    { kind: 'triangle', sizeMin: 52, color: '--accent-1', zones: [
+      { xMin: 0.04, xMax: 0.20, yMin: 0.10, yMax: 0.28 },
+      { xMin: 0.04, xMax: 0.18, yMin: 0.62, yMax: 0.86 },
+    ]},
+    { kind: 'circle', sizeMin: 60, color: '--accent-2', zones: [
+      { xMin: 0.80, xMax: 0.96, yMin: 0.12, yMax: 0.30 },
+      { xMin: 0.82, xMax: 0.96, yMin: 0.64, yMax: 0.86 },
+    ]},
+    { kind: 'square', sizeMin: 44, color: '--accent-3', zones: [
+      { xMin: 0.04, xMax: 0.18, yMin: 0.36, yMax: 0.58 }, // left side-band
+      { xMin: 0.28, xMax: 0.44, yMin: 0.04, yMax: 0.18 }, // top strip
+    ]},
+    { kind: 'hexagon', sizeMin: 58, color: '--accent-1', zones: [
+      { xMin: 0.82, xMax: 0.96, yMin: 0.38, yMax: 0.60 }, // right side-band
+      { xMin: 0.56, xMax: 0.72, yMin: 0.04, yMax: 0.18 }, // top strip
+    ]},
+    { kind: 'dots', sizeMin: 36, color: '--accent-2', zones: [
+      { xMin: 0.44, xMax: 0.56, yMin: 0.04, yMax: 0.16 }, // top strip center
+      { xMin: 0.44, xMax: 0.56, yMin: 0.82, yMax: 0.90 }, // bottom strip (above scroll)
+    ]},
+  ];
+
+  type Guarded = HTMLElement & { __heroInited?: boolean };
+
+  function init() {
+    const wrap = document.querySelector<HTMLDivElement>('.hero-canvas-wrap');
+    // Guard against double-initialization. init() runs both at module
+    // evaluation time AND on every astro:page-load — without this, two
+    // independent game loops fight over the same canvas. Symptom: the
+    // final score field occasionally gets clobbered by a second loop's
+    // later-firing endRound (e.g. shows 5, then "1" a few seconds later).
+    if (!wrap) return;
+    if ((wrap as Guarded).__heroInited) return;
+
+    const canvas = wrap.querySelector<HTMLCanvasElement>('canvas.hero-canvas');
+    const scoreEl = wrap?.querySelector<HTMLDivElement>('.hero-score');
+    const scoreValue = wrap?.querySelector<HTMLElement>('.hero-score-value');
+    const bestValue = wrap?.querySelector<HTMLElement>('.hero-best-value');
+    const timeValue = wrap?.querySelector<HTMLElement>('.hero-time-value');
+    const gameoverEl = wrap?.querySelector<HTMLDivElement>('.hero-gameover');
+    const finalValue = wrap?.querySelector<HTMLElement>('.hero-final-value');
+    const retryBtn = wrap?.querySelector<HTMLButtonElement>('.hero-retry-btn');
+
+    if (!wrap || !canvas || !scoreEl || !scoreValue || !bestValue || !timeValue ||
+        !gameoverEl || !finalValue || !retryBtn) return;
+    const ctx = canvas.getContext('2d', { alpha: true });
+    if (!ctx) return;
+
+    // Commit the guard only after every required element resolved — if any
+    // child was missing we want a later init() retry to still succeed.
+    (wrap as Guarded).__heroInited = true;
+
+    const cs = getComputedStyle(document.documentElement);
+    const paletteFor = (token: string) => cs.getPropertyValue(token).trim() || '#00d9ff';
+
+    const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    const coarsePointer = window.matchMedia('(pointer: coarse)').matches;
+
+    let width = 0;
+    let height = 0;
+    let dpr = 1;
+
+    const shapes: Shape[] = [];
+
+    function pickZone(kind: ShapeKind): Zone {
+      const def = KINDS.find((k) => k.kind === kind) ?? KINDS[0];
+      return def.zones[Math.floor(Math.random() * def.zones.length)];
+    }
+
+    function randomSize(kind: ShapeKind): number {
+      const def = KINDS.find((k) => k.kind === kind) ?? KINDS[0];
+      return def.sizeMin * (1 + Math.random() * SIZE_JITTER);
+    }
+
+    function randomInZone(zone: Zone) {
+      return {
+        x: (zone.xMin + Math.random() * (zone.xMax - zone.xMin)) * width,
+        y: (zone.yMin + Math.random() * (zone.yMax - zone.yMin)) * height,
+      };
+    }
+
+    function makeShape(kind: ShapeKind, permanent: boolean): Shape {
+      const def = KINDS.find((k) => k.kind === kind) ?? KINDS[0];
+      const zone = pickZone(kind);
+      const pos = randomInZone(zone);
+      return {
+        kind,
+        baseX: pos.x,
+        baseY: pos.y,
+        x: pos.x,
+        y: pos.y,
+        phaseX: Math.random() * Math.PI * 2,
+        phaseY: Math.random() * Math.PI * 2,
+        freqX: 0.00028 + Math.random() * 0.00022,
+        freqY: 0.00034 + Math.random() * 0.00022,
+        ampX: 18 + Math.random() * 14,
+        ampY: 14 + Math.random() * 12,
+        rot: Math.random() * Math.PI * 2,
+        vrot: (Math.random() - 0.5) * 0.0018,
+        fleeX: 0,
+        fleeY: 0,
+        size: randomSize(kind),
+        color: paletteFor(def.color),
+        opacity: 0.3,
+        alive: true,
+        respawnAt: 0,
+        entering: false,
+        entryFromX: 0,
+        entryFromY: 0,
+        entryStart: 0,
+        pulse: 0,
+        hitCooldownUntil: 0,
+        permanent,
+      };
+    }
+
+    function seedBasePool() {
+      shapes.length = 0;
+      for (let i = 0; i < BASE_POOL; i++) {
+        shapes.push(makeShape(KINDS[i].kind, true));
+      }
+    }
+
+    function resize() {
+      const rect = wrap!.getBoundingClientRect();
+      width = rect.width;
+      height = rect.height;
+      dpr = Math.min(window.devicePixelRatio || 1, 2);
+      canvas!.width = Math.floor(width * dpr);
+      canvas!.height = Math.floor(height * dpr);
+      canvas!.style.width = `${width}px`;
+      canvas!.style.height = `${height}px`;
+      ctx!.setTransform(dpr, 0, 0, dpr, 0, 0);
+      // Rebase existing shape home positions into the new canvas size
+      shapes.forEach((s) => {
+        const zone = pickZone(s.kind);
+        const pos = randomInZone(zone);
+        s.baseX = pos.x;
+        s.baseY = pos.y;
+        if (!s.alive || s.entering) return;
+        s.x = pos.x;
+        s.y = pos.y;
+      });
+    }
+
+    seedBasePool();
+    resize();
+
+    window.addEventListener('resize', resize, { passive: true });
+
+    const particles: Particle[] = [];
+    const shockwaves: Shockwave[] = [];
+
+    let pointerX = -9999;
+    let pointerY = -9999;
+    let pointerActive = false;
+    let lastSwipePoint: TrailPoint | null = null;
+    const trail: TrailPoint[] = [];
+
+    // Score + timer
+    let score = 0;
+    let best = Number(localStorage.getItem(BEST_KEY) || 0);
+    bestValue!.textContent = String(best);
+    let scoreShown = false;
+    let timerActive = false;
+    let timerStart = 0;
+    let gameOver = false;
+
+    function refreshScoreUI() {
+      scoreValue!.textContent = String(score);
+    }
+
+    function setTimerText(remainingMs: number) {
+      const v = Math.max(0, remainingMs / 1000).toFixed(1);
+      timeValue!.textContent = `${v}s`;
+    }
+
+    function bumpScore() {
+      if (gameOver) return; // no stray increments after the round has ended
+      score += 1;
+      refreshScoreUI();
+      if (!scoreShown) {
+        scoreEl!.classList.add('is-visible');
+        scoreShown = true;
+      }
+      if (!timerActive) {
+        timerActive = true;
+        timerStart = performance.now();
+      }
+      if (score > best) {
+        best = score;
+        bestValue!.textContent = String(best);
+        try { localStorage.setItem(BEST_KEY, String(best)); } catch {}
+        scoreEl!.classList.remove('best-flash');
+        void scoreEl!.offsetWidth;
+        scoreEl!.classList.add('best-flash');
+      }
+    }
+
+    function endRound() {
+      if (gameOver) return; // idempotent — guards against multiple rAF frames firing it
+      gameOver = true;
+      timerActive = false;
+      // Snapshot the score right now so later mutations or HMR can't
+      // rewrite the final value mid-round.
+      const finalScoreAtEnd = score;
+      finalValue!.textContent = String(finalScoreAtEnd);
+      // Force the timer to a clean "0.0s" so it never freezes on a stale frame
+      // value like "0.1s" when the last rAF arrived mid-countdown.
+      setTimerText(0);
+      // Hide the regular top-right score UI during game over so only the
+      // minimal top-center panel is visible.
+      scoreEl!.classList.remove('is-visible');
+      gameoverEl!.classList.add('is-visible');
+      document.dispatchEvent(new CustomEvent('fx:gameover'));
+    }
+
+    function resetRound() {
+      gameOver = false;
+      timerActive = false;
+      score = 0;
+      refreshScoreUI();
+      // Explicitly reset the game-over panel's score too, so a stale "2"
+      // from the previous round can never leak back into view.
+      finalValue!.textContent = '0';
+      setTimerText(TIMER_DURATION_MS);
+      scoreEl!.classList.remove('is-visible');
+      scoreShown = false;
+      gameoverEl!.classList.remove('is-visible');
+      particles.length = 0;
+      shockwaves.length = 0;
+      seedBasePool();
+      // Shapes need world positions from the current canvas dimensions
+      shapes.forEach((s) => {
+        s.baseX = Math.max(0, Math.min(width, s.baseX));
+        s.baseY = Math.max(0, Math.min(height, s.baseY));
+        s.x = s.baseX;
+        s.y = s.baseY;
+      });
+    }
+
+    retryBtn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      resetRound();
+    });
+
+    function hitShape(s: Shape, now: number) {
+      if (!s.alive || gameOver) return;
+      s.alive = false;
+      s.hitCooldownUntil = now + HIT_COOLDOWN_MS;
+
+      // Particles
+      const baseCount = Math.min(PARTICLE_COUNT, PARTICLE_MAX - particles.length);
+      for (let i = 0; i < baseCount; i++) {
+        const angle = (i / baseCount) * Math.PI * 2 + Math.random() * 0.4;
+        const speed = 1.8 + Math.random() * 2.2;
+        particles.push({
+          x: s.x,
+          y: s.y,
+          vx: Math.cos(angle) * speed,
+          vy: Math.sin(angle) * speed,
+          life: 1,
+          decay: 0.018 + Math.random() * 0.012,
+          color: s.color,
+          size: 2 + Math.random() * 1.5,
+        });
+      }
+      shockwaves.push({ x: s.x, y: s.y, radius: s.size * 0.4, life: 1, color: s.color });
+
+      bumpScore();
+      document.dispatchEvent(new CustomEvent('fx:hit'));
+
+      // Non-permanent clone: just disappear. Don't schedule respawn.
+      if (!s.permanent) {
+        // Will get pruned by the update loop
+        s.respawnAt = Number.POSITIVE_INFINITY;
+        return;
+      }
+
+      // Permanent: schedule respawn
+      s.respawnAt = now + RESPAWN_DELAY_MS;
+
+      // 15% chance: add a short-lived clone that spawns alongside the respawn.
+      if (shapes.length < MAX_POOL && Math.random() < DOUBLE_SPAWN_CHANCE) {
+        const clone = makeShape(s.kind, false);
+        clone.alive = false;
+        clone.respawnAt = now + RESPAWN_DELAY_MS + 200; // stagger slightly
+        shapes.push(clone);
+      }
+
+      // Every HITS_PER_BONUS hits: grow the permanent pool by one (random kind).
+      if (score % HITS_PER_BONUS === 0 && shapes.length < MAX_POOL) {
+        const kind = KINDS[Math.floor(Math.random() * KINDS.length)].kind;
+        const bonus = makeShape(kind, true);
+        bonus.alive = false;
+        bonus.respawnAt = now + RESPAWN_DELAY_MS;
+        shapes.push(bonus);
+      }
+    }
+
+    function hitTest(px: number, py: number, now: number, tolerance = 0) {
+      for (const s of shapes) {
+        if (!s.alive || gameOver) continue;
+        if (now < s.hitCooldownUntil) continue;
+        const r = s.size * 0.5 * HIT_RADIUS_MULTIPLIER + tolerance;
+        const dx = px - s.x;
+        const dy = py - s.y;
+        if (dx * dx + dy * dy <= r * r) {
+          hitShape(s, now);
+          return true;
+        }
+      }
+      return false;
+    }
+
+    function swipeHit(p1: TrailPoint, p2: TrailPoint, now: number) {
+      for (const s of shapes) {
+        if (!s.alive || gameOver) continue;
+        if (now < s.hitCooldownUntil) continue;
+        const r = s.size * 0.5 * HIT_RADIUS_MULTIPLIER + TAP_BONUS_RADIUS;
+        const dx = p2.x - p1.x;
+        const dy = p2.y - p1.y;
+        const lenSq = dx * dx + dy * dy;
+        let t = 0;
+        if (lenSq > 0) {
+          t = ((s.x - p1.x) * dx + (s.y - p1.y) * dy) / lenSq;
+          t = Math.max(0, Math.min(1, t));
+        }
+        const cx = p1.x + t * dx;
+        const cy = p1.y + t * dy;
+        const ddx = s.x - cx;
+        const ddy = s.y - cy;
+        if (ddx * ddx + ddy * ddy <= r * r) {
+          hitShape(s, now);
+        }
+      }
+    }
+
+    function localCoords(e: MouseEvent | Touch) {
+      const rect = canvas!.getBoundingClientRect();
+      return { x: e.clientX - rect.left, y: e.clientY - rect.top };
+    }
+
+    if (!coarsePointer) {
+      canvas.addEventListener('mousemove', (e) => {
+        const { x, y } = localCoords(e);
+        pointerX = x;
+        pointerY = y;
+        pointerActive = true;
+      });
+      canvas.addEventListener('mouseleave', () => {
+        pointerActive = false;
+        pointerX = -9999;
+        pointerY = -9999;
+      });
+      canvas.addEventListener('mousedown', (e) => {
+        if (e.button !== 0) return;
+        if (gameOver) return;
+        const { x, y } = localCoords(e);
+        hitTest(x, y, performance.now());
+      });
+    } else {
+      const pushTrail = (x: number, y: number, now: number) => {
+        const point = { x, y, t: now };
+        trail.push(point);
+        if (trail.length > TRAIL_MAX) trail.shift();
+        if (lastSwipePoint) swipeHit(lastSwipePoint, point, now);
+        lastSwipePoint = point;
+      };
+
+      canvas.addEventListener('touchstart', (e) => {
+        if (gameOver) return;
+        const t = e.touches[0];
+        if (!t) return;
+        const { x, y } = localCoords(t);
+        const now = performance.now();
+        hitTest(x, y, now, TAP_BONUS_RADIUS);
+        lastSwipePoint = { x, y, t: now };
+        trail.length = 0;
+        trail.push(lastSwipePoint);
+      }, { passive: true });
+      canvas.addEventListener('touchmove', (e) => {
+        if (gameOver) return;
+        const t = e.touches[0];
+        if (!t) return;
+        const { x, y } = localCoords(t);
+        pushTrail(x, y, performance.now());
+      }, { passive: true });
+      const endTouch = () => { lastSwipePoint = null; };
+      canvas.addEventListener('touchend', endTouch);
+      canvas.addEventListener('touchcancel', endTouch);
+    }
+
+    // --- Game loop ---
+    let running = true;
+    let rafId = 0;
+
+    function update(now: number) {
+      // Timer
+      if (timerActive && !gameOver) {
+        const remaining = TIMER_DURATION_MS - (now - timerStart);
+        setTimerText(remaining);
+        if (remaining <= 0) endRound();
+      } else if (!scoreShown) {
+        setTimerText(TIMER_DURATION_MS);
+      }
+
+      for (let i = shapes.length - 1; i >= 0; i--) {
+        const s = shapes[i];
+
+        // Prune non-permanent clones that have been destroyed.
+        if (!s.alive && !s.permanent && s.respawnAt === Number.POSITIVE_INFINITY) {
+          shapes.splice(i, 1);
+          continue;
+        }
+
+        const fx = Math.sin(now * s.freqX + s.phaseX) * s.ampX;
+        const fy = Math.cos(now * s.freqY + s.phaseY) * s.ampY;
+
+        if (!s.alive) {
+          // No respawns while the round is over — shapes that were destroyed
+          // stay destroyed until the player hits Retry.
+          if (gameOver) continue;
+          if (now >= s.respawnAt) {
+            // Pick a new zone + size for this respawn so the screen feels alive.
+            const zone = pickZone(s.kind);
+            const pos = randomInZone(zone);
+            s.baseX = pos.x;
+            s.baseY = pos.y;
+            s.size = randomSize(s.kind);
+            const choices = [
+              { x: -40, y: s.baseY },
+              { x: width + 40, y: s.baseY },
+              { x: s.baseX, y: -40 },
+              { x: s.baseX, y: height + 40 },
+            ];
+            const from = choices[Math.floor(Math.random() * choices.length)];
+            s.entering = true;
+            s.entryFromX = from.x;
+            s.entryFromY = from.y;
+            s.entryStart = now;
+            s.alive = true;
+            s.fleeX = 0;
+            s.fleeY = 0;
+          } else {
+            continue;
+          }
+        }
+
+        if (s.entering) {
+          const p = Math.min(1, (now - s.entryStart) / ENTRY_MS);
+          const eased = 1 - (1 - p) * (1 - p);
+          const targetX = s.baseX + fx;
+          const targetY = s.baseY + fy;
+          s.x = s.entryFromX + (targetX - s.entryFromX) * eased;
+          s.y = s.entryFromY + (targetY - s.entryFromY) * eased;
+          s.opacity = 0.3 * eased;
+          if (p >= 1) s.entering = false;
+          s.rot += s.vrot;
+          continue;
+        }
+
+        if (pointerActive && !gameOver) {
+          const dx = s.x - pointerX;
+          const dy = s.y - pointerY;
+          const distSq = dx * dx + dy * dy;
+          const fleeRadSq = FLEE_RADIUS * FLEE_RADIUS;
+          const commitR = s.size * 0.55; // cursor sits on the shape ⇒ commit window
+          if (distSq < fleeRadSq) {
+            const dist = Math.sqrt(distSq) || 0.0001;
+            const strength = (1 - dist / FLEE_RADIUS) ** 1.6;
+            const panic = dist < PANIC_RADIUS ? 2.2 : 1;
+            // Inside the commit radius: flee is heavily dampened so the player
+            // can actually click. Still some motion to feel alive.
+            const commit = dist < commitR ? COMMIT_FLEE_DAMPING : 1;
+            s.fleeX += (dx / dist) * FLEE_FORCE * strength * panic * commit;
+            s.fleeY += (dy / dist) * FLEE_FORCE * strength * panic * commit;
+            s.pulse = Math.max(s.pulse, strength);
+          }
+        }
+
+        s.fleeX *= FLEE_DAMPING;
+        s.fleeY *= FLEE_DAMPING;
+        s.pulse *= 0.92;
+
+        const maxFleeDist = 160;
+        const fleeMag = Math.sqrt(s.fleeX * s.fleeX + s.fleeY * s.fleeY);
+        if (fleeMag > maxFleeDist) {
+          const k = maxFleeDist / fleeMag;
+          s.fleeX *= k;
+          s.fleeY *= k;
+        }
+
+        s.x = s.baseX + fx + s.fleeX;
+        s.y = s.baseY + fy + s.fleeY;
+        s.opacity = 0.3;
+        s.rot += s.vrot + s.pulse * 0.02;
+      }
+
+      for (let i = particles.length - 1; i >= 0; i--) {
+        const p = particles[i];
+        p.x += p.vx;
+        p.y += p.vy;
+        p.vx *= 0.96;
+        p.vy *= 0.96;
+        p.life -= p.decay;
+        if (p.life <= 0) particles.splice(i, 1);
+      }
+
+      for (let i = shockwaves.length - 1; i >= 0; i--) {
+        const w = shockwaves[i];
+        w.radius += 4.5;
+        w.life -= 0.05;
+        if (w.life <= 0) shockwaves.splice(i, 1);
+      }
+    }
+
+    function draw(now: number) {
+      ctx!.clearRect(0, 0, width, height);
+
+      for (const s of shapes) {
+        if (!s.alive && !s.entering) continue;
+        const scale = 1 + s.pulse * 0.12;
+        ctx!.save();
+        ctx!.translate(s.x, s.y);
+        ctx!.rotate(s.rot);
+        ctx!.scale(scale, scale);
+        ctx!.globalAlpha = s.opacity;
+        ctx!.strokeStyle = s.color;
+        ctx!.lineWidth = 1.5;
+        ctx!.fillStyle = s.color;
+
+        const h = s.size / 2;
+        switch (s.kind) {
+          case 'triangle':
+            ctx!.beginPath();
+            ctx!.moveTo(0, -h);
+            ctx!.lineTo(h, h);
+            ctx!.lineTo(-h, h);
+            ctx!.closePath();
+            ctx!.stroke();
+            break;
+          case 'circle':
+            ctx!.beginPath();
+            ctx!.arc(0, 0, h, 0, Math.PI * 2);
+            ctx!.stroke();
+            break;
+          case 'square':
+            ctx!.strokeRect(-h, -h, s.size, s.size);
+            break;
+          case 'hexagon':
+            ctx!.beginPath();
+            for (let i = 0; i < 6; i++) {
+              const a = (Math.PI / 3) * i - Math.PI / 2;
+              const px = Math.cos(a) * h;
+              const py = Math.sin(a) * h;
+              if (i === 0) ctx!.moveTo(px, py);
+              else ctx!.lineTo(px, py);
+            }
+            ctx!.closePath();
+            ctx!.stroke();
+            break;
+          case 'dots': {
+            // Full 3×3 grid of dots (matches the original SVG — no missing
+            // center, otherwise it reads as a broken square frame).
+            const step = s.size / 3;
+            const r = Math.max(1.4, s.size * 0.055);
+            for (let gy = 0; gy < 3; gy++) {
+              for (let gx = 0; gx < 3; gx++) {
+                ctx!.beginPath();
+                ctx!.arc(
+                  -s.size / 2 + step / 2 + gx * step,
+                  -s.size / 2 + step / 2 + gy * step,
+                  r, 0, Math.PI * 2
+                );
+                ctx!.fill();
+              }
+            }
+            break;
+          }
+        }
+        ctx!.restore();
+      }
+
+      for (const w of shockwaves) {
+        ctx!.save();
+        ctx!.globalAlpha = Math.max(0, w.life) * 0.55;
+        ctx!.strokeStyle = w.color;
+        ctx!.lineWidth = 1.5;
+        ctx!.beginPath();
+        ctx!.arc(w.x, w.y, w.radius, 0, Math.PI * 2);
+        ctx!.stroke();
+        ctx!.restore();
+      }
+
+      for (const p of particles) {
+        ctx!.save();
+        ctx!.globalAlpha = Math.max(0, p.life);
+        ctx!.fillStyle = p.color;
+        ctx!.fillRect(p.x - p.size / 2, p.y - p.size / 2, p.size, p.size);
+        ctx!.restore();
+      }
+
+      if (trail.length >= 2) {
+        while (trail.length && now - trail[0].t > TRAIL_FADE_MS) trail.shift();
+        for (let i = 1; i < trail.length; i++) {
+          const prev = trail[i - 1];
+          const cur = trail[i];
+          const age = now - cur.t;
+          const alpha = Math.max(0, 1 - age / TRAIL_FADE_MS) * 0.6;
+          ctx!.save();
+          ctx!.globalAlpha = alpha;
+          ctx!.strokeStyle = paletteFor('--accent-1');
+          ctx!.lineWidth = 2.5;
+          ctx!.lineCap = 'round';
+          ctx!.beginPath();
+          ctx!.moveTo(prev.x, prev.y);
+          ctx!.lineTo(cur.x, cur.y);
+          ctx!.stroke();
+          ctx!.restore();
+        }
+      }
+    }
+
+    function tick(now: number) {
+      if (!running) return;
+      update(now);
+      draw(now);
+      rafId = requestAnimationFrame(tick);
+    }
+
+    if (reducedMotion) {
+      shapes.forEach((s) => {
+        s.vrot = 0;
+        s.ampX = 0;
+        s.ampY = 0;
+        s.rot = 0;
+        s.x = s.baseX;
+        s.y = s.baseY;
+      });
+      draw(0);
+      return;
+    }
+
+    const io = new IntersectionObserver(
+      (entries) => {
+        for (const entry of entries) {
+          if (entry.isIntersecting) {
+            if (!running) {
+              running = true;
+              rafId = requestAnimationFrame(tick);
+            }
+          } else {
+            running = false;
+            cancelAnimationFrame(rafId);
+          }
+        }
+      },
+      { threshold: 0.01 }
+    );
+    io.observe(wrap);
+
+    rafId = requestAnimationFrame(tick);
+  }
+
+  init();
+  document.addEventListener('astro:page-load', init);
+</script>
