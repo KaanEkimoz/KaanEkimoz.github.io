@@ -27,7 +27,11 @@ const latestPosts = allPosts
   <Hero />
 
   <!-- ======== ABOUT ======== -->
-  <section id="about" class="max-w-6xl mx-auto px-6 py-20 scroll-mt-20">
+  <section
+    id="about"
+    class="max-w-6xl mx-auto px-6 py-20 scroll-mt-20"
+    data-fade-in
+  >
     <SectionHeading title="About" />
     <div class="grid md:grid-cols-[1fr_auto] gap-10 items-start">
       <div class="space-y-4 text-text-200 leading-relaxed">
@@ -56,7 +60,11 @@ const latestPosts = allPosts
   </section>
 
   <!-- ======== FEATURED PROJECTS ======== -->
-  <section id="projects" class="max-w-6xl mx-auto px-6 py-12 scroll-mt-20">
+  <section
+    id="projects"
+    class="max-w-6xl mx-auto px-6 py-12 scroll-mt-20"
+    data-fade-in
+  >
     <SectionHeading title="Featured Projects" />
     <div class="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
       {featuredProjects.map((project) => <ProjectCard project={project} />)}
@@ -67,7 +75,7 @@ const latestPosts = allPosts
   </section>
 
   <!-- ======== LATEST POSTS ======== -->
-  <section class="max-w-6xl mx-auto px-6 py-12">
+  <section class="max-w-6xl mx-auto px-6 py-12" data-fade-in>
     <SectionHeading title="Latest Posts" />
     {
       latestPosts.length > 0 ? (
@@ -88,7 +96,11 @@ const latestPosts = allPosts
   </section>
 
   <!-- ======== CONTACT ======== -->
-  <section id="contact" class="max-w-6xl mx-auto px-6 py-20 scroll-mt-20">
+  <section
+    id="contact"
+    class="max-w-6xl mx-auto px-6 py-20 scroll-mt-20"
+    data-fade-in
+  >
     <SectionHeading title="Let's Connect" />
     <div class="border border-border bg-bg-elev p-8 sm:p-12">
       <a

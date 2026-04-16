@@ -1,0 +1,153 @@
+---
+/**
+ * CustomCursor
+ *
+ * Renders a two-part cursor (dot + ring) that follows the mouse with subtle
+ * lag on the ring. Enables on desktop only (skipped on touch / coarse pointer).
+ * Toggle via FxToggle (writes localStorage 'fx-cursor' = 'on' | 'off' and
+ * dispatches CustomEvent('fx:cursor-changed', { detail: { on } })).
+ *
+ * Removable in one step: delete this component + its <CustomCursor /> usage
+ * + the cursor toggle in FxToggle.astro.
+ */
+---
+
+<div class="cursor-dot" aria-hidden="true"></div>
+<div class="cursor-ring" aria-hidden="true"></div>
+
+<style is:global>
+  /* Hide native cursor only when FX cursor is active */
+  html.fx-cursor-on,
+  html.fx-cursor-on * {
+    cursor: none !important;
+  }
+
+  .cursor-dot,
+  .cursor-ring {
+    position: fixed;
+    top: 0;
+    left: 0;
+    pointer-events: none;
+    z-index: 9999;
+    will-change: transform;
+    opacity: 0;
+    transition: opacity 0.2s;
+  }
+
+  html.fx-cursor-on .cursor-dot,
+  html.fx-cursor-on .cursor-ring {
+    opacity: 1;
+  }
+
+  .cursor-dot {
+    width: 6px;
+    height: 6px;
+    margin: -3px 0 0 -3px;
+    background: var(--accent-1);
+    border-radius: 50%;
+  }
+
+  .cursor-ring {
+    width: 32px;
+    height: 32px;
+    margin: -16px 0 0 -16px;
+    border: 1px solid var(--accent-1);
+    border-radius: 50%;
+    transition: width 0.18s, height 0.18s, margin 0.18s, border-color 0.18s,
+      background 0.18s, opacity 0.2s;
+  }
+
+  .cursor-ring.cursor-ring-hover {
+    width: 48px;
+    height: 48px;
+    margin: -24px 0 0 -24px;
+    border-color: var(--accent-2);
+    background: rgba(255, 77, 255, 0.08);
+  }
+
+  /* Hide on touch devices (no hover support) */
+  @media (hover: none), (pointer: coarse) {
+    .cursor-dot,
+    .cursor-ring {
+      display: none !important;
+    }
+  }
+</style>
+
+<script>
+  // Custom cursor controller — runs once per page load (re-bound by ClientRouter)
+  const STORAGE_KEY = 'fx-cursor';
+
+  function isCoarsePointer() {
+    return matchMedia('(hover: none), (pointer: coarse)').matches;
+  }
+
+  function getEnabled(): boolean {
+    if (isCoarsePointer()) return false;
+    const stored = localStorage.getItem(STORAGE_KEY);
+    // Default ON when user hasn't toggled
+    return stored !== 'off';
+  }
+
+  function applyClass(on: boolean) {
+    document.documentElement.classList.toggle('fx-cursor-on', on);
+  }
+
+  let dot: HTMLElement | null = null;
+  let ring: HTMLElement | null = null;
+  let mouseX = -100;
+  let mouseY = -100;
+  let ringX = -100;
+  let ringY = -100;
+  let rafId: number | null = null;
+
+  function tick() {
+    if (!ring) return;
+    ringX += (mouseX - ringX) * 0.2;
+    ringY += (mouseY - ringY) * 0.2;
+    ring.style.transform = `translate(${ringX}px, ${ringY}px)`;
+    rafId = requestAnimationFrame(tick);
+  }
+
+  function onMove(e: MouseEvent) {
+    mouseX = e.clientX;
+    mouseY = e.clientY;
+    if (dot) dot.style.transform = `translate(${mouseX}px, ${mouseY}px)`;
+  }
+
+  function onOver(e: Event) {
+    const target = e.target as HTMLElement;
+    if (target.closest('a, button, [role="button"]')) {
+      ring?.classList.add('cursor-ring-hover');
+    }
+  }
+
+  function onOut(e: Event) {
+    const target = e.target as HTMLElement;
+    if (target.closest('a, button, [role="button"]')) {
+      ring?.classList.remove('cursor-ring-hover');
+    }
+  }
+
+  function init() {
+    dot = document.querySelector('.cursor-dot');
+    ring = document.querySelector('.cursor-ring');
+    applyClass(getEnabled());
+
+    document.addEventListener('mousemove', onMove);
+    document.addEventListener('mouseover', onOver);
+    document.addEventListener('mouseout', onOut);
+
+    if (rafId !== null) cancelAnimationFrame(rafId);
+    rafId = requestAnimationFrame(tick);
+  }
+
+  // Listen for toggle events from FxToggle
+  document.addEventListener('fx:cursor-changed', ((e: CustomEvent) => {
+    applyClass(Boolean(e.detail?.on));
+  }) as EventListener);
+
+  init();
+  // Re-init on Astro client-side navigation
+  document.addEventListener('astro:page-load', init);
+</script>

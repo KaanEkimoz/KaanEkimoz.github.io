@@ -1,0 +1,88 @@
+---
+/**
+ * SoundFx
+ *
+ * Creates a single AudioContext on first user gesture and plays subtle 8-bit
+ * style tones on click. No external audio files — all generated via Web Audio.
+ * Toggle via FxToggle (localStorage 'fx-sound' = 'on' | 'off' + custom event).
+ *
+ * Default: OFF (sound is opt-in to avoid surprising visitors).
+ *
+ * Removable in one step: delete this component + its <SoundFx /> usage + the
+ * sound toggle in FxToggle.astro.
+ */
+---
+
+<script>
+  const STORAGE_KEY = 'fx-sound';
+
+  function isEnabled(): boolean {
+    return localStorage.getItem(STORAGE_KEY) === 'on';
+  }
+
+  let enabled = isEnabled();
+  let ctx: AudioContext | null = null;
+
+  function ensureContext(): AudioContext | null {
+    if (ctx) return ctx;
+    const AC = window.AudioContext || (window as any).webkitAudioContext;
+    if (!AC) return null;
+    ctx = new AC();
+    return ctx;
+  }
+
+  function playClick() {
+    if (!enabled) return;
+    const c = ensureContext();
+    if (!c) return;
+    const t = c.currentTime;
+    const osc = c.createOscillator();
+    const gain = c.createGain();
+    osc.type = 'square';
+    osc.frequency.setValueAtTime(880, t);
+    osc.frequency.exponentialRampToValueAtTime(220, t + 0.08);
+    gain.gain.setValueAtTime(0.04, t);
+    gain.gain.exponentialRampToValueAtTime(0.0001, t + 0.1);
+    osc.connect(gain).connect(c.destination);
+    osc.start(t);
+    osc.stop(t + 0.11);
+  }
+
+  function playToggle(on: boolean) {
+    // Distinct sound when user toggles a setting
+    const c = ensureContext();
+    if (!c) return;
+    const t = c.currentTime;
+    const osc = c.createOscillator();
+    const gain = c.createGain();
+    osc.type = 'square';
+    osc.frequency.setValueAtTime(on ? 440 : 220, t);
+    osc.frequency.linearRampToValueAtTime(on ? 880 : 110, t + 0.08);
+    gain.gain.setValueAtTime(0.05, t);
+    gain.gain.exponentialRampToValueAtTime(0.0001, t + 0.12);
+    osc.connect(gain).connect(c.destination);
+    osc.start(t);
+    osc.stop(t + 0.13);
+  }
+
+  function bindClicks() {
+    // Use capture so we hear the click regardless of stopPropagation
+    document.addEventListener(
+      'click',
+      (e) => {
+        const target = e.target as HTMLElement;
+        if (target.closest('a, button, [role="button"]')) playClick();
+      },
+      true
+    );
+  }
+
+  document.addEventListener('fx:sound-changed', ((e: CustomEvent) => {
+    enabled = Boolean(e.detail?.on);
+    // Audible feedback for the toggle action itself
+    playToggle(enabled);
+  }) as EventListener);
+
+  bindClicks();
+  // No need to re-bind on astro:page-load — the document listener persists.
+</script>

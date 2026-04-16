@@ -1,5 +1,6 @@
 ---
 import { NAV, SITE } from '@lib/constants';
+import FxToggle from '@components/FxToggle.astro';
 
 const currentPath = Astro.url.pathname;
 const isActive = (href: string) =>
@@ -34,8 +35,9 @@ const isActive = (href: string) =>
           </a>
         ))
       }
-      {/* Sound toggle slot — populated in Phase 5 */}
-      <div id="sound-toggle-mount" class="w-6 h-6"></div>
+      <div class="ml-2 pl-4 border-l border-border">
+        <FxToggle />
+      </div>
     </nav>
   </div>
 </header>
