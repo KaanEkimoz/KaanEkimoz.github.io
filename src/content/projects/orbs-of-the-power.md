@@ -9,6 +9,10 @@ description: "A modular roguelike action game built around five unique orbs and 
 techStack: ["Unity", "C#", "ECS-style architecture"]
 links:
   github: "https://github.com/KaanEkimoz/Orbs-of-The-Power"
+coverImage: "../../assets/projects/orbs-of-the-power/cover.png"
+gallery:
+  - "../../assets/projects/orbs-of-the-power/gallery/01.png"
+youtubeId: "0KpRHhH52hQ"
 featured: true
 order: 1
 ---
