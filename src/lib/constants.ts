@@ -5,11 +5,11 @@
 
 export const SITE = {
   name: 'kaanusta.dev',
-  title: 'Y. Kaan Usta — Game Developer',
+  title: 'Kaan Usta — Game Developer',
   description:
     'Building mobile games since 2020. Specialized in Unity, focused on lightweight, addictive experiences.',
   url: 'https://kaanusta.dev',
-  author: 'Y. Kaan Usta',
+  author: 'Kaan Usta',
   locale: 'en-US',
 } as const;
 
