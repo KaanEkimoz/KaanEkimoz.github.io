@@ -86,110 +86,36 @@
 </style>
 
 <script>
-  type ShapeKind = 'triangle' | 'circle' | 'hexagon' | 'square' | 'dots';
-
-  type Zone = { xMin: number; xMax: number; yMin: number; yMax: number };
-
-  type KindDef = {
-    kind: ShapeKind;
-    zones: Zone[];
-    sizeMin: number; // current size
-    color: string;
-  };
-
-  type Shape = {
-    kind: ShapeKind;
-    baseX: number;
-    baseY: number;
-    x: number;
-    y: number;
-    phaseX: number;
-    phaseY: number;
-    freqX: number;
-    freqY: number;
-    ampX: number;
-    ampY: number;
-    rot: number;
-    vrot: number;
-    fleeX: number;
-    fleeY: number;
-    size: number;
-    color: string;
-    opacity: number;
-    alive: boolean;
-    respawnAt: number;
-    entering: boolean;
-    entryFromX: number;
-    entryFromY: number;
-    entryStart: number;
-    pulse: number;
-    hitCooldownUntil: number;
-    permanent: boolean; // true = respawns forever, false = one-shot clone
-  };
-
-  type Particle = {
-    x: number;
-    y: number;
-    vx: number;
-    vy: number;
-    life: number;
-    decay: number;
-    color: string;
-    size: number;
-  };
-
-  type Shockwave = { x: number; y: number; radius: number; life: number; color: string };
-
-  // Tuning
-  const FLEE_RADIUS = 120;
-  const PANIC_RADIUS = 40;
-  const FLEE_FORCE = 0.72;            // +30% vs 0.55
-  const FLEE_DAMPING = 0.88;
-  // Clicks get a slightly forgiving hit radius — the pointer-events fix on
-  // the button row does the heavy lifting now, so we can keep this modest.
-  const HIT_RADIUS_MULTIPLIER = 1.5;
-  const TAP_BONUS_RADIUS = 18;
-  // When the cursor is inside the shape's body the flee eases off — gives
-  // the player a "commit zone" to actually land the click.
-  const COMMIT_FLEE_DAMPING = 0.2;
-  const RESPAWN_DELAY_MS = 1200; // -40% on the previous 2000ms
-  const ENTRY_MS = 420;
-  const PARTICLE_COUNT = 12;
-  const PARTICLE_MAX = 140;
-  const HIT_COOLDOWN_MS = 120;
-  const BEST_KEY = 'hero-best';
-  const TIMER_DURATION_MS = 20_000;
-  const DOUBLE_SPAWN_CHANCE = 0.23; // +8 pp
-  const HITS_PER_BONUS = 5;
-  const MAX_POOL = 10;
-  const BASE_POOL = 5;
-  const SIZE_JITTER = 0.4; // up to +40% over min
-
-  // Zones avoid the central text block — roughly x 0.22–0.78, y 0.24–0.80 on
-  // desktop. Safe areas: left column, right column, top strip, bottom strip
-  // (above the scroll indicator ~y 0.92).
-  const KINDS: KindDef[] = [
-    { kind: 'triangle', sizeMin: 52, color: '--accent-1', zones: [
-      { xMin: 0.04, xMax: 0.20, yMin: 0.10, yMax: 0.28 },
-      { xMin: 0.04, xMax: 0.18, yMin: 0.62, yMax: 0.86 },
-    ]},
-    { kind: 'circle', sizeMin: 60, color: '--accent-2', zones: [
-      { xMin: 0.80, xMax: 0.96, yMin: 0.12, yMax: 0.30 },
-      { xMin: 0.82, xMax: 0.96, yMin: 0.64, yMax: 0.86 },
-    ]},
-    { kind: 'square', sizeMin: 44, color: '--accent-3', zones: [
-      { xMin: 0.04, xMax: 0.18, yMin: 0.36, yMax: 0.58 }, // left side-band
-      { xMin: 0.28, xMax: 0.44, yMin: 0.04, yMax: 0.18 }, // top strip
-    ]},
-    { kind: 'hexagon', sizeMin: 58, color: '--accent-1', zones: [
-      { xMin: 0.82, xMax: 0.96, yMin: 0.38, yMax: 0.60 }, // right side-band
-      { xMin: 0.56, xMax: 0.72, yMin: 0.04, yMax: 0.18 }, // top strip
-    ]},
-    { kind: 'dots', sizeMin: 36, color: '--accent-2', zones: [
-      { xMin: 0.44, xMax: 0.56, yMin: 0.04, yMax: 0.16 }, // top strip center
-      { xMin: 0.44, xMax: 0.56, yMin: 0.82, yMax: 0.90 }, // bottom strip (above scroll)
-    ]},
-  ];
+  import type {
+    ShapeKind,
+    Zone,
+    KindDef,
+    Shape,
+    Particle,
+    Shockwave,
+  } from '@lib/hero-canvas.types';
+  import {
+    FLEE_RADIUS,
+    PANIC_RADIUS,
+    FLEE_FORCE,
+    FLEE_DAMPING,
+    HIT_RADIUS_MULTIPLIER,
+    TAP_BONUS_RADIUS,
+    COMMIT_FLEE_DAMPING,
+    RESPAWN_DELAY_MS,
+    ENTRY_MS,
+    PARTICLE_COUNT,
+    PARTICLE_MAX,
+    HIT_COOLDOWN_MS,
+    TIMER_DURATION_MS,
+    DOUBLE_SPAWN_CHANCE,
+    HITS_PER_BONUS,
+    MAX_POOL,
+    BASE_POOL,
+    SIZE_JITTER,
+    KINDS,
+  } from '@lib/hero-canvas.config';
+  import { FX_EVENTS, FX_STORAGE } from '@lib/fx-events';
 
   type Guarded = HTMLElement & { __heroInited?: boolean };
 
@@ -332,7 +258,7 @@
 
     // Score + timer
     let score = 0;
-    let best = Number(localStorage.getItem(BEST_KEY) || 0);
+    let best = Number(localStorage.getItem(FX_STORAGE.heroBest) || 0);
     bestValue!.textContent = String(best);
     let scoreShown = false;
     let timerActive = false;
@@ -364,7 +290,7 @@
         best = score;
         bestValue!.textContent = String(best);
         try {
-          localStorage.setItem(BEST_KEY, String(best));
+          localStorage.setItem(FX_STORAGE.heroBest, String(best));
         } catch {
           /* storage blocked (Brave/Safari strict mode) — best stays in memory */
         }
@@ -389,7 +315,7 @@
       // minimal top-center panel is visible.
       scoreEl!.classList.remove('is-visible');
       gameoverEl!.classList.add('is-visible');
-      document.dispatchEvent(new CustomEvent('fx:gameover'));
+      document.dispatchEvent(new CustomEvent(FX_EVENTS.gameover));
     }
 
     function resetRound() {
@@ -445,7 +371,7 @@
       shockwaves.push({ x: s.x, y: s.y, radius: s.size * 0.4, life: 1, color: s.color });
 
       bumpScore();
-      document.dispatchEvent(new CustomEvent('fx:hit'));
+      document.dispatchEvent(new CustomEvent(FX_EVENTS.hit));
 
       // Non-permanent clone: just disappear. Don't schedule respawn.
       if (!s.permanent) {

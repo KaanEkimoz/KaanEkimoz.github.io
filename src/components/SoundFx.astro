@@ -14,7 +14,7 @@
 ---
 
 <script>
-  const STORAGE_KEY = 'fx-sound';
+  import { FX_EVENTS, FX_STORAGE } from '@lib/fx-events';
 
   // Brave's Shields / Safari's ITP can throw on localStorage access; without
   // a guard here the whole SoundFx module would crash at load time and never
@@ -22,7 +22,7 @@
   // toggle would visually flip but produce no audio.
   let enabled = false;
   try {
-    enabled = localStorage.getItem(STORAGE_KEY) === 'on';
+    enabled = localStorage.getItem(FX_STORAGE.sound) === 'on';
   } catch {
     /* storage blocked — start disabled, the toggle event will flip this */
   }
@@ -151,14 +151,14 @@
   );
 
   // Sound toggle event — update enabled flag and play feedback tone.
-  document.addEventListener('fx:sound-changed', ((e: CustomEvent) => {
+  document.addEventListener(FX_EVENTS.soundChanged, ((e: CustomEvent) => {
     enabled = Boolean(e.detail?.on);
     playToggle(enabled);
   }) as EventListener);
 
   // Hero canvas shape-destroyed event — play the hit tone.
-  document.addEventListener('fx:hit', playHit);
+  document.addEventListener(FX_EVENTS.hit, playHit);
 
   // Hero canvas round-ended event — descending jingle.
-  document.addEventListener('fx:gameover', playGameOver);
+  document.addEventListener(FX_EVENTS.gameover, playGameOver);
 </script>
