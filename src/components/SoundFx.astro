@@ -16,24 +16,41 @@
 <script>
   const STORAGE_KEY = 'fx-sound';
 
-  function isEnabled(): boolean {
-    return localStorage.getItem(STORAGE_KEY) === 'on';
+  let enabled = localStorage.getItem(STORAGE_KEY) === 'on';
+  let ctx: AudioContext | null = null;
+  let unlocked = false;
+
+  function getContext(): AudioContext | null {
+    if (!ctx) {
+      const AC =
+        window.AudioContext || (window as unknown as { webkitAudioContext?: typeof AudioContext }).webkitAudioContext;
+      if (!AC) return null;
+      try {
+        ctx = new AC();
+      } catch {
+        return null;
+      }
+    }
+    // Always try to resume — Chrome/Safari auto-suspend until a user gesture.
+    if (ctx.state === 'suspended') {
+      ctx.resume().catch(() => {
+        /* ignore — will retry on next gesture */
+      });
+    }
+    return ctx;
   }
 
-  let enabled = isEnabled();
-  let ctx: AudioContext | null = null;
-
-  function ensureContext(): AudioContext | null {
-    if (ctx) return ctx;
-    const AC = window.AudioContext || (window as any).webkitAudioContext;
-    if (!AC) return null;
-    ctx = new AC();
-    return ctx;
+  /** Eagerly unlock audio on the very first user interaction.
+      After this, AudioContext stays running for the rest of the session. */
+  function unlock() {
+    if (unlocked) return;
+    unlocked = true;
+    getContext();
   }
 
   function playClick() {
     if (!enabled) return;
-    const c = ensureContext();
+    const c = getContext();
     if (!c) return;
     const t = c.currentTime;
     const osc = c.createOscillator();
@@ -41,48 +58,53 @@
     osc.type = 'square';
     osc.frequency.setValueAtTime(880, t);
     osc.frequency.exponentialRampToValueAtTime(220, t + 0.08);
-    gain.gain.setValueAtTime(0.04, t);
+    gain.gain.setValueAtTime(0.08, t);
     gain.gain.exponentialRampToValueAtTime(0.0001, t + 0.1);
     osc.connect(gain).connect(c.destination);
     osc.start(t);
-    osc.stop(t + 0.11);
+    osc.stop(t + 0.12);
   }
 
   function playToggle(on: boolean) {
-    // Distinct sound when user toggles a setting
-    const c = ensureContext();
+    // Audible feedback for the toggle action itself — always plays so the user
+    // knows the click registered (even when turning sound off).
+    const c = getContext();
     if (!c) return;
     const t = c.currentTime;
     const osc = c.createOscillator();
     const gain = c.createGain();
     osc.type = 'square';
-    osc.frequency.setValueAtTime(on ? 440 : 220, t);
-    osc.frequency.linearRampToValueAtTime(on ? 880 : 110, t + 0.08);
-    gain.gain.setValueAtTime(0.05, t);
-    gain.gain.exponentialRampToValueAtTime(0.0001, t + 0.12);
+    osc.frequency.setValueAtTime(on ? 440 : 440, t);
+    osc.frequency.linearRampToValueAtTime(on ? 880 : 220, t + 0.1);
+    gain.gain.setValueAtTime(0.12, t);
+    gain.gain.exponentialRampToValueAtTime(0.0001, t + 0.18);
     osc.connect(gain).connect(c.destination);
     osc.start(t);
-    osc.stop(t + 0.13);
+    osc.stop(t + 0.2);
   }
 
-  function bindClicks() {
-    // Use capture so we hear the click regardless of stopPropagation
-    document.addEventListener(
-      'click',
-      (e) => {
-        const target = e.target as HTMLElement;
-        if (target.closest('a, button, [role="button"]')) playClick();
-      },
-      true
-    );
-  }
+  // Unlock audio on the very first interaction of any kind.
+  document.addEventListener('click', unlock, { capture: true });
+  document.addEventListener('keydown', unlock);
+  document.addEventListener('touchstart', unlock, { passive: true });
 
+  // Per-click sound on interactive elements, EXCEPT the FX toggle buttons
+  // (those play their own toggle sound instead, otherwise we'd double-play).
+  document.addEventListener(
+    'click',
+    (e) => {
+      const target = e.target as HTMLElement;
+      const interactive = target.closest('a, button, [role="button"]');
+      if (!interactive) return;
+      if (interactive.classList.contains('fx-btn')) return;
+      playClick();
+    },
+    true
+  );
+
+  // Sound toggle event — update enabled flag and play feedback tone.
   document.addEventListener('fx:sound-changed', ((e: CustomEvent) => {
     enabled = Boolean(e.detail?.on);
-    // Audible feedback for the toggle action itself
     playToggle(enabled);
   }) as EventListener);
-
-  bindClicks();
-  // No need to re-bind on astro:page-load — the document listener persists.
 </script>
