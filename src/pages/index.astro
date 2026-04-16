@@ -1,4 +1,5 @@
 ---
+import { Image } from 'astro:assets';
 import { getCollection } from 'astro:content';
 import BaseLayout from '@layouts/BaseLayout.astro';
 import Hero from '@components/Hero.astro';
@@ -8,7 +9,8 @@ import ProjectCard from '@components/ProjectCard.astro';
 import BlogCard from '@components/BlogCard.astro';
 import SocialLinks from '@components/SocialLinks.astro';
 import Button from '@components/ui/Button.astro';
-import { SOCIAL } from '@lib/constants';
+import portrait from '@/assets/portrait.png';
+import { SOCIAL, SITE } from '@lib/constants';
 
 const allProjects = await getCollection('projects');
 const featuredProjects = allProjects
@@ -34,26 +36,36 @@ const latestPosts = allPosts
   >
     <SectionHeading title="About" />
     <div class="grid md:grid-cols-[1fr_auto] gap-10 items-start">
-      <div class="space-y-4 text-text-200 leading-relaxed">
-        <p>
-          I've been part of the software and game development world since 2020.
-          My journey started with a degree in Digital Game Design — and what
-          began as curiosity about programming and game engines became my
-          primary focus.
-        </p>
-        <p>
-          I've worked on projects spanning mobile, PC, and VR, but I've chosen
-          to specialize in <span class="text-text-100">mobile game development</span>.
-          From hyper-casual prototypes built in two weeks to roguelike systems
-          developed over five months, I enjoy the full spectrum: gameplay
-          programming, system design, and the small details that make a game
-          feel alive.
-        </p>
-        <p>
-          Currently focused on <span class="text-accent-1">Unity</span> and
-          <span class="text-accent-1">C#</span>, with side interests in custom
-          engine work, VR physics, and ECS architecture.
-        </p>
+      <div class="flex flex-col sm:flex-row gap-6 items-start">
+        <Image
+          src={portrait}
+          alt={`Portrait of ${SITE.author}`}
+          widths={[160, 240, 320]}
+          sizes="160px"
+          class="w-32 h-32 sm:w-40 sm:h-40 object-cover border-2 border-accent-1 shadow-glow-cyan shrink-0"
+          loading="eager"
+        />
+        <div class="space-y-4 text-text-200 leading-relaxed">
+          <p>
+            I've been part of the software and game development world since 2020.
+            My journey started with a degree in Digital Game Design — and what
+            began as curiosity about programming and game engines became my
+            primary focus.
+          </p>
+          <p>
+            I've worked on projects spanning mobile, PC, and VR, but I've chosen
+            to specialize in <span class="text-text-100">mobile game development</span>.
+            From hyper-casual prototypes built in two weeks to roguelike systems
+            developed over five months, I enjoy the full spectrum: gameplay
+            programming, system design, and the small details that make a game
+            feel alive.
+          </p>
+          <p>
+            Currently focused on <span class="text-accent-1">Unity</span> and
+            <span class="text-accent-1">C#</span>, with side interests in custom
+            engine work, VR physics, and ECS architecture.
+          </p>
+        </div>
       </div>
       <StatsCard />
     </div>

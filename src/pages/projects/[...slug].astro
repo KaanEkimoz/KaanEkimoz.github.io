@@ -1,8 +1,10 @@
 ---
+import { Image } from 'astro:assets';
 import { getCollection, render } from 'astro:content';
 import BaseLayout from '@layouts/BaseLayout.astro';
 import Tag from '@components/ui/Tag.astro';
 import Button from '@components/ui/Button.astro';
+import LiteYouTube from '@components/LiteYouTube.astro';
 import type { GetStaticPaths } from 'astro';
 
 export const getStaticPaths: GetStaticPaths = async () => {
@@ -25,6 +27,9 @@ const {
   description,
   techStack,
   links,
+  coverImage,
+  gallery,
+  youtubeId,
 } = project.data;
 
 const platformVariant =
@@ -40,6 +45,21 @@ const platformVariant =
       ← Back to Projects
     </a>
 
+    {/* Cover hero */}
+    {
+      coverImage && (
+        <div class="mb-10 border border-border overflow-hidden">
+          <Image
+            src={coverImage}
+            alt={`${title} cover image`}
+            widths={[640, 960, 1280]}
+            sizes="(min-width: 768px) 768px, 100vw"
+            class="w-full h-auto"
+          />
+        </div>
+      )
+    }
+
     <header class="mb-10 border-b border-border pb-8">
       <div class="flex flex-wrap items-center gap-2 mb-4">
         <Tag variant={platformVariant}>{platform}</Tag>
@@ -53,6 +73,18 @@ const platformVariant =
       </h1>
       <p class="mt-4 text-text-200 text-lg leading-relaxed">{description}</p>
     </header>
+
+    {/* Video */}
+    {
+      youtubeId && (
+        <div class="mb-12">
+          <div class="font-mono text-xs uppercase tracking-widest text-text-300 mb-3">
+            Gameplay
+          </div>
+          <LiteYouTube id={youtubeId} title={`${title} — gameplay`} />
+        </div>
+      )
+    }
 
     <div class="grid sm:grid-cols-2 gap-6 mb-12 text-sm font-mono">
       <div>
@@ -114,6 +146,30 @@ const platformVariant =
     <div class="prose-content space-y-4 text-text-200 leading-relaxed">
       <Content />
     </div>
+
+    {/* Gallery */}
+    {
+      gallery && gallery.length > 0 && (
+        <section class="mt-16 pt-10 border-t border-border">
+          <h2 class="font-mono uppercase tracking-widest text-text-100 text-sm mb-6">
+            <span class="text-accent-1">///</span> Screenshots
+          </h2>
+          <div class="grid sm:grid-cols-2 gap-4">
+            {gallery.map((img, i) => (
+              <div class="border border-border overflow-hidden">
+                <Image
+                  src={img}
+                  alt={`${title} screenshot ${i + 1}`}
+                  widths={[400, 800, 1200]}
+                  sizes="(min-width: 768px) 50vw, 100vw"
+                  class="w-full h-auto"
+                />
+              </div>
+            ))}
+          </div>
+        </section>
+      )
+    }
   </article>
 </BaseLayout>
 
