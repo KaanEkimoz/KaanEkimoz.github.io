@@ -27,3 +27,4 @@ pnpm-debug.log*
 
 # planning docs (kept local, not deployed)
 CLAUDE_CODE_KICKOFF.md
+tmp/
