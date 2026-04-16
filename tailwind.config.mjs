@@ -21,7 +21,7 @@ export default {
         text: {
           100: '#f0f0f5', // headings
           200: '#b8b8c8', // body
-          300: '#6c6c80', // meta, muted
+          300: '#a8a8c0', // meta, muted — WCAG AA contrast on bg-base (~7:1)
         },
         border: {
           DEFAULT: '#2a2a3a',
