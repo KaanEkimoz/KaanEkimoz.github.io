@@ -92,6 +92,8 @@
 </style>
 
 <script>
+  import { FX_EVENTS, FX_STORAGE } from '@lib/fx-events';
+
   type FxKey = 'cursor' | 'sound';
 
   const DEFAULTS: Record<FxKey, 'on' | 'off'> = {
@@ -99,9 +101,15 @@
     sound: 'off', // opt-in — surprising sound is bad UX
   };
 
-  function storageKey(fx: FxKey) {
-    return `fx-${fx}`;
-  }
+  const STORAGE_KEY: Record<FxKey, (typeof FX_STORAGE)[keyof typeof FX_STORAGE]> = {
+    cursor: FX_STORAGE.cursor,
+    sound: FX_STORAGE.sound,
+  };
+
+  const CHANGE_EVENT: Record<FxKey, (typeof FX_EVENTS)[keyof typeof FX_EVENTS]> = {
+    cursor: FX_EVENTS.cursorChanged,
+    sound: FX_EVENTS.soundChanged,
+  };
 
   // In-memory fallback for when localStorage is unavailable
   // (Brave "Forget on site", Safari ITP, incognito quota, etc.)
@@ -110,7 +118,7 @@
   function getState(fx: FxKey): boolean {
     let stored: string | null = null;
     try {
-      stored = localStorage.getItem(storageKey(fx));
+      stored = localStorage.getItem(STORAGE_KEY[fx]);
     } catch {
       stored = memoryState[fx] ?? null;
     }
@@ -123,13 +131,11 @@
     const value = on ? 'on' : 'off';
     memoryState[fx] = value;
     try {
-      localStorage.setItem(storageKey(fx), value);
+      localStorage.setItem(STORAGE_KEY[fx], value);
     } catch {
       // Storage blocked — keep going with memoryState so the UI still toggles.
     }
-    document.dispatchEvent(
-      new CustomEvent(`fx:${fx}-changed`, { detail: { on } })
-    );
+    document.dispatchEvent(new CustomEvent(CHANGE_EVENT[fx], { detail: { on } }));
   }
 
   function syncButton(btn: HTMLButtonElement) {

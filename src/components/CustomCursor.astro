@@ -75,8 +75,9 @@
 </style>
 
 <script>
+  import { FX_EVENTS, FX_STORAGE } from '@lib/fx-events';
+
   // Custom cursor controller — runs once per page load (re-bound by ClientRouter)
-  const STORAGE_KEY = 'fx-cursor';
 
   function isCoarsePointer() {
     return matchMedia('(hover: none), (pointer: coarse)').matches;
@@ -84,8 +85,15 @@
 
   function getEnabled(): boolean {
     if (isCoarsePointer()) return false;
-    const stored = localStorage.getItem(STORAGE_KEY);
-    // Default ON when user hasn't toggled
+    // Brave's Shields / Safari's ITP can throw on storage access. Falling back
+    // to the default (on) is fine — without the guard the whole CustomCursor
+    // module would crash at load and the ring/dot would never track at all.
+    let stored: string | null = null;
+    try {
+      stored = localStorage.getItem(FX_STORAGE.cursor);
+    } catch {
+      /* storage blocked */
+    }
     return stored !== 'off';
   }
 
@@ -143,7 +151,7 @@
   }
 
   // Listen for toggle events from FxToggle
-  document.addEventListener('fx:cursor-changed', ((e: CustomEvent) => {
+  document.addEventListener(FX_EVENTS.cursorChanged, ((e: CustomEvent) => {
     applyClass(Boolean(e.detail?.on));
   }) as EventListener);
 
