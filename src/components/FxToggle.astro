@@ -103,15 +103,30 @@
     return `fx-${fx}`;
   }
 
+  // In-memory fallback for when localStorage is unavailable
+  // (Brave "Forget on site", Safari ITP, incognito quota, etc.)
+  const memoryState: Partial<Record<FxKey, 'on' | 'off'>> = {};
+
   function getState(fx: FxKey): boolean {
-    const stored = localStorage.getItem(storageKey(fx));
+    let stored: string | null = null;
+    try {
+      stored = localStorage.getItem(storageKey(fx));
+    } catch {
+      stored = memoryState[fx] ?? null;
+    }
     if (stored === 'on') return true;
     if (stored === 'off') return false;
     return DEFAULTS[fx] === 'on';
   }
 
   function setState(fx: FxKey, on: boolean) {
-    localStorage.setItem(storageKey(fx), on ? 'on' : 'off');
+    const value = on ? 'on' : 'off';
+    memoryState[fx] = value;
+    try {
+      localStorage.setItem(storageKey(fx), value);
+    } catch {
+      // Storage blocked — keep going with memoryState so the UI still toggles.
+    }
     document.dispatchEvent(
       new CustomEvent(`fx:${fx}-changed`, { detail: { on } })
     );
