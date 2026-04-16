@@ -83,6 +83,48 @@
     display: none;
   }
 
+  /* LiteYouTube styles — scoped CSS from the component doesn't apply to
+     fetched HTML because Astro scope attributes don't match. */
+  #project-modal-content .lite-yt {
+    display: block;
+    position: relative;
+    width: 100%;
+    aspect-ratio: 16 / 9;
+    background: var(--bg-elev);
+    border: 1px solid var(--border);
+    overflow: hidden;
+  }
+  #project-modal-content .lite-yt-btn {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    padding: 0;
+    border: 0;
+    background: transparent;
+    cursor: pointer;
+    display: block;
+  }
+  #project-modal-content .lite-yt-btn img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+  #project-modal-content .lite-yt-play {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    pointer-events: none;
+  }
+  #project-modal-content .lite-yt iframe {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    border: 0;
+  }
+
   /* Prose styles inside modal — reuse the existing prose-content styles */
   #project-modal-content .prose-content h2 {
     @apply font-mono text-text-100 text-xl mt-10 mb-4 uppercase tracking-widest;
