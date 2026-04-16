@@ -30,6 +30,7 @@ const isActive = (href: string) =>
                 ? 'text-accent-1'
                 : 'text-text-300 hover:text-text-100',
             ]}
+            aria-current={isActive(item.href) ? 'page' : undefined}
           >
             {item.label}
           </a>

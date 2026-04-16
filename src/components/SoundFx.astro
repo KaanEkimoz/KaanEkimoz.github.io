@@ -74,7 +74,7 @@
     const osc = c.createOscillator();
     const gain = c.createGain();
     osc.type = 'square';
-    osc.frequency.setValueAtTime(on ? 440 : 440, t);
+    osc.frequency.setValueAtTime(on ? 520 : 380, t);
     osc.frequency.linearRampToValueAtTime(on ? 880 : 220, t + 0.1);
     gain.gain.setValueAtTime(0.12, t);
     gain.gain.exponentialRampToValueAtTime(0.0001, t + 0.18);
