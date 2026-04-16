@@ -1,0 +1,112 @@
+---
+/**
+ * ProjectModal — full-screen overlay for project details.
+ *
+ * Hidden by default. Client JS in BaseLayout opens it by fetching the
+ * project detail page, extracting `#project-detail`, and injecting the
+ * HTML here. Closes via X button, backdrop click, Escape, or browser back.
+ */
+---
+
+<div
+  id="project-modal"
+  class="fixed inset-0 z-50 hidden"
+  role="dialog"
+  aria-modal="true"
+  aria-label="Project details"
+>
+  {/* Backdrop */}
+  <div
+    id="project-modal-backdrop"
+    class="absolute inset-0 bg-black/70 backdrop-blur-sm cursor-pointer transition-opacity duration-300 opacity-0"
+  ></div>
+
+  {/* Scroll wrapper — covers the full overlay area; clicks outside the panel close the modal */}
+  <div id="project-modal-wrapper" class="relative z-10 flex items-start justify-center h-full overflow-y-auto overscroll-contain py-8 px-4 sm:px-6 cursor-pointer">
+    <div
+      id="project-modal-panel"
+      class="relative w-full max-w-4xl bg-bg-base border border-border shadow-2xl transition-all duration-300 origin-top scale-95 opacity-0 my-auto cursor-default"
+    >
+      {/* Close bar — sticky so it's always visible while scrolling */}
+      <div class="sticky top-0 z-20 flex justify-end p-3 bg-bg-base/90 backdrop-blur-sm border-b border-border">
+        <button
+          id="project-modal-close"
+          type="button"
+          aria-label="Close project"
+          class="flex items-center justify-center w-10 h-10 border border-border text-text-300 hover:text-accent-1 hover:border-accent-1 hover:shadow-glow-cyan transition-all duration-200 font-mono text-lg"
+        >
+          &times;
+        </button>
+      </div>
+
+      {/* Content — injected via JS */}
+      <div id="project-modal-content" class="p-6 sm:p-8">
+        {/* Loading state */}
+        <div id="project-modal-loader" class="flex flex-col items-center justify-center py-20 gap-4">
+          <div class="w-8 h-8 border-2 border-accent-1 border-t-transparent rounded-full animate-spin"></div>
+          <span class="font-mono text-xs uppercase tracking-widest text-text-300">Loading...</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<style is:global>
+  /* Body scroll lock when modal is open */
+  html.modal-open {
+    overflow: hidden;
+  }
+
+  /* Modal visible state — toggled via JS */
+  #project-modal.is-open {
+    display: block;
+  }
+  #project-modal.is-open #project-modal-backdrop {
+    opacity: 1;
+  }
+  #project-modal.is-open #project-modal-panel {
+    scale: 1;
+    opacity: 1;
+  }
+
+  /* Remove the "← Back to Projects" link and page chrome when inside modal */
+  #project-modal-content a[href="/projects"] {
+    display: none;
+  }
+
+  /* Prose styles inside modal — reuse the existing prose-content styles */
+  #project-modal-content .prose-content h2 {
+    @apply font-mono text-text-100 text-xl mt-10 mb-4 uppercase tracking-widest;
+  }
+  #project-modal-content .prose-content h3 {
+    @apply font-mono text-text-100 text-lg mt-8 mb-3;
+  }
+  #project-modal-content .prose-content p {
+    @apply text-text-200;
+  }
+  #project-modal-content .prose-content ul {
+    @apply list-disc list-inside space-y-2 text-text-200 marker:text-accent-1;
+  }
+  #project-modal-content .prose-content ol {
+    @apply list-decimal list-inside space-y-2 text-text-200 marker:text-accent-1;
+  }
+  #project-modal-content .prose-content strong {
+    @apply text-text-100;
+  }
+  #project-modal-content .prose-content a {
+    @apply text-accent-1 hover:underline underline-offset-4;
+  }
+  #project-modal-content .prose-content code {
+    @apply bg-bg-elev px-1.5 py-0.5 font-mono text-sm text-accent-1 border border-border;
+  }
+  #project-modal-content .prose-content blockquote {
+    @apply border-l-2 border-accent-1 pl-4 italic text-text-300;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    #project-modal-backdrop,
+    #project-modal-panel {
+      transition: none !important;
+    }
+  }
+</style>

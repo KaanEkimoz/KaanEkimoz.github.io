@@ -5,6 +5,7 @@ import Header from '@components/Header.astro';
 import Footer from '@components/Footer.astro';
 import CustomCursor from '@components/CustomCursor.astro';
 import SoundFx from '@components/SoundFx.astro';
+import ProjectModal from '@components/ProjectModal.astro';
 import { SITE } from '@lib/constants';
 
 interface Props {
@@ -69,6 +70,7 @@ const socialImage = new URL(image, SITE.url).href;
       <slot />
     </main>
     <Footer />
+    <ProjectModal />
 
     {/* Scroll-triggered fade-in for elements with data-fade-in attribute. */}
     <script>
@@ -99,6 +101,114 @@ const socialImage = new URL(image, SITE.url).href;
 
       setupFadeIn();
       document.addEventListener('astro:page-load', setupFadeIn);
+    </script>
+
+    {/* Project modal — intercepts card clicks, fetches detail page, shows overlay */}
+    <script is:inline>
+      // Project modal — must be is:inline so it runs immediately, before Astro's
+      // ClientRouter can register its own click handlers on <a> tags.
+      (function() {
+        var modal = document.getElementById('project-modal');
+        var wrapper = document.getElementById('project-modal-wrapper');
+        var closeBtn = document.getElementById('project-modal-close');
+        var contentEl = document.getElementById('project-modal-content');
+        if (!modal || !wrapper || !closeBtn || !contentEl) return;
+
+        var originalUrl = '';
+        var isOpen = false;
+
+        function openModal() {
+          originalUrl = location.href;
+          modal.classList.remove('hidden');
+          void modal.offsetHeight;
+          modal.classList.add('is-open');
+          document.documentElement.classList.add('modal-open');
+          isOpen = true;
+          closeBtn.focus();
+        }
+
+        function closeModal(updateUrl) {
+          if (!isOpen) return;
+          if (updateUrl === undefined) updateUrl = true;
+          modal.classList.remove('is-open');
+          document.documentElement.classList.remove('modal-open');
+          isOpen = false;
+
+          if (updateUrl && originalUrl) {
+            history.pushState(null, '', originalUrl);
+          }
+
+          setTimeout(function() {
+            modal.classList.add('hidden');
+            contentEl.innerHTML =
+              '<div class="flex flex-col items-center justify-center py-20 gap-4">' +
+              '<div class="w-8 h-8 border-2 border-accent-1 border-t-transparent rounded-full animate-spin"></div>' +
+              '<span class="font-mono text-xs uppercase tracking-widest text-text-300">Loading...</span>' +
+              '</div>';
+          }, 300);
+        }
+
+        function loadProject(href) {
+          openModal();
+          history.pushState({ projectModal: true }, '', href);
+
+          fetch(href)
+            .then(function(res) {
+              if (!res.ok) throw new Error('HTTP ' + res.status);
+              return res.text();
+            })
+            .then(function(html) {
+              var doc = new DOMParser().parseFromString(html, 'text/html');
+              var article = doc.getElementById('project-detail');
+              if (article) {
+                contentEl.innerHTML = article.innerHTML;
+                // Re-init LiteYouTube custom elements inside modal
+                contentEl.querySelectorAll('lite-youtube').forEach(function(el) {
+                  if (customElements.get('lite-youtube')) {
+                    var clone = el.cloneNode(true);
+                    el.replaceWith(clone);
+                  }
+                });
+              } else {
+                closeModal();
+                location.href = href;
+              }
+            })
+            .catch(function() {
+              closeModal();
+              location.href = href;
+            });
+        }
+
+        // Capture phase click — fires BEFORE Astro ClientRouter
+        document.addEventListener('click', function(e) {
+          var el = e.target;
+          while (el && el !== document) {
+            if (el.tagName === 'A' && el.hasAttribute('data-project-modal')) {
+              e.preventDefault();
+              e.stopImmediatePropagation();
+              loadProject(el.href);
+              return;
+            }
+            el = el.parentElement;
+          }
+        }, true);
+
+        // Close handlers
+        closeBtn.addEventListener('click', function() { closeModal(); });
+
+        wrapper.addEventListener('click', function(e) {
+          if (e.target === wrapper) closeModal();
+        });
+
+        document.addEventListener('keydown', function(e) {
+          if (e.key === 'Escape' && isOpen) closeModal();
+        });
+
+        window.addEventListener('popstate', function() {
+          if (isOpen) closeModal(false);
+        });
+      })();
     </script>
   </body>
 </html>
