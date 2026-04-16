@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32">
+  <title>kaanusta.dev</title>
+  <rect width="32" height="32" rx="5" fill="#0a0a14"/>
+  <path d="M10 7 V25 M10 16 L20 7 M10 16 L20 25" stroke="#00d9ff" stroke-width="2.75" stroke-linecap="square" stroke-linejoin="miter" fill="none"/>
+  <circle cx="24" cy="25" r="1.5" fill="#ff4dff"/>
+</svg>

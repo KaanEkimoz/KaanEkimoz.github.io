@@ -1,0 +1,38 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 630" width="1200" height="630">
+  <defs>
+    <pattern id="grid" width="40" height="40" patternUnits="userSpaceOnUse">
+      <path d="M 40 0 L 0 0 0 40" fill="none" stroke="#1f1f2e" stroke-width="1"/>
+    </pattern>
+    <radialGradient id="glow" cx="85%" cy="85%" r="55%">
+      <stop offset="0%" stop-color="#ff4dff" stop-opacity="0.18"/>
+      <stop offset="100%" stop-color="#ff4dff" stop-opacity="0"/>
+    </radialGradient>
+    <radialGradient id="glow2" cx="15%" cy="15%" r="45%">
+      <stop offset="0%" stop-color="#00d9ff" stop-opacity="0.12"/>
+      <stop offset="100%" stop-color="#00d9ff" stop-opacity="0"/>
+    </radialGradient>
+  </defs>
+
+  <rect width="1200" height="630" fill="#0a0a14"/>
+  <rect width="1200" height="630" fill="url(#grid)"/>
+  <rect width="1200" height="630" fill="url(#glow)"/>
+  <rect width="1200" height="630" fill="url(#glow2)"/>
+
+  <g fill="none" stroke-width="2.5" opacity="0.55">
+    <polygon points="960,115 1040,255 880,255" stroke="#00d9ff"/>
+    <circle cx="1070" cy="450" r="62" stroke="#ff4dff"/>
+    <polygon points="865,395 920,395 947,442 920,490 865,490 838,442" stroke="#ffd60a"/>
+  </g>
+
+  <rect x="80" y="148" width="56" height="4" fill="#00d9ff"/>
+  <text x="152" y="158" font-family="'JetBrains Mono', Menlo, Consolas, monospace" font-size="22" font-weight="500" fill="#6c6c80" letter-spacing="6">/// PORTFOLIO · BLOG</text>
+
+  <text x="80" y="300" font-family="'Inter', 'Helvetica Neue', Helvetica, Arial, sans-serif" font-size="140" font-weight="700" fill="#f0f0f5" letter-spacing="-3">KAAN USTA</text>
+
+  <text x="80" y="370" font-family="'JetBrains Mono', Menlo, monospace" font-size="32" font-weight="500" fill="#ff4dff" letter-spacing="8">GAME DEVELOPER</text>
+
+  <text x="80" y="450" font-family="'Inter', 'Helvetica Neue', Helvetica, Arial, sans-serif" font-size="26" fill="#b8b8c8">Building mobile games since 2020.</text>
+  <text x="80" y="488" font-family="'Inter', 'Helvetica Neue', Helvetica, Arial, sans-serif" font-size="26" fill="#b8b8c8">Unity · C# · roguelikes · hyper-casual.</text>
+
+  <text x="80" y="570" font-family="'JetBrains Mono', Menlo, monospace" font-size="30" font-weight="500" fill="#f0f0f5">kaanusta<tspan fill="#00d9ff">.dev</tspan></text>
+</svg>
