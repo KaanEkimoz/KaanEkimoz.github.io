@@ -9,6 +9,12 @@ description: "A modern Tetris-inspired mobile game with new graphics, levels, an
 techStack: ["Unity", "C#"]
 links:
   github: "https://github.com/KaanEkimoz/Brick-Game"
+coverImage: "../../assets/projects/brick-game/cover.png"
+gallery:
+  - "../../assets/projects/brick-game/cover.png"
+  - "../../assets/projects/brick-game/gallery/01.png"
+  - "../../assets/projects/brick-game/gallery/02.png"
+youtubeId: "C_O8qqyZQSA"
 featured: true
 order: 2
 ---
