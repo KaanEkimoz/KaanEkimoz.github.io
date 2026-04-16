@@ -51,9 +51,9 @@
         <span class="hero-final-value text-lg text-accent-1">0</span>
         <button
           type="button"
-          class="hero-retry-btn font-mono text-xs uppercase tracking-widest text-accent-1 border border-accent-1 px-3 py-1 hover:bg-accent-1 hover:text-bg-base transition-colors"
+          class="hero-retry-btn whitespace-nowrap font-mono text-xs uppercase tracking-widest text-accent-1 border border-accent-1 px-3 py-1 hover:bg-accent-1 hover:text-bg-base transition-colors"
         >
-          [ Retry ]
+          [&nbsp;Retry&nbsp;]
         </button>
       </div>
     </div>
@@ -139,15 +139,15 @@
   };
 
   type Shockwave = { x: number; y: number; radius: number; life: number; color: string };
-  type TrailPoint = { x: number; y: number; t: number };
 
   // Tuning
   const FLEE_RADIUS = 120;
   const PANIC_RADIUS = 40;
   const FLEE_FORCE = 0.72;            // +30% vs 0.55
   const FLEE_DAMPING = 0.88;
-  // Clicks get a forgiving hit radius so fast flee doesn't rob the player.
-  const HIT_RADIUS_MULTIPLIER = 1.6;
+  // Clicks get a slightly forgiving hit radius — the pointer-events fix on
+  // the button row does the heavy lifting now, so we can keep this modest.
+  const HIT_RADIUS_MULTIPLIER = 1.5;
   const TAP_BONUS_RADIUS = 18;
   // When the cursor is inside the shape's body the flee eases off — gives
   // the player a "commit zone" to actually land the click.
@@ -156,8 +156,6 @@
   const ENTRY_MS = 420;
   const PARTICLE_COUNT = 12;
   const PARTICLE_MAX = 140;
-  const TRAIL_MAX = 10;
-  const TRAIL_FADE_MS = 280;
   const HIT_COOLDOWN_MS = 120;
   const BEST_KEY = 'hero-best';
   const TIMER_DURATION_MS = 20_000;
@@ -319,7 +317,11 @@
     seedBasePool();
     resize();
 
-    window.addEventListener('resize', resize, { passive: true });
+    // ResizeObserver catches the initial layout-settle on mobile (the wrap
+    // often has 0×0 dimensions when init() first runs; the window 'resize'
+    // event never fires for that, leaving shapes stranded at origin).
+    const ro = new ResizeObserver(() => resize());
+    ro.observe(wrap);
 
     const particles: Particle[] = [];
     const shockwaves: Shockwave[] = [];
@@ -327,8 +329,6 @@
     let pointerX = -9999;
     let pointerY = -9999;
     let pointerActive = false;
-    let lastSwipePoint: TrailPoint | null = null;
-    const trail: TrailPoint[] = [];
 
     // Score + timer
     let score = 0;
@@ -486,29 +486,6 @@
       return false;
     }
 
-    function swipeHit(p1: TrailPoint, p2: TrailPoint, now: number) {
-      for (const s of shapes) {
-        if (!s.alive || gameOver) continue;
-        if (now < s.hitCooldownUntil) continue;
-        const r = s.size * 0.5 * HIT_RADIUS_MULTIPLIER + TAP_BONUS_RADIUS;
-        const dx = p2.x - p1.x;
-        const dy = p2.y - p1.y;
-        const lenSq = dx * dx + dy * dy;
-        let t = 0;
-        if (lenSq > 0) {
-          t = ((s.x - p1.x) * dx + (s.y - p1.y) * dy) / lenSq;
-          t = Math.max(0, Math.min(1, t));
-        }
-        const cx = p1.x + t * dx;
-        const cy = p1.y + t * dy;
-        const ddx = s.x - cx;
-        const ddy = s.y - cy;
-        if (ddx * ddx + ddy * ddy <= r * r) {
-          hitShape(s, now);
-        }
-      }
-    }
-
     function localCoords(e: MouseEvent | Touch) {
       const rect = canvas!.getBoundingClientRect();
       return { x: e.clientX - rect.left, y: e.clientY - rect.top };
@@ -533,35 +510,15 @@
         hitTest(x, y, performance.now());
       });
     } else {
-      const pushTrail = (x: number, y: number, now: number) => {
-        const point = { x, y, t: now };
-        trail.push(point);
-        if (trail.length > TRAIL_MAX) trail.shift();
-        if (lastSwipePoint) swipeHit(lastSwipePoint, point, now);
-        lastSwipePoint = point;
-      };
-
+      // Mobile: tap-only. Swipe/trail was a nice idea but unpredictable in
+      // practice — plain tap-to-destroy is what the player expects.
       canvas.addEventListener('touchstart', (e) => {
         if (gameOver) return;
         const t = e.touches[0];
         if (!t) return;
         const { x, y } = localCoords(t);
-        const now = performance.now();
-        hitTest(x, y, now, TAP_BONUS_RADIUS);
-        lastSwipePoint = { x, y, t: now };
-        trail.length = 0;
-        trail.push(lastSwipePoint);
+        hitTest(x, y, performance.now(), TAP_BONUS_RADIUS);
       }, { passive: true });
-      canvas.addEventListener('touchmove', (e) => {
-        if (gameOver) return;
-        const t = e.touches[0];
-        if (!t) return;
-        const { x, y } = localCoords(t);
-        pushTrail(x, y, performance.now());
-      }, { passive: true });
-      const endTouch = () => { lastSwipePoint = null; };
-      canvas.addEventListener('touchend', endTouch);
-      canvas.addEventListener('touchcancel', endTouch);
     }
 
     // --- Game loop ---
@@ -774,25 +731,6 @@
         ctx!.restore();
       }
 
-      if (trail.length >= 2) {
-        while (trail.length && now - trail[0].t > TRAIL_FADE_MS) trail.shift();
-        for (let i = 1; i < trail.length; i++) {
-          const prev = trail[i - 1];
-          const cur = trail[i];
-          const age = now - cur.t;
-          const alpha = Math.max(0, 1 - age / TRAIL_FADE_MS) * 0.6;
-          ctx!.save();
-          ctx!.globalAlpha = alpha;
-          ctx!.strokeStyle = paletteFor('--accent-1');
-          ctx!.lineWidth = 2.5;
-          ctx!.lineCap = 'round';
-          ctx!.beginPath();
-          ctx!.moveTo(prev.x, prev.y);
-          ctx!.lineTo(cur.x, cur.y);
-          ctx!.stroke();
-          ctx!.restore();
-        }
-      }
     }
 
     function tick(now: number) {
@@ -802,17 +740,16 @@
       rafId = requestAnimationFrame(tick);
     }
 
+    // For reducedMotion users we still run the rAF loop (so the canvas
+    // redraws whenever ResizeObserver lands a real size) but zero out the
+    // float / rotation parameters so nothing actually animates.
     if (reducedMotion) {
       shapes.forEach((s) => {
         s.vrot = 0;
         s.ampX = 0;
         s.ampY = 0;
         s.rot = 0;
-        s.x = s.baseX;
-        s.y = s.baseY;
       });
-      draw(0);
-      return;
     }
 
     const io = new IntersectionObserver(
