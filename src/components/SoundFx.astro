@@ -16,7 +16,16 @@
 <script>
   const STORAGE_KEY = 'fx-sound';
 
-  let enabled = localStorage.getItem(STORAGE_KEY) === 'on';
+  // Brave's Shields / Safari's ITP can throw on localStorage access; without
+  // a guard here the whole SoundFx module would crash at load time and never
+  // wire up the fx:sound-changed / fx:hit / fx:gameover listeners, so the
+  // toggle would visually flip but produce no audio.
+  let enabled = false;
+  try {
+    enabled = localStorage.getItem(STORAGE_KEY) === 'on';
+  } catch {
+    /* storage blocked — start disabled, the toggle event will flip this */
+  }
   let ctx: AudioContext | null = null;
   let unlocked = false;
 
