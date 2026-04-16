@@ -65,6 +65,45 @@
     osc.stop(t + 0.12);
   }
 
+  /** Brighter, shorter "pew" for hero canvas hits — distinct from the general UI click. */
+  function playHit() {
+    if (!enabled) return;
+    const c = getContext();
+    if (!c) return;
+    const t = c.currentTime;
+    const osc = c.createOscillator();
+    const gain = c.createGain();
+    osc.type = 'square';
+    osc.frequency.setValueAtTime(1040, t);
+    osc.frequency.exponentialRampToValueAtTime(320, t + 0.09);
+    gain.gain.setValueAtTime(0.09, t);
+    gain.gain.exponentialRampToValueAtTime(0.0001, t + 0.11);
+    osc.connect(gain).connect(c.destination);
+    osc.start(t);
+    osc.stop(t + 0.13);
+  }
+
+  /** Descending 3-note jingle when a hero-canvas round ends. */
+  function playGameOver() {
+    if (!enabled) return;
+    const c = getContext();
+    if (!c) return;
+    const t = c.currentTime;
+    const notes = [520, 390, 260];
+    notes.forEach((freq, i) => {
+      const osc = c.createOscillator();
+      const gain = c.createGain();
+      const start = t + i * 0.14;
+      osc.type = 'square';
+      osc.frequency.setValueAtTime(freq, start);
+      gain.gain.setValueAtTime(0.1, start);
+      gain.gain.exponentialRampToValueAtTime(0.0001, start + 0.2);
+      osc.connect(gain).connect(c.destination);
+      osc.start(start);
+      osc.stop(start + 0.22);
+    });
+  }
+
   function playToggle(on: boolean) {
     // Audible feedback for the toggle action itself — always plays so the user
     // knows the click registered (even when turning sound off).
@@ -107,4 +146,10 @@
     enabled = Boolean(e.detail?.on);
     playToggle(enabled);
   }) as EventListener);
+
+  // Hero canvas shape-destroyed event — play the hit tone.
+  document.addEventListener('fx:hit', playHit);
+
+  // Hero canvas round-ended event — descending jingle.
+  document.addEventListener('fx:gameover', playGameOver);
 </script>
