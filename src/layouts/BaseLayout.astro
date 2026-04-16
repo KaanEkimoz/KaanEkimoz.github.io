@@ -19,7 +19,7 @@ interface Props {
 const {
   title,
   description = SITE.description,
-  image = '/og-image.png',
+  image = '/og-image.jpg',
   pathname = Astro.url.pathname,
 } = Astro.props;
 
@@ -49,7 +49,7 @@ const socialImage = new URL(image, SITE.url).href;
     <meta property="og:url" content={canonicalUrl} />
     <meta property="og:image" content={socialImage} />
     <meta property="og:image:secure_url" content={socialImage} />
-    <meta property="og:image:type" content="image/png" />
+    <meta property="og:image:type" content="image/jpeg" />
     <meta property="og:image:width" content="1200" />
     <meta property="og:image:height" content="630" />
     <meta property="og:image:alt" content="kaanusta.dev — Y. Kaan Usta, game developer" />
