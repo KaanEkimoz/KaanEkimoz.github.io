@@ -7,7 +7,7 @@
  * Mechanics:
  * - Desktop: shapes flee from the cursor, click to destroy.
  * - Mobile:  tap to destroy, or swipe through shapes for a fruit-ninja combo.
- * - First hit starts a 30-second timer; when it runs out, a GAME OVER overlay
+ * - First hit starts a 20-second timer; when it runs out, a TIME IS UP overlay
  *   shows FINAL score + best and lets the user retry.
  * - Shapes spawn in randomized positions within per-kind zones, at randomized
  *   sizes (current size = minimum, up to ~1.4x).
@@ -36,7 +36,7 @@
     <span class="text-text-300"> · BEST </span>
     <span class="hero-best-value text-text-200">0</span>
     <span class="text-text-300"> · TIME </span>
-    <span class="hero-time-value text-accent-3">30.0s</span>
+    <span class="hero-time-value text-accent-3">20.0s</span>
   </div>
 
   <div
@@ -363,7 +363,11 @@
       if (score > best) {
         best = score;
         bestValue!.textContent = String(best);
-        try { localStorage.setItem(BEST_KEY, String(best)); } catch {}
+        try {
+          localStorage.setItem(BEST_KEY, String(best));
+        } catch {
+          /* storage blocked (Brave/Safari strict mode) — best stays in memory */
+        }
         scoreEl!.classList.remove('best-flash');
         void scoreEl!.offsetWidth;
         scoreEl!.classList.add('best-flash');

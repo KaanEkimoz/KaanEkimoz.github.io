@@ -84,8 +84,15 @@
 
   function getEnabled(): boolean {
     if (isCoarsePointer()) return false;
-    const stored = localStorage.getItem(STORAGE_KEY);
-    // Default ON when user hasn't toggled
+    // Brave's Shields / Safari's ITP can throw on storage access. Falling back
+    // to the default (on) is fine — without the guard the whole CustomCursor
+    // module would crash at load and the ring/dot would never track at all.
+    let stored: string | null = null;
+    try {
+      stored = localStorage.getItem(STORAGE_KEY);
+    } catch {
+      /* storage blocked */
+    }
     return stored !== 'off';
   }
 

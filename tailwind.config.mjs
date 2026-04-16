@@ -1,7 +1,6 @@
 /** @type {import('tailwindcss').Config} */
 export default {
   content: ['./src/**/*.{astro,html,js,jsx,md,mdx,ts,tsx}'],
-  darkMode: 'class',
   theme: {
     extend: {
       colors: {
@@ -38,16 +37,6 @@ export default {
         'glow-cyan': '0 0 20px rgba(0, 217, 255, 0.4)',
         'glow-magenta': '0 0 20px rgba(255, 77, 255, 0.4)',
         'glow-amber': '0 0 20px rgba(255, 214, 10, 0.4)',
-      },
-      animation: {
-        'fade-in-up': 'fadeInUp 0.6s ease-out forwards',
-        'pulse-slow': 'pulse 3s ease-in-out infinite',
-      },
-      keyframes: {
-        fadeInUp: {
-          '0%': { opacity: '0', transform: 'translateY(16px)' },
-          '100%': { opacity: '1', transform: 'translateY(0)' },
-        },
       },
     },
   },

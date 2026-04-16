@@ -73,7 +73,7 @@ scripts/
 Edit `scripts/og-image.svg`, then:
 
 ```sh
-node -e "require('sharp')(require('fs').readFileSync('scripts/og-image.svg')).png().toFile('public/og-image.png')"
+node -e "require('sharp')(require('fs').readFileSync('scripts/og-image.svg')).flatten({background:'#0a0a14'}).jpeg({quality:88,mozjpeg:true}).toFile('public/og-image.jpg')"
 ```
 
 ## Deployment
