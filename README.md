@@ -1,6 +1,6 @@
 # kaanusta.dev
 
-Personal portfolio and blog for **Y. Kaan Usta** — game developer, Unity / C#, mobile-focused.
+Personal portfolio and blog for **Kaan Usta** — game developer, Unity / C#, mobile-focused.
 
 **Live:** [kaanusta.dev](https://kaanusta.dev)
 
@@ -82,4 +82,4 @@ Pushing to `main` triggers `.github/workflows/deploy.yml`, which builds with Ast
 
 ## License
 
-© Y. Kaan Usta. All rights reserved. The source is public so you can read and learn from it, but code, design, images, and written content may not be reused without permission.
+© Kaan Usta. All rights reserved. The source is public so you can read and learn from it, but code, design, images, and written content may not be reused without permission.
