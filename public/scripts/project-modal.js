@@ -97,7 +97,22 @@
 
   // Capture phase click — fires BEFORE Astro ClientRouter
   document.addEventListener('click', function(e) {
-    var el = e.target;
+    var target = e.target;
+
+    // Wrapper click (outside panel) — only when clicking the wrapper DIRECTLY
+    if (target.id === 'project-modal-wrapper') {
+      closeModal();
+      return;
+    }
+
+    // Close buttons (top-right X or FAB)
+    if (target.id === 'project-modal-close' || target.id === 'project-modal-fab') {
+      closeModal();
+      return;
+    }
+
+    // Project card links — traverse up to find the <a> tag
+    var el = target;
     while (el && el !== document) {
       if (el.tagName === 'A' && el.hasAttribute('data-project-modal')) {
         e.preventDefault();
@@ -105,27 +120,9 @@
         loadProject(el.href);
         return;
       }
-      // Close buttons (top-right X or FAB)
-      if (el.id === 'project-modal-close' || el.id === 'project-modal-fab') {
-        closeModal();
-        return;
-      }
-      // Wrapper click (outside panel)
-      if (el.id === 'project-modal-wrapper') {
-        closeModal();
-        return;
-      }
       el = el.parentElement;
     }
   }, true);
-
-  // Stop panel clicks from reaching wrapper handler
-  document.addEventListener('click', function(e) {
-    var panel = $('project-modal-panel');
-    if (panel && isOpen && panel.contains(e.target) && e.target.id !== 'project-modal-close') {
-      e.stopPropagation();
-    }
-  });
 
   document.addEventListener('keydown', function(e) {
     if (e.key === 'Escape' && isOpen) closeModal();
