@@ -10,7 +10,7 @@ const isActive = (href: string) =>
 <header
   class="sticky top-0 z-40 backdrop-blur-md bg-bg-base/80 border-b border-border"
 >
-  <div class="max-w-6xl mx-auto px-6 h-14 flex items-center justify-between">
+  <div class="max-w-6xl mx-auto px-4 sm:px-6 h-14 flex items-center justify-between gap-4">
     <a
       href="/"
       class="font-mono text-text-100 text-sm tracking-widest hover:text-accent-1 transition-colors"
@@ -19,7 +19,7 @@ const isActive = (href: string) =>
       <span class="text-text-100">kaanusta</span><span class="text-accent-1">.dev</span>
     </a>
 
-    <nav class="flex items-center gap-6">
+    <nav class="flex items-center gap-3 sm:gap-6">
       {
         NAV.map((item) => (
           <a
@@ -36,7 +36,7 @@ const isActive = (href: string) =>
           </a>
         ))
       }
-      <div class="ml-2 pl-4 border-l border-border">
+      <div class="ml-0 sm:ml-2 pl-3 sm:pl-4 border-l border-border">
         <FxToggle />
       </div>
     </nav>
