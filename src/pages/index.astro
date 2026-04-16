@@ -1,0 +1,117 @@
+---
+import { getCollection } from 'astro:content';
+import BaseLayout from '@layouts/BaseLayout.astro';
+import Hero from '@components/Hero.astro';
+import SectionHeading from '@components/SectionHeading.astro';
+import StatsCard from '@components/StatsCard.astro';
+import ProjectCard from '@components/ProjectCard.astro';
+import BlogCard from '@components/BlogCard.astro';
+import SocialLinks from '@components/SocialLinks.astro';
+import Button from '@components/ui/Button.astro';
+import { SOCIAL } from '@lib/constants';
+
+const allProjects = await getCollection('projects');
+const featuredProjects = allProjects
+  .filter((p) => p.data.featured)
+  .sort((a, b) => (a.data.order ?? 99) - (b.data.order ?? 99))
+  .slice(0, 3);
+
+const allPosts = await getCollection('blog', ({ data }) => !data.draft);
+const latestPosts = allPosts
+  .sort((a, b) => b.data.pubDate.getTime() - a.data.pubDate.getTime())
+  .slice(0, 3);
+---
+
+<BaseLayout>
+  <!-- ======== HERO ======== -->
+  <Hero />
+
+  <!-- ======== ABOUT ======== -->
+  <section
+    id="about"
+    class="max-w-6xl mx-auto px-6 py-20 scroll-mt-20"
+    data-fade-in
+  >
+    <SectionHeading title="About" />
+    <div class="grid md:grid-cols-[1fr_auto] gap-10 items-start">
+      <div class="space-y-4 text-text-200 leading-relaxed">
+        <p>
+          I've been part of the software and game development world since 2020.
+          My journey started with a degree in Digital Game Design — and what
+          began as curiosity about programming and game engines became my
+          primary focus.
+        </p>
+        <p>
+          I've worked on projects spanning mobile, PC, and VR, but I've chosen
+          to specialize in <span class="text-text-100">mobile game development</span>.
+          From hyper-casual prototypes built in two weeks to roguelike systems
+          developed over five months, I enjoy the full spectrum: gameplay
+          programming, system design, and the small details that make a game
+          feel alive.
+        </p>
+        <p>
+          Currently focused on <span class="text-accent-1">Unity</span> and
+          <span class="text-accent-1">C#</span>, with side interests in custom
+          engine work, VR physics, and ECS architecture.
+        </p>
+      </div>
+      <StatsCard />
+    </div>
+  </section>
+
+  <!-- ======== FEATURED PROJECTS ======== -->
+  <section
+    id="projects"
+    class="max-w-6xl mx-auto px-6 py-12 scroll-mt-20"
+    data-fade-in
+  >
+    <SectionHeading title="Featured Projects" />
+    <div class="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
+      {featuredProjects.map((project) => <ProjectCard project={project} />)}
+    </div>
+    <div class="mt-8">
+      <Button href="/projects" variant="ghost">[ See All Projects → ]</Button>
+    </div>
+  </section>
+
+  <!-- ======== LATEST POSTS ======== -->
+  <section class="max-w-6xl mx-auto px-6 py-12" data-fade-in>
+    <SectionHeading title="Latest Posts" />
+    {
+      latestPosts.length > 0 ? (
+        <div class="space-y-6">
+          {latestPosts.map((post) => (
+            <BlogCard post={post} />
+          ))}
+          <div class="pt-2">
+            <Button href="/blog" variant="ghost">[ All Posts → ]</Button>
+          </div>
+        </div>
+      ) : (
+        <div class="border border-border bg-bg-elev p-8 text-center font-mono text-text-300">
+          Coming soon.
+        </div>
+      )
+    }
+  </section>
+
+  <!-- ======== CONTACT ======== -->
+  <section
+    id="contact"
+    class="max-w-6xl mx-auto px-6 py-20 scroll-mt-20"
+    data-fade-in
+  >
+    <SectionHeading title="Let's Connect" />
+    <div class="border border-border bg-bg-elev p-8 sm:p-12">
+      <a
+        href={`mailto:${SOCIAL.email}`}
+        class="block font-mono text-2xl sm:text-3xl text-text-100 hover:text-accent-1 transition-colors break-all"
+      >
+        {SOCIAL.email}
+      </a>
+      <div class="mt-8">
+        <SocialLinks />
+      </div>
+    </div>
+  </section>
+</BaseLayout>

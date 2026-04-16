@@ -1,0 +1,35 @@
+---
+import { getCollection } from 'astro:content';
+import BaseLayout from '@layouts/BaseLayout.astro';
+import SectionHeading from '@components/SectionHeading.astro';
+import BlogCard from '@components/BlogCard.astro';
+
+const posts = (await getCollection('blog', ({ data }) => !data.draft)).sort(
+  (a, b) => b.data.pubDate.getTime() - a.data.pubDate.getTime()
+);
+---
+
+<BaseLayout title="Blog" description="Devlogs, post-mortems, and notes on game development from Y. Kaan Usta.">
+  <div class="max-w-3xl mx-auto px-6 py-16">
+    <header class="mb-12">
+      <SectionHeading title="Blog" as="h1" />
+      <p class="text-text-200">
+        Devlogs, post-mortems, and notes on the craft.
+      </p>
+    </header>
+
+    {
+      posts.length > 0 ? (
+        <div class="space-y-8">
+          {posts.map((post) => (
+            <BlogCard post={post} />
+          ))}
+        </div>
+      ) : (
+        <div class="border border-border bg-bg-elev p-8 text-center font-mono text-text-300">
+          No posts yet. Coming soon.
+        </div>
+      )
+    }
+  </div>
+</BaseLayout>

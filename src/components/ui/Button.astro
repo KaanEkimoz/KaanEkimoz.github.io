@@ -1,0 +1,50 @@
+---
+interface Props {
+  /** Render as anchor (link) or button. If href is provided, defaults to anchor. */
+  href?: string;
+  /** Visual variant */
+  variant?: 'primary' | 'secondary' | 'ghost';
+  /** Optional native attributes */
+  type?: 'button' | 'submit' | 'reset';
+  /** External link — adds target=_blank + rel */
+  external?: boolean;
+  class?: string;
+}
+
+const {
+  href,
+  variant = 'primary',
+  type = 'button',
+  external = false,
+  class: className,
+} = Astro.props;
+
+const base =
+  'inline-flex items-center gap-2 px-5 py-2.5 font-mono text-xs uppercase tracking-widest transition-all duration-200';
+
+const variants = {
+  primary:
+    'border border-accent-1 text-accent-1 hover:bg-accent-1 hover:text-bg-base hover:shadow-glow-cyan',
+  secondary:
+    'border border-border text-text-200 hover:border-text-100 hover:text-text-100',
+  ghost: 'text-text-200 hover:text-accent-1',
+} as const;
+
+const cls = `${base} ${variants[variant]} ${className ?? ''}`;
+const isLink = Boolean(href);
+const externalAttrs = external
+  ? { target: '_blank', rel: 'noopener noreferrer' }
+  : {};
+---
+
+{
+  isLink ? (
+    <a href={href} class={cls} {...externalAttrs}>
+      <slot />
+    </a>
+  ) : (
+    <button type={type} class={cls}>
+      <slot />
+    </button>
+  )
+}

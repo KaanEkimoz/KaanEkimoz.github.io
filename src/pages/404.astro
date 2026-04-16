@@ -1,0 +1,47 @@
+---
+import BaseLayout from '@layouts/BaseLayout.astro';
+import Button from '@components/ui/Button.astro';
+---
+
+<BaseLayout
+  title="404 — Game Over"
+  description="Page not found. Restart from the home screen."
+>
+  <div
+    class="min-h-[70vh] flex flex-col items-center justify-center text-center px-6"
+  >
+    <div
+      class="font-mono uppercase tracking-widest text-xs text-text-300 mb-2"
+    >
+      ERROR · 404
+    </div>
+    <h1
+      class="font-mono font-semibold text-6xl sm:text-8xl text-accent-2 game-over-flicker tracking-widest"
+    >
+      GAME OVER
+    </h1>
+    <p class="mt-6 text-text-200 max-w-md">
+      The page you're looking for doesn't exist — maybe a broken link, maybe a
+      page that never shipped.
+    </p>
+    <div class="mt-10">
+      <Button href="/" variant="primary">[ RESTART ]</Button>
+    </div>
+  </div>
+</BaseLayout>
+
+<style>
+  @keyframes flicker {
+    0%, 100% { opacity: 1; }
+    45% { opacity: 1; }
+    50% { opacity: 0.4; }
+    55% { opacity: 1; }
+  }
+  .game-over-flicker {
+    animation: flicker 3s ease-in-out infinite;
+    text-shadow: 0 0 30px rgba(255, 77, 255, 0.5);
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .game-over-flicker { animation: none; }
+  }
+</style>

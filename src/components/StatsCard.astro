@@ -1,0 +1,16 @@
+---
+import { STATS } from '@lib/constants';
+---
+
+<div
+  class="inline-block border border-accent-1/40 bg-bg-elev px-6 py-4 font-mono text-sm transition-shadow hover:shadow-glow-cyan"
+>
+  {
+    STATS.map((s) => (
+      <div class="flex gap-6">
+        <span class="text-text-300 w-24">{s.label}</span>
+        <span class="text-text-100">{s.value}</span>
+      </div>
+    ))
+  }
+</div>

@@ -1,0 +1,141 @@
+---
+/**
+ * FxToggle
+ *
+ * Two compact icon buttons in the header — cursor and sound.
+ * - Cursor: defaults ON (opt-out)
+ * - Sound: defaults OFF (opt-in, browsers require user gesture anyway)
+ *
+ * Each writes localStorage and dispatches a CustomEvent so CustomCursor and
+ * SoundFx components can react without tight coupling.
+ */
+---
+
+<div class="flex items-center gap-2" aria-label="Effects">
+  <button
+    type="button"
+    class="fx-btn"
+    data-fx="cursor"
+    aria-pressed="false"
+    aria-label="Toggle custom cursor"
+    title="Custom cursor"
+  >
+    {/* Crosshair / cursor icon */}
+    <svg
+      width="14"
+      height="14"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      stroke-width="1.5"
+      aria-hidden="true"
+    >
+      <circle cx="12" cy="12" r="3" />
+      <circle cx="12" cy="12" r="9" />
+      <line x1="12" y1="1" x2="12" y2="5" />
+      <line x1="12" y1="19" x2="12" y2="23" />
+      <line x1="1" y1="12" x2="5" y2="12" />
+      <line x1="19" y1="12" x2="23" y2="12" />
+    </svg>
+  </button>
+
+  <button
+    type="button"
+    class="fx-btn"
+    data-fx="sound"
+    aria-pressed="false"
+    aria-label="Toggle sound effects"
+    title="Sound effects"
+  >
+    {/* Speaker icon */}
+    <svg
+      width="14"
+      height="14"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      stroke-width="1.5"
+      aria-hidden="true"
+    >
+      <polygon points="11,5 6,9 2,9 2,15 6,15 11,19" fill="currentColor" />
+      <path d="M16 8 L20 16" stroke-linecap="round" />
+      <path d="M20 8 L16 16" stroke-linecap="round" class="sound-off-x" />
+      <path
+        d="M15 9 a4 4 0 0 1 0 6"
+        stroke-linecap="round"
+        class="sound-on-wave"
+      />
+    </svg>
+  </button>
+</div>
+
+<style>
+  .fx-btn {
+    @apply inline-flex items-center justify-center w-7 h-7 border border-border text-text-300 transition-colors;
+  }
+  .fx-btn:hover {
+    @apply text-text-100;
+  }
+  .fx-btn[aria-pressed='true'] {
+    @apply text-accent-1 border-accent-1;
+  }
+  /* Toggle the speaker icon's wave/x based on state */
+  .fx-btn[data-fx='sound'] .sound-on-wave {
+    display: none;
+  }
+  .fx-btn[data-fx='sound'][aria-pressed='true'] .sound-off-x {
+    display: none;
+  }
+  .fx-btn[data-fx='sound'][aria-pressed='true'] .sound-on-wave {
+    display: inline;
+  }
+</style>
+
+<script>
+  type FxKey = 'cursor' | 'sound';
+
+  const DEFAULTS: Record<FxKey, 'on' | 'off'> = {
+    cursor: 'on', // opt-out — feels nicer to land with cursor on
+    sound: 'off', // opt-in — surprising sound is bad UX
+  };
+
+  function storageKey(fx: FxKey) {
+    return `fx-${fx}`;
+  }
+
+  function getState(fx: FxKey): boolean {
+    const stored = localStorage.getItem(storageKey(fx));
+    if (stored === 'on') return true;
+    if (stored === 'off') return false;
+    return DEFAULTS[fx] === 'on';
+  }
+
+  function setState(fx: FxKey, on: boolean) {
+    localStorage.setItem(storageKey(fx), on ? 'on' : 'off');
+    document.dispatchEvent(
+      new CustomEvent(`fx:${fx}-changed`, { detail: { on } })
+    );
+  }
+
+  function syncButton(btn: HTMLButtonElement) {
+    const fx = btn.dataset.fx as FxKey;
+    btn.setAttribute('aria-pressed', getState(fx) ? 'true' : 'false');
+  }
+
+  function init() {
+    const buttons = document.querySelectorAll<HTMLButtonElement>('.fx-btn');
+    buttons.forEach((btn) => {
+      const fx = btn.dataset.fx as FxKey;
+      if (!fx) return;
+      syncButton(btn);
+      btn.addEventListener('click', () => {
+        const next = !getState(fx);
+        setState(fx, next);
+        syncButton(btn);
+      });
+    });
+  }
+
+  init();
+  document.addEventListener('astro:page-load', init);
+</script>

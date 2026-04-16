@@ -1,0 +1,39 @@
+---
+import type { CollectionEntry } from 'astro:content';
+
+interface Props {
+  post: CollectionEntry<'blog'>;
+}
+
+const { post } = Astro.props;
+const { title, description, pubDate, tags } = post.data;
+
+const dateStr = pubDate.toLocaleDateString('en-US', {
+  year: 'numeric',
+  month: 'short',
+  day: 'numeric',
+});
+---
+
+<a
+  href={`/blog/${post.id}`}
+  class="group block border-l-2 border-border pl-4 py-2 transition-all duration-200 hover:border-accent-1"
+>
+  <div class="font-mono text-xs uppercase tracking-widest text-accent-1 mb-1">
+    {dateStr}
+  </div>
+  <h3 class="font-mono font-semibold text-text-100 text-base group-hover:text-accent-1 transition-colors">
+    {title}
+  </h3>
+  <p class="text-text-200 text-sm mt-1 line-clamp-2">{description}</p>
+  {
+    tags.length > 0 && (
+      <div class="mt-2 font-mono text-[10px] uppercase tracking-widest text-text-300">
+        {tags.join(' · ')}
+      </div>
+    )
+  }
+  <div class="mt-2 font-mono text-xs uppercase tracking-widest text-text-300 group-hover:text-accent-1 transition-colors">
+    Read →
+  </div>
+</a>

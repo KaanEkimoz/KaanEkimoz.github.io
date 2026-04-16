@@ -1,0 +1,109 @@
+---
+import { getCollection, render } from 'astro:content';
+import BaseLayout from '@layouts/BaseLayout.astro';
+import Tag from '@components/ui/Tag.astro';
+import type { GetStaticPaths } from 'astro';
+
+export const getStaticPaths: GetStaticPaths = async () => {
+  const posts = await getCollection('blog', ({ data }) => !data.draft);
+  return posts.map((post) => ({
+    params: { slug: post.id },
+    props: { post },
+  }));
+};
+
+const { post } = Astro.props;
+const { Content } = await render(post);
+const { title, description, pubDate, updatedDate, tags } = post.data;
+
+const dateStr = pubDate.toLocaleDateString('en-US', {
+  year: 'numeric',
+  month: 'long',
+  day: 'numeric',
+});
+---
+
+<BaseLayout title={title} description={description}>
+  <article class="max-w-3xl mx-auto px-6 py-16">
+    <a
+      href="/blog"
+      class="inline-block font-mono text-xs uppercase tracking-widest text-text-300 hover:text-accent-1 mb-8"
+    >
+      ← Back to Blog
+    </a>
+
+    <header class="mb-10 border-b border-border pb-8">
+      <div class="font-mono text-xs uppercase tracking-widest text-accent-1 mb-3">
+        {dateStr}
+        {updatedDate && (
+          <span class="text-text-300 ml-2">
+            · updated{' '}
+            {updatedDate.toLocaleDateString('en-US', {
+              year: 'numeric',
+              month: 'short',
+              day: 'numeric',
+            })}
+          </span>
+        )}
+      </div>
+      <h1
+        class="font-mono font-semibold text-4xl sm:text-5xl text-text-100 tracking-wide"
+      >
+        {title}
+      </h1>
+      <p class="mt-4 text-text-200 text-lg leading-relaxed">{description}</p>
+      {
+        tags.length > 0 && (
+          <div class="mt-4 flex flex-wrap gap-2">
+            {tags.map((t) => (
+              <Tag variant="muted">{t}</Tag>
+            ))}
+          </div>
+        )
+      }
+    </header>
+
+    <div class="prose-content space-y-4 text-text-200 leading-relaxed">
+      <Content />
+    </div>
+  </article>
+</BaseLayout>
+
+<style is:global>
+  .prose-content h2 {
+    @apply font-mono text-text-100 text-xl mt-10 mb-4 uppercase tracking-widest;
+  }
+  .prose-content h3 {
+    @apply font-mono text-text-100 text-lg mt-8 mb-3;
+  }
+  .prose-content p {
+    @apply text-text-200;
+  }
+  .prose-content ul {
+    @apply list-disc list-inside space-y-2 text-text-200 marker:text-accent-1;
+  }
+  .prose-content ol {
+    @apply list-decimal list-inside space-y-2 text-text-200 marker:text-accent-1;
+  }
+  .prose-content strong {
+    @apply text-text-100;
+  }
+  .prose-content em {
+    @apply text-text-100 italic;
+  }
+  .prose-content a {
+    @apply text-accent-1 hover:underline underline-offset-4;
+  }
+  .prose-content code {
+    @apply bg-bg-elev px-1.5 py-0.5 font-mono text-sm text-accent-1 border border-border;
+  }
+  .prose-content pre {
+    @apply bg-bg-elev p-4 overflow-x-auto border border-border;
+  }
+  .prose-content pre code {
+    @apply bg-transparent border-0 p-0 text-text-200;
+  }
+  .prose-content blockquote {
+    @apply border-l-2 border-accent-1 pl-4 italic text-text-300;
+  }
+</style>
