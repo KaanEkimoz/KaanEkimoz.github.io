@@ -163,12 +163,23 @@ const socialImage = new URL(image, SITE.url).href;
               var article = doc.getElementById('project-detail');
               if (article) {
                 contentEl.innerHTML = article.innerHTML;
-                // Re-init LiteYouTube custom elements inside modal
-                contentEl.querySelectorAll('lite-youtube').forEach(function(el) {
-                  if (customElements.get('lite-youtube')) {
-                    var clone = el.cloneNode(true);
-                    el.replaceWith(clone);
-                  }
+                // Init YouTube embeds — custom element may not be defined on this page,
+                // so we attach click handlers directly instead of relying on connectedCallback.
+                contentEl.querySelectorAll('.lite-yt').forEach(function(yt) {
+                  var btn = yt.querySelector('button');
+                  if (!btn) return;
+                  btn.addEventListener('click', function() {
+                    var vid = yt.getAttribute('data-id');
+                    var ttl = yt.getAttribute('data-title') || 'YouTube video';
+                    if (!vid) return;
+                    var iframe = document.createElement('iframe');
+                    iframe.src = 'https://www.youtube-nocookie.com/embed/' + encodeURIComponent(vid) + '?autoplay=1&rel=0';
+                    iframe.title = ttl;
+                    iframe.allow = 'accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share';
+                    iframe.allowFullscreen = true;
+                    iframe.style.cssText = 'position:absolute;inset:0;width:100%;height:100%;border:0;';
+                    yt.replaceChildren(iframe);
+                  }, { once: true });
                 });
               } else {
                 closeModal();
