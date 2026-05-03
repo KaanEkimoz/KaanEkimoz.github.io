@@ -4,7 +4,6 @@ import { ClientRouter } from 'astro:transitions';
 import Header from '@components/Header.astro';
 import Footer from '@components/Footer.astro';
 import CustomCursor from '@components/CustomCursor.astro';
-import SoundFx from '@components/SoundFx.astro';
 import ProjectModal from '@components/ProjectModal.astro';
 import { SITE } from '@lib/constants';
 
@@ -69,7 +68,6 @@ const socialImage = new URL(image, SITE.url).href;
   </head>
   <body class="min-h-screen flex flex-col">
     <CustomCursor />
-    <SoundFx />
     <Header />
     <main class="flex-1">
       <slot />

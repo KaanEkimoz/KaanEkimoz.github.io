@@ -2,16 +2,15 @@
 /**
  * FxToggle
  *
- * Two compact icon buttons in the header — cursor and sound.
- * - Cursor: defaults ON (opt-out)
- * - Sound: defaults OFF (opt-in, browsers require user gesture anyway)
+ * Single icon button in the header that toggles the custom cursor.
+ * Defaults ON (opt-out — feels nicer to land with cursor on).
  *
- * Each writes localStorage and dispatches a CustomEvent so CustomCursor and
- * SoundFx components can react without tight coupling.
+ * Writes to localStorage and dispatches a CustomEvent so CustomCursor can
+ * react without tight coupling.
  */
 ---
 
-<div class="flex items-center gap-2" aria-label="Effects">
+<div class="flex items-center" aria-label="Effects">
   <button
     type="button"
     class="fx-btn"
@@ -38,35 +37,6 @@
       <line x1="19" y1="12" x2="23" y2="12" />
     </svg>
   </button>
-
-  <button
-    type="button"
-    class="fx-btn"
-    data-fx="sound"
-    aria-pressed="false"
-    aria-label="Toggle sound effects"
-    title="Sound effects"
-  >
-    {/* Speaker icon */}
-    <svg
-      width="14"
-      height="14"
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      stroke-width="1.5"
-      aria-hidden="true"
-    >
-      <polygon points="11,5 6,9 2,9 2,15 6,15 11,19" fill="currentColor" />
-      <path d="M16 8 L20 16" stroke-linecap="round" />
-      <path d="M20 8 L16 16" stroke-linecap="round" class="sound-off-x" />
-      <path
-        d="M15 9 a4 4 0 0 1 0 6"
-        stroke-linecap="round"
-        class="sound-on-wave"
-      />
-    </svg>
-  </button>
 </div>
 
 <style>
@@ -79,79 +49,48 @@
   .fx-btn[aria-pressed='true'] {
     @apply text-accent-1 border-accent-1;
   }
-  /* Toggle the speaker icon's wave/x based on state */
-  .fx-btn[data-fx='sound'] .sound-on-wave {
-    display: none;
-  }
-  .fx-btn[data-fx='sound'][aria-pressed='true'] .sound-off-x {
-    display: none;
-  }
-  .fx-btn[data-fx='sound'][aria-pressed='true'] .sound-on-wave {
-    display: inline;
-  }
 </style>
 
 <script>
   import { FX_EVENTS, FX_STORAGE } from '@lib/fx-events';
 
-  type FxKey = 'cursor' | 'sound';
+  const DEFAULT_ON = true; // cursor defaults on
+  let memoryState: 'on' | 'off' | null = null;
 
-  const DEFAULTS: Record<FxKey, 'on' | 'off'> = {
-    cursor: 'on', // opt-out — feels nicer to land with cursor on
-    sound: 'off', // opt-in — surprising sound is bad UX
-  };
-
-  const STORAGE_KEY: Record<FxKey, (typeof FX_STORAGE)[keyof typeof FX_STORAGE]> = {
-    cursor: FX_STORAGE.cursor,
-    sound: FX_STORAGE.sound,
-  };
-
-  const CHANGE_EVENT: Record<FxKey, (typeof FX_EVENTS)[keyof typeof FX_EVENTS]> = {
-    cursor: FX_EVENTS.cursorChanged,
-    sound: FX_EVENTS.soundChanged,
-  };
-
-  // In-memory fallback for when localStorage is unavailable
-  // (Brave "Forget on site", Safari ITP, incognito quota, etc.)
-  const memoryState: Partial<Record<FxKey, 'on' | 'off'>> = {};
-
-  function getState(fx: FxKey): boolean {
+  function getState(): boolean {
     let stored: string | null = null;
     try {
-      stored = localStorage.getItem(STORAGE_KEY[fx]);
+      stored = localStorage.getItem(FX_STORAGE.cursor);
     } catch {
-      stored = memoryState[fx] ?? null;
+      stored = memoryState;
     }
     if (stored === 'on') return true;
     if (stored === 'off') return false;
-    return DEFAULTS[fx] === 'on';
+    return DEFAULT_ON;
   }
 
-  function setState(fx: FxKey, on: boolean) {
-    const value = on ? 'on' : 'off';
-    memoryState[fx] = value;
+  function setState(on: boolean) {
+    memoryState = on ? 'on' : 'off';
     try {
-      localStorage.setItem(STORAGE_KEY[fx], value);
+      localStorage.setItem(FX_STORAGE.cursor, memoryState);
     } catch {
       // Storage blocked — keep going with memoryState so the UI still toggles.
     }
-    document.dispatchEvent(new CustomEvent(CHANGE_EVENT[fx], { detail: { on } }));
+    document.dispatchEvent(
+      new CustomEvent(FX_EVENTS.cursorChanged, { detail: { on } })
+    );
   }
 
   function syncButton(btn: HTMLButtonElement) {
-    const fx = btn.dataset.fx as FxKey;
-    btn.setAttribute('aria-pressed', getState(fx) ? 'true' : 'false');
+    btn.setAttribute('aria-pressed', getState() ? 'true' : 'false');
   }
 
   function init() {
     const buttons = document.querySelectorAll<HTMLButtonElement>('.fx-btn');
     buttons.forEach((btn) => {
-      const fx = btn.dataset.fx as FxKey;
-      if (!fx) return;
       syncButton(btn);
       btn.addEventListener('click', () => {
-        const next = !getState(fx);
-        setState(fx, next);
+        setState(!getState());
         syncButton(btn);
       });
     });
