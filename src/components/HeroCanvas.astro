@@ -17,7 +17,7 @@
  *
  * Respects prefers-reduced-motion (renders static shapes, no interaction).
  * Pauses the RAF loop when the hero scrolls out of view.
- * Dispatches `fx:hit` on every destroy so SoundFx can play the feedback tone.
+ * No audio side-effects — sound layer was removed; the canvas is silent.
  */
 ---
 
@@ -115,7 +115,7 @@
     SIZE_JITTER,
     KINDS,
   } from '@lib/hero-canvas.config';
-  import { FX_EVENTS, FX_STORAGE } from '@lib/fx-events';
+  import { FX_STORAGE } from '@lib/fx-events';
 
   type Guarded = HTMLElement & { __heroInited?: boolean };
 
@@ -315,7 +315,6 @@
       // minimal top-center panel is visible.
       scoreEl!.classList.remove('is-visible');
       gameoverEl!.classList.add('is-visible');
-      document.dispatchEvent(new CustomEvent(FX_EVENTS.gameover));
     }
 
     function resetRound() {
@@ -371,7 +370,6 @@
       shockwaves.push({ x: s.x, y: s.y, radius: s.size * 0.4, life: 1, color: s.color });
 
       bumpScore();
-      document.dispatchEvent(new CustomEvent(FX_EVENTS.hit));
 
       // Non-permanent clone: just disappear. Don't schedule respawn.
       if (!s.permanent) {
