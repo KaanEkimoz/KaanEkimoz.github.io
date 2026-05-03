@@ -58,11 +58,18 @@
   let memoryState: 'on' | 'off' | null = null;
 
   function getState(): boolean {
+    // Check the in-memory state first. Brave's strict Shields silently
+    // no-op localStorage.setItem (no throw, no actual write), so reading
+    // localStorage afterwards returns null and we'd fall back to the
+    // default — making the toggle look stuck. memoryState reflects the
+    // user's last click regardless of whether storage took.
+    if (memoryState === 'on') return true;
+    if (memoryState === 'off') return false;
     let stored: string | null = null;
     try {
       stored = localStorage.getItem(FX_STORAGE.cursor);
     } catch {
-      stored = memoryState;
+      /* storage blocked — defaults below */
     }
     if (stored === 'on') return true;
     if (stored === 'off') return false;
@@ -85,9 +92,21 @@
     btn.setAttribute('aria-pressed', getState() ? 'true' : 'false');
   }
 
+  type Guarded = HTMLButtonElement & { __fxInited?: boolean };
+
   function init() {
     const buttons = document.querySelectorAll<HTMLButtonElement>('.fx-btn');
     buttons.forEach((btn) => {
+      // init() runs at module load AND on astro:page-load. Without a per-
+      // button guard each click handler would be bound twice on the same
+      // element, so a single click would fire setState(!getState()) twice
+      // and the state would round-trip back to where it started — making
+      // the toggle look stuck (especially visible in Brave's timing).
+      if ((btn as Guarded).__fxInited) {
+        syncButton(btn);
+        return;
+      }
+      (btn as Guarded).__fxInited = true;
       syncButton(btn);
       btn.addEventListener('click', () => {
         setState(!getState());
