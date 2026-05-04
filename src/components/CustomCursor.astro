@@ -39,6 +39,19 @@
     opacity: 1;
   }
 
+  /* When the pointer is over an iframe (YouTube embed, etc.), the iframe
+     captures mousemove and our ring/dot would otherwise freeze in place
+     while the iframe shows its own native cursor — giving a stale ghost
+     in the corner. Hide the custom cursor entirely while inside an iframe;
+     also let the iframe show its own cursor by allowing the native one. */
+  html.fx-cursor-over-iframe .cursor-dot,
+  html.fx-cursor-over-iframe .cursor-ring {
+    opacity: 0;
+  }
+  html.fx-cursor-on.fx-cursor-over-iframe iframe {
+    cursor: auto !important;
+  }
+
   .cursor-dot {
     width: 6px;
     height: 6px;
@@ -154,6 +167,23 @@
   document.addEventListener(FX_EVENTS.cursorChanged, ((e: CustomEvent) => {
     applyClass(Boolean(e.detail?.on));
   }) as EventListener);
+
+  // Hide the custom cursor while the pointer is over any iframe — the iframe
+  // (YouTube embed, etc.) captures mousemove on the inside, so without this
+  // our dot/ring would freeze on the page edge while YouTube shows its own
+  // native cursor inside the video.
+  function onIframeEnter(e: Event) {
+    if ((e.target as Element | null)?.tagName === 'IFRAME') {
+      document.documentElement.classList.add('fx-cursor-over-iframe');
+    }
+  }
+  function onIframeLeave(e: Event) {
+    if ((e.target as Element | null)?.tagName === 'IFRAME') {
+      document.documentElement.classList.remove('fx-cursor-over-iframe');
+    }
+  }
+  document.addEventListener('mouseover', onIframeEnter);
+  document.addEventListener('mouseout', onIframeLeave);
 
   init();
   // Re-init on Astro client-side navigation
