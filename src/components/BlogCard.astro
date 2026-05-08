@@ -1,12 +1,13 @@
 ---
 import type { CollectionEntry } from 'astro:content';
+import { Image } from 'astro:assets';
 
 interface Props {
   post: CollectionEntry<'blog'>;
 }
 
 const { post } = Astro.props;
-const { title, description, pubDate, tags } = post.data;
+const { title, description, pubDate, tags, heroImage } = post.data;
 
 const dateStr = pubDate.toLocaleDateString('en-US', {
   year: 'numeric',
@@ -19,6 +20,20 @@ const dateStr = pubDate.toLocaleDateString('en-US', {
   href={`/blog/${post.id}`}
   class="group block border-l-2 border-border pl-4 py-2 transition-all duration-200 hover:border-accent-1"
 >
+  {
+    heroImage && (
+      <div class="mb-3 overflow-hidden border border-border">
+        <Image
+          src={heroImage}
+          alt=""
+          width={640}
+          height={360}
+          loading="lazy"
+          class="w-full aspect-[16/9] object-cover transition-transform duration-300 group-hover:scale-[1.02]"
+        />
+      </div>
+    )
+  }
   <div class="font-mono text-xs uppercase tracking-widest text-accent-1 mb-1">
     {dateStr}
   </div>
