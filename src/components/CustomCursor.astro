@@ -135,13 +135,19 @@
     mouseY = e.clientY;
     if (dot) dot.style.transform = `translate(${mouseX}px, ${mouseY}px)`;
     // Safety net: getting a mousemove on the parent document means the
-    // pointer is NOT inside an iframe (iframes capture mousemoves
-    // internally). Clear the stuck over-iframe class — fixes the case
-    // where mouseout never fired because the iframe was removed from
-    // the DOM (e.g. closing the project modal while still over the
-    // YouTube embed).
+    // pointer is NOT *inside* an iframe (iframes capture mousemoves
+    // internally). Clear a stuck over-iframe class — but only when the
+    // event target is neither an iframe nor a descendant of one, otherwise
+    // the boundary-crossing mousemove that fires on the iframe element
+    // itself would race with the just-added class and clear it.
+    const target = e.target as Element | null;
     const html = document.documentElement;
-    if (html.classList.contains('fx-cursor-over-iframe')) {
+    if (
+      html.classList.contains('fx-cursor-over-iframe') &&
+      target &&
+      target.tagName !== 'IFRAME' &&
+      !target.closest('iframe')
+    ) {
       html.classList.remove('fx-cursor-over-iframe');
     }
   }
@@ -194,6 +200,33 @@
   }
   document.addEventListener('mouseover', onIframeEnter);
   document.addEventListener('mouseout', onIframeLeave);
+
+  // When an iframe gets injected under the cursor (LiteYouTube swaps its
+  // facade button for an iframe on click — pointer never moves, so the
+  // mouseover handler above never fires), watch the DOM and add the class
+  // ourselves if the new iframe's bounding rect contains the current
+  // mouse position.
+  const iframeWatcher = new MutationObserver((mutations) => {
+    for (const m of mutations) {
+      for (const node of m.addedNodes) {
+        if (!(node instanceof HTMLIFrameElement)) continue;
+        // getBoundingClientRect on a freshly inserted node may report 0,0;
+        // defer to next frame so layout has settled.
+        requestAnimationFrame(() => {
+          const r = node.getBoundingClientRect();
+          if (
+            mouseX >= r.left &&
+            mouseX <= r.right &&
+            mouseY >= r.top &&
+            mouseY <= r.bottom
+          ) {
+            document.documentElement.classList.add('fx-cursor-over-iframe');
+          }
+        });
+      }
+    }
+  });
+  iframeWatcher.observe(document.body, { childList: true, subtree: true });
 
   init();
   // Re-init on Astro client-side navigation
