@@ -18,37 +18,39 @@ const dateStr = pubDate.toLocaleDateString('en-US', {
 
 <a
   href={`/blog/${post.id}`}
-  class="group block border-l-2 border-border pl-4 py-2 transition-all duration-200 hover:border-accent-1"
+  class="group flex gap-4 items-start border-l-2 border-border pl-4 py-2 transition-all duration-200 hover:border-accent-1"
 >
   {
     heroImage && (
-      <div class="mb-3 overflow-hidden border border-border">
+      <div class="shrink-0 w-32 sm:w-40 overflow-hidden border border-border">
         <Image
           src={heroImage}
           alt=""
-          width={640}
-          height={360}
+          width={320}
+          height={180}
           loading="lazy"
           class="w-full aspect-[16/9] object-cover transition-transform duration-300 group-hover:scale-[1.02]"
         />
       </div>
     )
   }
-  <div class="font-mono text-xs uppercase tracking-widest text-accent-1 mb-1">
-    {dateStr}
-  </div>
-  <h3 class="font-mono font-semibold text-text-100 text-base group-hover:text-accent-1 transition-colors">
-    {title}
-  </h3>
-  <p class="text-text-200 text-sm mt-1 line-clamp-2">{description}</p>
-  {
-    tags.length > 0 && (
-      <div class="mt-2 font-mono text-[10px] uppercase tracking-widest text-text-300">
-        {tags.join(' · ')}
-      </div>
-    )
-  }
-  <div class="mt-2 font-mono text-xs uppercase tracking-widest text-text-300 group-hover:text-accent-1 transition-colors">
-    Read →
+  <div class="flex-1 min-w-0">
+    <div class="font-mono text-xs uppercase tracking-widest text-accent-1 mb-1">
+      {dateStr}
+    </div>
+    <h3 class="font-mono font-semibold text-text-100 text-base group-hover:text-accent-1 transition-colors">
+      {title}
+    </h3>
+    <p class="text-text-200 text-sm mt-1 line-clamp-2">{description}</p>
+    {
+      tags.length > 0 && (
+        <div class="mt-2 font-mono text-[10px] uppercase tracking-widest text-text-300">
+          {tags.join(' · ')}
+        </div>
+      )
+    }
+    <div class="mt-2 font-mono text-xs uppercase tracking-widest text-text-300 group-hover:text-accent-1 transition-colors">
+      Read →
+    </div>
   </div>
 </a>
