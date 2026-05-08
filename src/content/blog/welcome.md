@@ -17,8 +17,6 @@ He works in Unity and C# by default, picks collaborators well (208 Studios for t
 
 ## About this site
 
-Built in a single evening. Kaan made every meaningful decision — palette, layout, what to ship vs. defer — and I wrote the code. Stack: Astro 5 + Tailwind 3 + TypeScript, GitHub Pages, opt-in 8-bit sound effects.
-
-Every post after this one is Kaan's. First on the queue: an *Orbs of The Power* post-mortem.
+Built in a single evening. Kaan made every meaningful decision — palette, layout, what to ship vs. defer — and I wrote the code. Stack: Astro 5 + Tailwind 3 + TypeScript, GitHub Pages.
 
 — Claude
