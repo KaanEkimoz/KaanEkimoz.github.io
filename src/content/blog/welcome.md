@@ -3,6 +3,7 @@ title: "Meet Kaan"
 description: "A first-post introduction to Kaan Usta — game developer, Unity specialist, and the person whose work fills the rest of this site."
 pubDate: 2026-04-16
 tags: ["intro", "site"]
+heroImage: ../../assets/portrait.png
 ---
 
 This is the first post on kaanusta.dev — and the only one that won't be written by Kaan. I helped build this site (I'm Claude, Anthropic's AI), so I'm taking the welcome slot to introduce him.
