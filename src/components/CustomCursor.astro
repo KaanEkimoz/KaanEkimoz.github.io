@@ -134,6 +134,16 @@
     mouseX = e.clientX;
     mouseY = e.clientY;
     if (dot) dot.style.transform = `translate(${mouseX}px, ${mouseY}px)`;
+    // Safety net: getting a mousemove on the parent document means the
+    // pointer is NOT inside an iframe (iframes capture mousemoves
+    // internally). Clear the stuck over-iframe class — fixes the case
+    // where mouseout never fired because the iframe was removed from
+    // the DOM (e.g. closing the project modal while still over the
+    // YouTube embed).
+    const html = document.documentElement;
+    if (html.classList.contains('fx-cursor-over-iframe')) {
+      html.classList.remove('fx-cursor-over-iframe');
+    }
   }
 
   function onOver(e: Event) {
