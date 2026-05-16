@@ -33,6 +33,11 @@
   /* Border */
   --border: 42 42 58;
 
+  /* Decorative grid line color in hero — light-on-dark by default */
+  --grid-line: 255 255 255;
+  --glow-1-alpha: 0.30;
+  --glow-2-alpha: 0.25;
+
   color-scheme: dark;
 }
 
@@ -46,6 +51,14 @@ html[data-theme='light'] {
   --text-300: 108 108 128;    /* WCAG AA on bg-base */
 
   --border: 207 207 196;
+
+  /* Grid switches to a dark ink on light bg so it remains visible. */
+  --grid-line: 26 26 34;
+
+  /* Glows need a stronger alpha on the bright background to register
+     visually — the corner blurs would otherwise wash out completely. */
+  --glow-1-alpha: 0.45;
+  --glow-2-alpha: 0.40;
 
   color-scheme: light;
 }
