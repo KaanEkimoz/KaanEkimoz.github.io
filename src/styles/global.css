@@ -9,26 +9,45 @@
 @tailwind components;
 @tailwind utilities;
 
-/* CSS variables — single source of truth for the design system.
-   Tailwind theme reads these via tailwind.config.mjs. */
+/* Design tokens — space-separated RGB triplets so Tailwind's
+   `rgb(var(--xxx) / <alpha-value>)` syntax can splice in opacity
+   modifiers (e.g. `bg-bg-base/80`).
+   The :root block holds the DARK theme (the brand default).
+   The light theme is layered on top via the [data-theme="light"] selector. */
 :root {
   /* Background layers */
-  --bg-base: #0a0a14;
-  --bg-elev: #14141f;
-  --bg-elev-2: #1f1f2e;
+  --bg-base: 10 10 20;
+  --bg-elev: 20 20 31;
+  --bg-elev-2: 31 31 46;
 
-  /* Accent (cool palette) */
-  --accent-1: #00d9ff; /* cyan */
-  --accent-2: #ff4dff; /* magenta */
-  --accent-3: #ffd60a; /* amber */
+  /* Accent (cool palette) — same across themes; they're the brand. */
+  --accent-1: 0 217 255;    /* cyan */
+  --accent-2: 255 77 255;   /* magenta */
+  --accent-3: 255 214 10;   /* amber */
 
   /* Text hierarchy */
-  --text-100: #f0f0f5;
-  --text-200: #b8b8c8;
-  --text-300: #a8a8c0;
+  --text-100: 240 240 245;
+  --text-200: 184 184 200;
+  --text-300: 168 168 192;
 
   /* Border */
-  --border: #2a2a3a;
+  --border: 42 42 58;
+
+  color-scheme: dark;
+}
+
+html[data-theme='light'] {
+  --bg-base: 245 244 239;     /* warm off-white */
+  --bg-elev: 235 234 227;
+  --bg-elev-2: 223 223 214;
+
+  --text-100: 26 26 34;       /* near-black */
+  --text-200: 58 58 74;
+  --text-300: 108 108 128;    /* WCAG AA on bg-base */
+
+  --border: 207 207 196;
+
+  color-scheme: light;
 }
 
 @layer base {
@@ -50,8 +69,8 @@
   }
 
   ::selection {
-    background-color: var(--accent-1);
-    color: var(--bg-base);
+    background-color: rgb(var(--accent-1));
+    color: rgb(var(--bg-base));
   }
 
   /* Subtle scrollbar */
@@ -60,14 +79,14 @@
     height: 10px;
   }
   ::-webkit-scrollbar-track {
-    background: var(--bg-base);
+    background: rgb(var(--bg-base));
   }
   ::-webkit-scrollbar-thumb {
-    background: var(--bg-elev-2);
+    background: rgb(var(--bg-elev-2));
     border-radius: 0;
   }
   ::-webkit-scrollbar-thumb:hover {
-    background: var(--accent-1);
+    background: rgb(var(--accent-1));
   }
 }
 
@@ -78,8 +97,8 @@
     position: relative;
     width: 100%;
     aspect-ratio: 16 / 9;
-    background: var(--bg-elev);
-    border: 1px solid var(--border);
+    background: rgb(var(--bg-elev));
+    border: 1px solid rgb(var(--border));
     overflow: hidden;
   }
   .lite-yt-btn {

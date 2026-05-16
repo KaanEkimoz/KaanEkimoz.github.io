@@ -1,6 +1,7 @@
 ---
 import { NAV, SITE } from '@lib/constants';
 import FxToggle from '@components/FxToggle.astro';
+import ThemeToggle from '@components/ThemeToggle.astro';
 
 const currentPath = Astro.url.pathname;
 const isActive = (href: string) =>
@@ -36,8 +37,11 @@ const isActive = (href: string) =>
           </a>
         ))
       }
-      <div class="hidden sm:block ml-2 pl-4 border-l border-border">
-        <FxToggle />
+      <div class="ml-2 pl-3 sm:pl-4 border-l border-border flex items-center gap-2">
+        <ThemeToggle />
+        <div class="hidden sm:block">
+          <FxToggle />
+        </div>
       </div>
     </nav>
   </div>

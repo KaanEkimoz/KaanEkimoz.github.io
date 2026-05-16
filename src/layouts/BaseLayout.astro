@@ -33,6 +33,31 @@ const socialImage = new URL(image, SITE.url).href;
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <meta name="generator" content={Astro.generator} />
+
+    {/* Pre-paint theme setter — must run before any styled content lays
+        out, otherwise the page flashes the wrong theme. Reads the user's
+        last choice from localStorage (key 'fx-theme'), falls back to the
+        system preference, and writes data-theme + theme-color before
+        first paint. */}
+    <script is:inline>
+      (function () {
+        try {
+          var stored = null;
+          try { stored = localStorage.getItem('fx-theme'); } catch (e) {}
+          var theme =
+            stored === 'light' || stored === 'dark'
+              ? stored
+              : (window.matchMedia &&
+                  window.matchMedia('(prefers-color-scheme: light)').matches
+                  ? 'light'
+                  : 'dark');
+          document.documentElement.dataset.theme = theme;
+          var meta = document.querySelector('meta[name="theme-color"]');
+          var color = theme === 'light' ? '#f5f4ef' : '#0a0a14';
+          if (meta) meta.setAttribute('content', color);
+        } catch (e) {}
+      })();
+    </script>
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <link rel="canonical" href={canonicalUrl} />
     <link rel="sitemap" href="/sitemap-index.xml" />
