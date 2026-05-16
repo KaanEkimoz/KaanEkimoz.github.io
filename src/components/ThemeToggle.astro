@@ -1,0 +1,155 @@
+---
+/**
+ * ThemeToggle
+ *
+ * Single header button that flips the site between dark (brand default)
+ * and light themes. Stores the choice in localStorage under 'fx-theme'.
+ * The initial value is set by an inline pre-paint script in BaseLayout
+ * to avoid a wrong-theme flash on load — this component only handles
+ * the click flip after hydration.
+ *
+ * Icon convention: the icon shown is the theme you would *switch to*.
+ *   - In dark mode → show sun  (click → light)
+ *   - In light mode → show moon (click → dark)
+ */
+---
+
+<button
+  type="button"
+  class="theme-btn"
+  aria-pressed="false"
+  aria-label="Toggle theme"
+  title="Theme"
+>
+  {/* Sun — visible when current theme is dark */}
+  <svg
+    class="icon-sun"
+    width="14"
+    height="14"
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke="currentColor"
+    stroke-width="1.5"
+    stroke-linecap="round"
+    aria-hidden="true"
+  >
+    <circle cx="12" cy="12" r="4" />
+    <line x1="12" y1="2" x2="12" y2="5" />
+    <line x1="12" y1="19" x2="12" y2="22" />
+    <line x1="2" y1="12" x2="5" y2="12" />
+    <line x1="19" y1="12" x2="22" y2="12" />
+    <line x1="4.5" y1="4.5" x2="6.5" y2="6.5" />
+    <line x1="17.5" y1="17.5" x2="19.5" y2="19.5" />
+    <line x1="4.5" y1="19.5" x2="6.5" y2="17.5" />
+    <line x1="17.5" y1="6.5" x2="19.5" y2="4.5" />
+  </svg>
+
+  {/* Moon — visible when current theme is light */}
+  <svg
+    class="icon-moon"
+    width="14"
+    height="14"
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke="currentColor"
+    stroke-width="1.5"
+    stroke-linecap="round"
+    stroke-linejoin="round"
+    aria-hidden="true"
+  >
+    <path d="M21 12.79A9 9 0 1 1 11.21 3 A7 7 0 0 0 21 12.79z" />
+  </svg>
+</button>
+
+<style>
+  .theme-btn {
+    @apply inline-flex items-center justify-center w-7 h-7 border border-border text-text-300 transition-colors;
+  }
+  .theme-btn:hover {
+    @apply text-text-100;
+  }
+  .theme-btn[aria-pressed='true'] {
+    @apply text-accent-1 border-accent-1;
+  }
+
+  /* aria-pressed="false" = dark theme (default) → show sun, hide moon */
+  .theme-btn .icon-moon {
+    display: none;
+  }
+  .theme-btn[aria-pressed='true'] .icon-sun {
+    display: none;
+  }
+  .theme-btn[aria-pressed='true'] .icon-moon {
+    display: inline;
+  }
+</style>
+
+<script>
+  type Theme = 'dark' | 'light';
+  const STORAGE_KEY = 'fx-theme';
+  const THEME_COLOR: Record<Theme, string> = {
+    dark: '#0a0a14',
+    light: '#f5f4ef',
+  };
+
+  let memoryState: Theme | null = null;
+
+  function readStored(): Theme | null {
+    try {
+      const v = localStorage.getItem(STORAGE_KEY);
+      if (v === 'light' || v === 'dark') return v;
+    } catch {
+      /* storage blocked */
+    }
+    return null;
+  }
+
+  function getCurrent(): Theme {
+    // Trust the DOM first — the pre-paint script in BaseLayout already
+    // resolved the initial theme from storage / system preference.
+    const dom = document.documentElement.dataset.theme;
+    if (dom === 'light' || dom === 'dark') return dom;
+    return memoryState ?? readStored() ?? 'dark';
+  }
+
+  function applyTheme(theme: Theme) {
+    document.documentElement.dataset.theme = theme;
+    const meta = document.querySelector('meta[name="theme-color"]');
+    if (meta) meta.setAttribute('content', THEME_COLOR[theme]);
+  }
+
+  function setTheme(theme: Theme) {
+    memoryState = theme;
+    try {
+      localStorage.setItem(STORAGE_KEY, theme);
+    } catch {
+      /* storage blocked — memoryState still keeps us consistent for the session */
+    }
+    applyTheme(theme);
+  }
+
+  function syncButton(btn: HTMLButtonElement) {
+    btn.setAttribute('aria-pressed', getCurrent() === 'light' ? 'true' : 'false');
+  }
+
+  type Guarded = HTMLButtonElement & { __themeInited?: boolean };
+
+  function init() {
+    const buttons = document.querySelectorAll<HTMLButtonElement>('.theme-btn');
+    buttons.forEach((btn) => {
+      if ((btn as Guarded).__themeInited) {
+        syncButton(btn);
+        return;
+      }
+      (btn as Guarded).__themeInited = true;
+      syncButton(btn);
+      btn.addEventListener('click', () => {
+        setTheme(getCurrent() === 'light' ? 'dark' : 'light');
+        syncButton(btn);
+      });
+    });
+  }
+
+  init();
+  document.addEventListener('astro:page-load', init);
+</script>

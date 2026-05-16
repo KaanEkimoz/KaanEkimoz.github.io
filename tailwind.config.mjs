@@ -3,27 +3,28 @@ export default {
   content: ['./src/**/*.{astro,html,js,jsx,md,mdx,ts,tsx}'],
   theme: {
     extend: {
+      // Themed colors reference CSS variables defined in src/styles/global.css.
+      // The `<alpha-value>` placeholder lets Tailwind's opacity modifiers
+      // (e.g. bg-bg-base/80) splice the alpha in correctly. Light theme is
+      // applied by setting `data-theme="light"` on <html>.
       colors: {
-        // Background layers
         bg: {
-          base: '#0a0a14',
-          elev: '#14141f',
-          'elev-2': '#1f1f2e',
+          base: 'rgb(var(--bg-base) / <alpha-value>)',
+          elev: 'rgb(var(--bg-elev) / <alpha-value>)',
+          'elev-2': 'rgb(var(--bg-elev-2) / <alpha-value>)',
         },
-        // Accent colors (cool palette: cyan + magenta + amber)
         accent: {
-          1: '#00d9ff', // cyan — primary CTA, link, glow
-          2: '#ff4dff', // magenta — hover, secondary highlight
-          3: '#ffd60a', // amber — XP/level/reward emphasis
+          1: 'rgb(var(--accent-1) / <alpha-value>)', // cyan
+          2: 'rgb(var(--accent-2) / <alpha-value>)', // magenta
+          3: 'rgb(var(--accent-3) / <alpha-value>)', // amber
         },
-        // Text hierarchy
         text: {
-          100: '#f0f0f5', // headings
-          200: '#b8b8c8', // body
-          300: '#a8a8c0', // meta, muted — WCAG AA contrast on bg-base (~7:1)
+          100: 'rgb(var(--text-100) / <alpha-value>)', // headings
+          200: 'rgb(var(--text-200) / <alpha-value>)', // body
+          300: 'rgb(var(--text-300) / <alpha-value>)', // meta, muted
         },
         border: {
-          DEFAULT: '#2a2a3a',
+          DEFAULT: 'rgb(var(--border) / <alpha-value>)',
         },
       },
       fontFamily: {
