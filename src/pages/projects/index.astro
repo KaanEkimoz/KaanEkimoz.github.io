@@ -3,10 +3,17 @@ import { getCollection } from 'astro:content';
 import BaseLayout from '@layouts/BaseLayout.astro';
 import SectionHeading from '@components/SectionHeading.astro';
 import ProjectCard from '@components/ProjectCard.astro';
+import ProjectFilter from '@components/ProjectFilter.astro';
 
 const projects = (await getCollection('projects')).sort(
   (a, b) => (a.data.order ?? 99) - (b.data.order ?? 99)
 );
+
+// Only surface filter pills for platforms that actually have projects, and
+// keep a natural ordering so the row reads Mobile → PC → VR → Web.
+const PLATFORM_ORDER = ['Mobile', 'PC', 'VR', 'Web'] as const;
+const present = new Set(projects.map((p) => p.data.platform));
+const platforms = PLATFORM_ORDER.filter((p) => present.has(p));
 ---
 
 <BaseLayout title="Projects" description="Games and prototypes by Kaan Usta — mobile, PC, and VR.">
@@ -19,8 +26,16 @@ const projects = (await getCollection('projects')).sort(
       </p>
     </header>
 
+    <ProjectFilter platforms={platforms} />
+
     <div class="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
-      {projects.map((project) => <ProjectCard project={project} />)}
+      {
+        projects.map((project) => (
+          <div data-project-platform={project.data.platform}>
+            <ProjectCard project={project} />
+          </div>
+        ))
+      }
     </div>
   </div>
 </BaseLayout>

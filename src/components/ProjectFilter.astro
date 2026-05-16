@@ -1,0 +1,152 @@
+---
+/**
+ * ProjectFilter
+ *
+ * Pills above the /projects grid that filter cards by platform.
+ * Filtering is client-side — every card on the page carries a
+ * data-platform attribute; the script toggles `hidden` on the
+ * non-matching ones and mirrors the choice in the URL as
+ * `?platform=mobile` so a filtered view is shareable.
+ *
+ * Only platforms that actually have a project show up as pills;
+ * we don't render an empty "Web" pill just because the enum
+ * allows it.
+ */
+interface Props {
+  /** Platforms that have at least one project, in the order to render. */
+  platforms: Array<'Mobile' | 'PC' | 'VR' | 'Web'>;
+}
+
+const { platforms } = Astro.props;
+
+const variantFor: Record<string, string> = {
+  Mobile: 'cyan',
+  PC: 'magenta',
+  VR: 'amber',
+  Web: 'cyan',
+};
+---
+
+<div
+  class="project-filter mb-8 flex flex-wrap items-center gap-2"
+  data-project-filter
+  role="group"
+  aria-label="Filter projects by platform"
+>
+  <button
+    type="button"
+    class="filter-pill"
+    data-value="all"
+    data-variant="muted"
+    aria-pressed="true"
+  >
+    All
+  </button>
+  {
+    platforms.map((p) => (
+      <button
+        type="button"
+        class="filter-pill"
+        data-value={p}
+        data-variant={variantFor[p]}
+        aria-pressed="false"
+      >
+        {p}
+      </button>
+    ))
+  }
+</div>
+
+<style>
+  .filter-pill {
+    @apply inline-flex items-center px-3 py-1 border font-mono text-xs uppercase tracking-widest transition-colors;
+    @apply border-border text-text-300;
+  }
+  .filter-pill:hover {
+    @apply text-text-100;
+  }
+  .filter-pill:focus-visible {
+    @apply outline-none ring-1 ring-accent-1;
+  }
+
+  /* Active pill carries the same accent as the matching Tag on the cards
+     so the connection reads instantly. */
+  .filter-pill[aria-pressed='true'][data-variant='muted'] {
+    @apply border-text-100 text-text-100;
+  }
+  .filter-pill[aria-pressed='true'][data-variant='cyan'] {
+    @apply border-accent-1 text-accent-1;
+  }
+  .filter-pill[aria-pressed='true'][data-variant='magenta'] {
+    @apply border-accent-2 text-accent-2;
+  }
+  .filter-pill[aria-pressed='true'][data-variant='amber'] {
+    @apply border-accent-3 text-accent-3;
+  }
+</style>
+
+<script>
+  type FilterValue = string; // 'all' | platform name
+
+  function apply(filter: FilterValue) {
+    const cards = document.querySelectorAll<HTMLElement>('[data-project-platform]');
+    cards.forEach((card) => {
+      const match = filter === 'all' || card.dataset.projectPlatform === filter;
+      card.hidden = !match;
+    });
+    document.querySelectorAll<HTMLButtonElement>('[data-project-filter] .filter-pill').forEach((btn) => {
+      btn.setAttribute('aria-pressed', btn.dataset.value === filter ? 'true' : 'false');
+    });
+  }
+
+  function readFromUrl(): FilterValue {
+    try {
+      const u = new URL(window.location.href);
+      const q = u.searchParams.get('platform');
+      if (!q) return 'all';
+      const buttons = document.querySelectorAll<HTMLButtonElement>('[data-project-filter] .filter-pill');
+      const match = Array.from(buttons).find(
+        (b) => (b.dataset.value || '').toLowerCase() === q.toLowerCase()
+      );
+      return match?.dataset.value ?? 'all';
+    } catch {
+      return 'all';
+    }
+  }
+
+  function writeToUrl(filter: FilterValue) {
+    try {
+      const u = new URL(window.location.href);
+      if (filter === 'all') u.searchParams.delete('platform');
+      else u.searchParams.set('platform', filter.toLowerCase());
+      window.history.replaceState({}, '', u);
+    } catch {
+      /* ignore — non-fatal */
+    }
+  }
+
+  type Guarded = HTMLElement & { __filterInited?: boolean };
+
+  function init() {
+    const root = document.querySelector<HTMLElement>('[data-project-filter]');
+    if (!root) return;
+    if ((root as Guarded).__filterInited) {
+      apply(readFromUrl());
+      return;
+    }
+    (root as Guarded).__filterInited = true;
+
+    apply(readFromUrl());
+
+    root.querySelectorAll<HTMLButtonElement>('.filter-pill').forEach((btn) => {
+      btn.addEventListener('click', () => {
+        const v = btn.dataset.value ?? 'all';
+        apply(v);
+        writeToUrl(v);
+      });
+    });
+  }
+
+  init();
+  document.addEventListener('astro:page-load', init);
+</script>
