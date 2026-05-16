@@ -148,7 +148,13 @@
     (wrap as Guarded).__heroInited = true;
 
     const cs = getComputedStyle(document.documentElement);
-    const paletteFor = (token: string) => cs.getPropertyValue(token).trim() || '#00d9ff';
+    // Design tokens are now stored as space-separated RGB triplets
+    // (e.g. "0 217 255") so Tailwind can compose alpha modifiers. The
+    // canvas API needs a real color string, so wrap with rgb(...).
+    const paletteFor = (token: string) => {
+      const raw = cs.getPropertyValue(token).trim();
+      return raw ? `rgb(${raw})` : '#00d9ff';
+    };
 
     const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
     const coarsePointer = window.matchMedia('(pointer: coarse)').matches;
