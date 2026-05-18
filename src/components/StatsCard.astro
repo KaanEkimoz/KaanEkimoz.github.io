@@ -1,5 +1,12 @@
 ---
 import { STATS } from '@lib/constants';
+import { DEFAULT_LOCALE, t, type Lang } from '@lib/i18n';
+
+interface Props {
+  lang?: Lang;
+}
+
+const { lang = DEFAULT_LOCALE } = Astro.props;
 ---
 
 <dl
@@ -8,7 +15,7 @@ import { STATS } from '@lib/constants';
   {
     STATS.map((s) => (
       <div class="flex gap-6">
-        <dt class="text-text-300 w-24">{s.label}</dt>
+        <dt class="text-text-300 w-24">{t(`stats.${s.key}`, lang)}</dt>
         <dd class="text-text-100">{s.value}</dd>
       </div>
     ))

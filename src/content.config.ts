@@ -33,6 +33,10 @@ const projects = defineCollection({
       // YouTube video id (just the id, e.g. "0KpRHhH52hQ"). Lazy-embedded.
       youtubeId: z.string().optional(),
       order: z.number().optional(),
+      // Locale of this entry. Files without a frontmatter value default to
+      // English; Turkish entries set `lang: tr` (paired with a `.tr.md`
+      // filename so the id stays distinct from the English counterpart).
+      lang: z.enum(['en', 'tr']).default('en'),
     }),
 });
 
@@ -50,6 +54,10 @@ const blog = defineCollection({
       tags: z.array(z.string()).default([]),
       heroImage: image().optional(),
       draft: z.boolean().default(false),
+      // Locale of this post. Defaults to English; Turkish posts use a
+      // `.tr.md` filename and set `lang: tr` so the page can pair them
+      // with the English counterpart for the language toggle.
+      lang: z.enum(['en', 'tr']).default('en'),
     }),
 });
 

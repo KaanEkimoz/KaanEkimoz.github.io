@@ -12,12 +12,16 @@
  * we don't render an empty "Web" pill just because the enum
  * allows it.
  */
+import { DEFAULT_LOCALE, t, type Lang } from '@lib/i18n';
+
 interface Props {
   /** Platforms that have at least one project, in the order to render. */
   platforms: Array<'Mobile' | 'PC' | 'VR' | 'Web'>;
+  /** Locale — drives the "All" label and aria text. */
+  lang?: Lang;
 }
 
-const { platforms } = Astro.props;
+const { platforms, lang = DEFAULT_LOCALE } = Astro.props;
 
 const variantFor: Record<string, string> = {
   Mobile: 'cyan',
@@ -31,7 +35,7 @@ const variantFor: Record<string, string> = {
   class="project-filter mb-8 flex flex-wrap items-center gap-2"
   data-project-filter
   role="group"
-  aria-label="Filter projects by platform"
+  aria-label={t('projectFilter.aria', lang)}
 >
   <button
     type="button"
@@ -40,7 +44,7 @@ const variantFor: Record<string, string> = {
     data-variant="muted"
     aria-pressed="true"
   >
-    All
+    {t('projectFilter.all', lang)}
   </button>
   {
     platforms.map((p) => (

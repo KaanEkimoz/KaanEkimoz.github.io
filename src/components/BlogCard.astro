@@ -1,15 +1,24 @@
 ---
 import type { CollectionEntry } from 'astro:content';
 import { Image } from 'astro:assets';
+import { BCP47, DEFAULT_LOCALE, localizedPath, t, type Lang } from '@lib/i18n';
 
 interface Props {
   post: CollectionEntry<'blog'>;
+  /** Locale of the surrounding page — drives date formatting + label + href. */
+  lang?: Lang;
 }
 
-const { post } = Astro.props;
+const { post, lang = DEFAULT_LOCALE } = Astro.props;
 const { title, description, pubDate, tags, heroImage } = post.data;
 
-const dateStr = pubDate.toLocaleDateString('en-US', {
+// TR entries use a `-tr` filename suffix (Astro normalizes dots out of
+// collection ids, so the dot variant wouldn't be reachable). Strip it so
+// EN and TR share the same canonical slug at the URL level.
+const slug = post.id.replace(/-tr$/, '');
+const href = localizedPath(`/blog/${slug}`, lang);
+
+const dateStr = pubDate.toLocaleDateString(BCP47[lang], {
   year: 'numeric',
   month: 'short',
   day: 'numeric',
@@ -17,7 +26,7 @@ const dateStr = pubDate.toLocaleDateString('en-US', {
 ---
 
 <a
-  href={`/blog/${post.id}`}
+  href={href}
   class="group flex gap-4 items-start border-l-2 border-border pl-4 py-2 transition-all duration-200 hover:border-accent-1"
 >
   {
@@ -50,7 +59,7 @@ const dateStr = pubDate.toLocaleDateString('en-US', {
       )
     }
     <div class="mt-2 font-mono text-xs uppercase tracking-widest text-text-300 group-hover:text-accent-1 transition-colors">
-      Read →
+      {t('blogCard.read', lang)}
     </div>
   </div>
 </a>

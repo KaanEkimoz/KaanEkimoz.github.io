@@ -1,7 +1,14 @@
 ---
 import Button from '@components/ui/Button.astro';
 import HeroCanvas from '@components/HeroCanvas.astro';
-import { SITE } from '@lib/constants';
+import { DEFAULT_LOCALE, localizedPath, t, type Lang } from '@lib/i18n';
+
+interface Props {
+  lang?: Lang;
+}
+
+const { lang = DEFAULT_LOCALE } = Astro.props;
+const blogHref = localizedPath('/blog', lang);
 ---
 
 <section
@@ -34,7 +41,7 @@ import { SITE } from '@lib/constants';
   </div>
 
   {/* Layer 3: interactive canvas — floating shapes react to cursor, click/tap to destroy */}
-  <HeroCanvas />
+  <HeroCanvas lang={lang} />
 
   {/* ================ HERO CONTENT ================ */}
   {/* pointer-events-none on the wrapper so clicks on empty space fall through
@@ -43,7 +50,7 @@ import { SITE } from '@lib/constants';
     <div
       class="font-mono uppercase tracking-widest text-xs text-text-300 mb-4"
     >
-      /// PORTFOLIO · BLOG
+      {t('hero.eyebrow', lang)}
     </div>
 
     <h1
@@ -55,21 +62,21 @@ import { SITE } from '@lib/constants';
     <p
       class="mt-4 font-mono uppercase tracking-widest text-sm sm:text-base text-accent-2"
     >
-      Game Developer
+      {t('hero.role', lang)}
     </p>
 
     <p
       class="mt-8 max-w-xl mx-auto text-text-200 text-base sm:text-lg leading-relaxed"
     >
-      {SITE.description}
+      {t('hero.description', lang)}
     </p>
 
     <div class="mt-10 flex flex-wrap items-center justify-center gap-3">
       <Button href="#projects" variant="primary" class="pointer-events-auto">
-        [ View Projects ]
+        {t('hero.cta.viewProjects', lang)}
       </Button>
-      <Button href="/blog" variant="secondary" class="pointer-events-auto">
-        [ Read Blog ]
+      <Button href={blogHref} variant="secondary" class="pointer-events-auto">
+        {t('hero.cta.readBlog', lang)}
       </Button>
     </div>
   </div>
@@ -78,9 +85,9 @@ import { SITE } from '@lib/constants';
   <a
     href="#about"
     class="absolute bottom-8 left-1/2 -translate-x-1/2 font-mono text-xs uppercase tracking-widest text-text-300 hover:text-accent-1 transition-colors flex flex-col items-center gap-2"
-    aria-label="Scroll to about section"
+    aria-label={t('hero.scroll', lang)}
   >
-    <span>Scroll</span>
+    <span>{t('hero.scroll', lang)}</span>
     <span class="hero-bounce">↓</span>
   </a>
 </section>

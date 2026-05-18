@@ -6,6 +6,7 @@ import Footer from '@components/Footer.astro';
 import CustomCursor from '@components/CustomCursor.astro';
 import ProjectModal from '@components/ProjectModal.astro';
 import { SITE } from '@lib/constants';
+import { BCP47, DEFAULT_LOCALE, alternateUrl, t, type Lang } from '@lib/i18n';
 
 interface Props {
   title?: string;
@@ -13,22 +14,34 @@ interface Props {
   image?: string;
   /** Path within the site, e.g. "/projects/orbs". Used to build canonical URL + og:url. */
   pathname?: string;
+  /** Current locale for this page. Drives html lang, meta, and the toggle. */
+  lang?: Lang;
 }
 
 const {
   title,
-  description = SITE.description,
+  description,
   image = '/og-image.jpg',
   pathname = Astro.url.pathname,
+  lang = DEFAULT_LOCALE,
 } = Astro.props;
 
-const fullTitle = title ? `${title} — ${SITE.name}` : SITE.title;
+const finalDescription = description ?? t('meta.siteDescription', lang);
+const fullTitle = title
+  ? `${title} — ${SITE.name}`
+  : t('meta.siteTitle', lang);
+
 const canonicalUrl = new URL(pathname, SITE.url).href;
 const socialImage = new URL(image, SITE.url).href;
+
+const altLang: Lang = lang === 'en' ? 'tr' : 'en';
+const alternateHref = new URL(alternateUrl(pathname, lang), SITE.url).href;
+const ogLocale = BCP47[lang];
+const ogLocaleAlt = BCP47[altLang];
 ---
 
 <!doctype html>
-<html lang="en">
+<html lang={BCP47[lang]}>
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
@@ -68,14 +81,20 @@ const socialImage = new URL(image, SITE.url).href;
     <link rel="canonical" href={canonicalUrl} />
     <link rel="sitemap" href="/sitemap-index.xml" />
 
+    {/* Locale alternates so crawlers pair EN and TR versions of each
+        page instead of treating them as duplicate content. */}
+    <link rel="alternate" hreflang={BCP47[lang]} href={canonicalUrl} />
+    <link rel="alternate" hreflang={BCP47[altLang]} href={alternateHref} />
+    <link rel="alternate" hreflang="x-default" href={lang === 'en' ? canonicalUrl : alternateHref} />
+
     <title>{fullTitle}</title>
-    <meta name="description" content={description} />
+    <meta name="description" content={finalDescription} />
     <meta name="author" content={SITE.author} />
 
     <!-- Open Graph -->
     <meta property="og:type" content="website" />
     <meta property="og:title" content={fullTitle} />
-    <meta property="og:description" content={description} />
+    <meta property="og:description" content={finalDescription} />
     <meta property="og:url" content={canonicalUrl} />
     <meta property="og:image" content={socialImage} />
     <meta property="og:image:secure_url" content={socialImage} />
@@ -83,13 +102,14 @@ const socialImage = new URL(image, SITE.url).href;
     <meta property="og:image:width" content="1200" />
     <meta property="og:image:height" content="630" />
     <meta property="og:image:alt" content="kaanusta.dev — Kaan Usta, game developer" />
-    <meta property="og:locale" content={SITE.locale} />
+    <meta property="og:locale" content={ogLocale} />
+    <meta property="og:locale:alternate" content={ogLocaleAlt} />
     <meta property="og:site_name" content={SITE.name} />
 
     <!-- Twitter -->
     <meta name="twitter:card" content="summary_large_image" />
     <meta name="twitter:title" content={fullTitle} />
-    <meta name="twitter:description" content={description} />
+    <meta name="twitter:description" content={finalDescription} />
     <meta name="twitter:image" content={socialImage} />
 
     <!-- Theme color matches bg-base for mobile browser chrome -->
@@ -99,12 +119,12 @@ const socialImage = new URL(image, SITE.url).href;
   </head>
   <body class="min-h-screen flex flex-col">
     <CustomCursor />
-    <Header />
+    <Header lang={lang} />
     <main class="flex-1">
       <slot />
     </main>
-    <Footer />
-    <ProjectModal />
+    <Footer lang={lang} />
+    <ProjectModal lang={lang} />
 
     {/* Scroll-triggered fade-in for elements with data-fade-in attribute. */}
     <script>

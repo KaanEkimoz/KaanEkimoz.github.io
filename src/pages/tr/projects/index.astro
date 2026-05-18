@@ -6,14 +6,12 @@ import ProjectCard from '@components/ProjectCard.astro';
 import ProjectFilter from '@components/ProjectFilter.astro';
 import { t, type Lang } from '@lib/i18n';
 
-const lang: Lang = 'en';
+const lang: Lang = 'tr';
 
 const projects = (
   await getCollection('projects', ({ data }) => data.lang === lang)
 ).sort((a, b) => (a.data.order ?? 99) - (b.data.order ?? 99));
 
-// Only surface filter pills for platforms that actually have projects, and
-// keep a natural ordering so the row reads Mobile → PC → VR → Web.
 const PLATFORM_ORDER = ['Mobile', 'PC', 'VR', 'Web'] as const;
 const present = new Set(projects.map((p) => p.data.platform));
 const platforms = PLATFORM_ORDER.filter((p) => present.has(p));

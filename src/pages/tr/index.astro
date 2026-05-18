@@ -11,9 +11,9 @@ import SocialLinks from '@components/SocialLinks.astro';
 import Button from '@components/ui/Button.astro';
 import portrait from '@/assets/portrait.png';
 import { SOCIAL } from '@lib/constants';
-import { t, type Lang } from '@lib/i18n';
+import { localizedPath, t, type Lang } from '@lib/i18n';
 
-const lang: Lang = 'en';
+const lang: Lang = 'tr';
 
 const allProjects = await getCollection('projects', ({ data }) => data.lang === lang);
 const featuredProjects = allProjects
@@ -31,10 +31,8 @@ const latestPosts = allPosts
 ---
 
 <BaseLayout lang={lang}>
-  <!-- ======== HERO ======== -->
   <Hero lang={lang} />
 
-  <!-- ======== ABOUT ======== -->
   <section
     id="about"
     class="max-w-6xl mx-auto px-6 py-20 scroll-mt-20"
@@ -45,7 +43,7 @@ const latestPosts = allPosts
       <div class="flex flex-col sm:flex-row gap-6 items-start">
         <Image
           src={portrait}
-          alt={`Kaan Usta`}
+          alt="Kaan Usta"
           widths={[160, 240, 320]}
           sizes="160px"
           class="w-32 h-32 sm:w-40 sm:h-40 object-cover border-2 border-accent-1 shadow-glow-cyan shrink-0"
@@ -61,7 +59,6 @@ const latestPosts = allPosts
     </div>
   </section>
 
-  <!-- ======== FEATURED PROJECTS ======== -->
   <section
     id="projects"
     class="max-w-6xl mx-auto px-6 py-12 scroll-mt-20"
@@ -72,11 +69,10 @@ const latestPosts = allPosts
       {featuredProjects.map((project) => <ProjectCard project={project} lang={lang} />)}
     </div>
     <div class="mt-8">
-      <Button href="/projects" variant="ghost">{t('featured.seeAll', lang)}</Button>
+      <Button href={localizedPath('/projects', lang)} variant="ghost">{t('featured.seeAll', lang)}</Button>
     </div>
   </section>
 
-  <!-- ======== LATEST POSTS ======== -->
   <section class="max-w-6xl mx-auto px-6 py-12" data-fade-in>
     <SectionHeading title={t('latest.title', lang)} />
     {
@@ -86,7 +82,7 @@ const latestPosts = allPosts
             <BlogCard post={post} lang={lang} />
           ))}
           <div class="pt-2">
-            <Button href="/blog" variant="ghost">{t('latest.allPosts', lang)}</Button>
+            <Button href={localizedPath('/blog', lang)} variant="ghost">{t('latest.allPosts', lang)}</Button>
           </div>
         </div>
       ) : (
@@ -97,7 +93,6 @@ const latestPosts = allPosts
     }
   </section>
 
-  <!-- ======== CONTACT ======== -->
   <section
     id="contact"
     class="max-w-6xl mx-auto px-6 py-20 scroll-mt-20"

@@ -8,13 +8,12 @@ import LiteYouTube from '@components/LiteYouTube.astro';
 import type { GetStaticPaths } from 'astro';
 import { t, type Lang } from '@lib/i18n';
 
-const lang: Lang = 'en';
+const lang: Lang = 'tr';
 
 export const getStaticPaths: GetStaticPaths = async () => {
-  // English-only routes here; the Turkish mirror lives under /tr/projects/.
-  const projects = await getCollection('projects', ({ data }) => data.lang === 'en');
+  const projects = await getCollection('projects', ({ data }) => data.lang === 'tr');
   return projects.map((project) => ({
-    params: { slug: project.id },
+    params: { slug: project.id.replace(/-tr$/, '') },
     props: { project },
   }));
 };
@@ -48,15 +47,12 @@ const screenshots =
 <BaseLayout lang={lang} title={title} description={description}>
   <article id="project-detail" class="max-w-3xl mx-auto px-6 py-16">
     <a
-      href="/projects"
+      href="/tr/projects"
       class="inline-block font-mono text-xs uppercase tracking-widest text-text-300 hover:text-accent-1 mb-8"
     >
       {t('projectDetail.back', lang)}
     </a>
 
-    {/* Hero: YouTube embed leads instead of a static cover, so the detail
-        page opens with the game in motion. The cover graphic is the first
-        Screenshots item below. */}
     {
       youtubeId && (
         <div class="mb-10">
@@ -134,7 +130,6 @@ const screenshots =
       )
     }
 
-    {/* Markdown body */}
     <div class="prose-content space-y-4 text-text-200 leading-relaxed">
       <Content />
     </div>

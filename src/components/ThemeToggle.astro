@@ -12,14 +12,23 @@
  *   - In dark mode → show sun  (click → light)
  *   - In light mode → show moon (click → dark)
  */
+import { DEFAULT_LOCALE, t, type Lang } from '@lib/i18n';
+
+interface Props {
+  lang?: Lang;
+}
+
+const { lang = DEFAULT_LOCALE } = Astro.props;
+const ariaLabel = t('toggle.theme', lang);
+const title = lang === 'tr' ? 'Tema' : 'Theme';
 ---
 
 <button
   type="button"
   class="theme-btn"
   aria-pressed="false"
-  aria-label="Toggle theme"
-  title="Theme"
+  aria-label={ariaLabel}
+  title={title}
 >
   {/* Sun — visible when current theme is dark */}
   <svg

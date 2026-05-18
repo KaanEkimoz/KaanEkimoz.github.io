@@ -1,0 +1,84 @@
+---
+/**
+ * LanguageToggle
+ *
+ * Segmented `EN | TR` button group in the header. The active segment
+ * matches the current page's locale; clicking the other segment
+ * navigates to the same page's localized counterpart.
+ *
+ * The alternate URL is computed at render time so a hard navigation
+ * always lands the visitor on the matching page in the other locale
+ * (e.g. /blog/welcome ↔ /tr/blog/welcome) instead of bouncing them
+ * to the locale home.
+ */
+import type { Lang } from '@lib/i18n';
+import { alternateUrl, t } from '@lib/i18n';
+
+interface Props {
+  lang: Lang;
+}
+
+const { lang } = Astro.props;
+const currentPath = Astro.url.pathname;
+const otherHref = alternateUrl(currentPath, lang);
+---
+
+<div
+  class="lang-toggle inline-flex items-center border border-border h-7 overflow-hidden font-mono text-[10px] uppercase tracking-widest"
+  role="group"
+  aria-label={t('toggle.language', lang)}
+>
+  <a
+    href={lang === 'en' ? currentPath : otherHref}
+    class:list={['lang-pill', lang === 'en' && 'is-active']}
+    aria-current={lang === 'en' ? 'true' : 'false'}
+    data-lang="en"
+  >
+    EN
+  </a>
+  <a
+    href={lang === 'tr' ? currentPath : otherHref}
+    class:list={['lang-pill', lang === 'tr' && 'is-active']}
+    aria-current={lang === 'tr' ? 'true' : 'false'}
+    data-lang="tr"
+  >
+    TR
+  </a>
+</div>
+
+<style>
+  .lang-pill {
+    @apply inline-flex items-center justify-center px-2 h-full text-text-300 transition-colors;
+    min-width: 1.75rem;
+  }
+  .lang-pill + .lang-pill {
+    @apply border-l border-border;
+  }
+  .lang-pill:hover {
+    @apply text-text-100;
+  }
+  .lang-pill.is-active {
+    @apply text-accent-1 bg-bg-elev;
+  }
+</style>
+
+<script>
+  /**
+   * Remember the user's last explicit choice. The URL is the source of
+   * truth — this just lets us route a fresh visit to /tr/ if the user
+   * picked Turkish last time and lands back on the site root.
+   */
+  document.addEventListener('click', (e) => {
+    const target = e.target as HTMLElement | null;
+    const pill = target?.closest('[data-lang]') as HTMLElement | null;
+    if (!pill) return;
+    const v = pill.dataset.lang;
+    if (v === 'en' || v === 'tr') {
+      try {
+        localStorage.setItem('fx-lang', v);
+      } catch {
+        /* storage blocked — non-fatal */
+      }
+    }
+  });
+</script>

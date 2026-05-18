@@ -6,17 +6,17 @@ import Tag from '@components/ui/Tag.astro';
 import type { GetStaticPaths } from 'astro';
 import { BCP47, t, type Lang } from '@lib/i18n';
 
-const lang: Lang = 'en';
+const lang: Lang = 'tr';
 
 export const getStaticPaths: GetStaticPaths = async () => {
-  // Only generate paths for English-locale posts at /blog/... — Turkish
-  // versions are wired up under /tr/blog/... in a separate page tree.
+  // Turkish posts only. Their id is `<slug>.tr`; the route uses the bare
+  // slug so URLs read /tr/blog/welcome instead of /tr/blog/welcome.tr.
   const posts = await getCollection(
     'blog',
-    ({ data }) => !data.draft && data.lang === 'en'
+    ({ data }) => !data.draft && data.lang === 'tr'
   );
   return posts.map((post) => ({
-    params: { slug: post.id },
+    params: { slug: post.id.replace(/-tr$/, '') },
     props: { post },
   }));
 };
@@ -30,14 +30,12 @@ const dateStr = pubDate.toLocaleDateString(BCP47[lang], {
   month: 'long',
   day: 'numeric',
 });
-
-const updatedLabel = lang === 'tr' ? 'güncellendi' : 'updated';
 ---
 
 <BaseLayout lang={lang} title={title} description={description}>
   <article class="max-w-3xl mx-auto px-6 py-16">
     <a
-      href="/blog"
+      href="/tr/blog"
       class="inline-block font-mono text-xs uppercase tracking-widest text-text-300 hover:text-accent-1 mb-8"
     >
       {t('blogIndex.back', lang)}
@@ -63,7 +61,7 @@ const updatedLabel = lang === 'tr' ? 'güncellendi' : 'updated';
           {dateStr}
           {updatedDate && (
             <span class="text-text-300 ml-2">
-              · {updatedLabel}{' '}
+              · {t('blogIndex.updated', lang)}{' '}
               {updatedDate.toLocaleDateString(BCP47[lang], {
                 year: 'numeric',
                 month: 'short',

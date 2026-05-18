@@ -2,19 +2,27 @@
 import { Image } from 'astro:assets';
 import Tag from '@components/ui/Tag.astro';
 import type { CollectionEntry } from 'astro:content';
+import { DEFAULT_LOCALE, localizedPath, t, type Lang } from '@lib/i18n';
 
 interface Props {
   project: CollectionEntry<'projects'>;
+  /** Locale of the surrounding page; localizes the card label + detail href. */
+  lang?: Lang;
 }
 
-const { project } = Astro.props;
+const { project, lang = DEFAULT_LOCALE } = Astro.props;
 const { title, description, platform, genres, year, coverImage } = project.data;
 const platformVariant =
   platform === 'Mobile' ? 'cyan' : platform === 'PC' ? 'magenta' : 'amber';
+
+// TR entries use a `-tr` filename suffix (Astro normalizes dots out of
+// collection ids). Strip it so EN and TR share the same canonical slug.
+const slug = project.id.replace(/-tr$/, '');
+const detailHref = localizedPath(`/projects/${slug}`, lang);
 ---
 
 <a
-  href={`/projects/${project.id}`}
+  href={detailHref}
   data-project-modal
   class="group block border border-border bg-bg-elev transition-all duration-200 hover:border-accent-1 hover:shadow-glow-cyan hover:-translate-y-0.5 overflow-hidden"
 >
@@ -48,7 +56,7 @@ const platformVariant =
     </div>
 
     <div class="font-mono text-xs uppercase tracking-widest text-text-300 group-hover:text-accent-1 transition-colors">
-      View →
+      {t('projectCard.view', lang)}
     </div>
   </div>
 </a>
