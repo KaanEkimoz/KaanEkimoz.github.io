@@ -34,6 +34,16 @@ const {
 
 const platformVariant =
   platform === 'Mobile' ? 'cyan' : platform === 'PC' ? 'magenta' : 'amber';
+
+// The cover image used to be the page hero. Now the YouTube embed owns
+// that slot, so the cover migrates into the Screenshots section — but
+// only if the author didn't already list it in `gallery` (Orbs already
+// does, others may not). Dedupe by `.src` so we never render the same
+// asset twice.
+const screenshots =
+  coverImage && !gallery.some((g) => g.src === coverImage.src)
+    ? [coverImage, ...gallery]
+    : gallery;
 ---
 
 <BaseLayout title={title} description={description}>
@@ -45,17 +55,13 @@ const platformVariant =
       ← Back to Projects
     </a>
 
-    {/* Cover hero */}
+    {/* Hero: YouTube embed lives here instead of a static cover, so the
+        detail page leads with the game in motion. The cover graphic is
+        kept around as the first item in Screenshots below. */}
     {
-      coverImage && (
-        <div class="mb-10 border border-border overflow-hidden">
-          <Image
-            src={coverImage}
-            alt={`${title} cover image`}
-            widths={[640, 960, 1280]}
-            sizes="(min-width: 768px) 768px, 100vw"
-            class="w-full h-auto"
-          />
+      youtubeId && (
+        <div class="mb-10">
+          <LiteYouTube id={youtubeId} title={`${title} — gameplay`} />
         </div>
       )
     }
@@ -73,18 +79,6 @@ const platformVariant =
       </h1>
       <p class="mt-4 text-text-200 text-lg leading-relaxed">{description}</p>
     </header>
-
-    {/* Video */}
-    {
-      youtubeId && (
-        <div class="mb-12">
-          <div class="font-mono text-xs uppercase tracking-widest text-text-300 mb-3">
-            Gameplay
-          </div>
-          <LiteYouTube id={youtubeId} title={`${title} — gameplay`} />
-        </div>
-      )
-    }
 
     <div class="grid sm:grid-cols-2 gap-6 mb-12 text-sm font-mono">
       <div>
@@ -147,15 +141,16 @@ const platformVariant =
       <Content />
     </div>
 
-    {/* Gallery */}
+    {/* Screenshots — includes the cover graphic (deduped) so the cover
+        survives the move out of the page hero. */}
     {
-      gallery && gallery.length > 0 && (
+      screenshots.length > 0 && (
         <section class="mt-16 pt-10 border-t border-border">
           <h2 class="font-mono uppercase tracking-widest text-text-100 text-sm mb-6">
             <span class="text-accent-1">///</span> Screenshots
           </h2>
           <div class="grid sm:grid-cols-2 gap-4">
-            {gallery.map((img, i) => (
+            {screenshots.map((img, i) => (
               <div class="border border-border overflow-hidden">
                 <Image
                   src={img}
