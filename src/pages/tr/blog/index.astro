@@ -5,7 +5,7 @@ import SectionHeading from '@components/SectionHeading.astro';
 import BlogCard from '@components/BlogCard.astro';
 import { t, type Lang } from '@lib/i18n';
 
-const lang: Lang = 'en';
+const lang: Lang = 'tr';
 
 const posts = (
   await getCollection('blog', ({ data }) => !data.draft && data.lang === lang)

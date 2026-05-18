@@ -1,6 +1,18 @@
 ---
 import { SITE } from '@lib/constants';
+import { DEFAULT_LOCALE, type Lang } from '@lib/i18n';
+
+interface Props {
+  lang?: Lang;
+}
+
+const { lang = DEFAULT_LOCALE } = Astro.props;
 const year = new Date().getFullYear();
+
+const stack = {
+  en: { built: 'Built with', hosted: 'Hosted on GitHub Pages', tagline: 'Made with curiosity in' },
+  tr: { built: 'Yapım', hosted: 'GitHub Pages üzerinde', tagline: 'Merakla yapıldı:' },
+}[lang];
 ---
 
 <footer class="border-t border-border mt-24">
@@ -10,18 +22,18 @@ const year = new Date().getFullYear();
     <div class="space-y-1">
       <div>© {year} {SITE.author}</div>
       <div>
-        Built with
+        {stack.built}
         <a
           href="https://astro.build"
           class="hover:text-accent-1"
           target="_blank"
           rel="noopener">Astro</a
         >
-        · Hosted on GitHub Pages
+        · {stack.hosted}
       </div>
     </div>
     <div class="text-text-300">
-      Made with curiosity in <span class="text-accent-1">Türkiye</span>
+      {stack.tagline} <span class="text-accent-1">Türkiye</span>
     </div>
   </div>
 </footer>

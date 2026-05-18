@@ -1,10 +1,12 @@
 ---
 import { SOCIAL } from '@lib/constants';
+import { DEFAULT_LOCALE, t, type Lang } from '@lib/i18n';
 
 interface Props {
   /** Optional list of channels to render (in order). Defaults to all. */
   channels?: Array<keyof typeof links>;
   size?: 'sm' | 'md';
+  lang?: Lang;
 }
 
 const links = {
@@ -17,9 +19,11 @@ const links = {
 const {
   channels = ['github', 'linkedin', 'youtube', 'itchio'],
   size = 'md',
+  lang = DEFAULT_LOCALE,
 } = Astro.props;
 
 const sizeCls = size === 'sm' ? 'text-[10px]' : 'text-xs';
+const newTab = t('social.newTab', lang);
 ---
 
 <ul class="flex flex-wrap items-center gap-x-4 gap-y-2">
@@ -36,7 +40,7 @@ const sizeCls = size === 'sm' ? 'text-[10px]' : 'text-xs';
               'font-mono uppercase tracking-widest text-text-300 hover:text-accent-1 transition-colors',
               sizeCls,
             ]}
-            aria-label={`${item.label} (opens in new tab)`}
+            aria-label={`${item.label} (${newTab})`}
           >
             {item.label}
           </a>

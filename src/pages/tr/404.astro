@@ -3,13 +3,13 @@ import BaseLayout from '@layouts/BaseLayout.astro';
 import Button from '@components/ui/Button.astro';
 import { localizedPath, t, type Lang } from '@lib/i18n';
 
-const lang: Lang = 'en';
+const lang: Lang = 'tr';
 ---
 
 <BaseLayout
   lang={lang}
   title={`404 — ${t('notFound.gameOver', lang)}`}
-  description="Page not found. Restart from the home screen."
+  description="Sayfa bulunamadı. Ana ekrandan baştan başla."
 >
   <div
     class="min-h-[70vh] flex flex-col items-center justify-center text-center px-6"

@@ -8,16 +8,27 @@
  * Writes to localStorage and dispatches a CustomEvent so CustomCursor can
  * react without tight coupling.
  */
+import { DEFAULT_LOCALE, type Lang } from '@lib/i18n';
+
+interface Props {
+  lang?: Lang;
+}
+
+const { lang = DEFAULT_LOCALE } = Astro.props;
+const labels = {
+  en: { group: 'Effects', toggle: 'Toggle custom cursor', title: 'Custom cursor' },
+  tr: { group: 'Efektler', toggle: 'Özel imleci aç/kapat', title: 'Özel imleç' },
+}[lang];
 ---
 
-<div class="flex items-center" aria-label="Effects">
+<div class="flex items-center" aria-label={labels.group}>
   <button
     type="button"
     class="fx-btn"
     data-fx="cursor"
     aria-pressed="false"
-    aria-label="Toggle custom cursor"
-    title="Custom cursor"
+    aria-label={labels.toggle}
+    title={labels.title}
   >
     {/* Crosshair / cursor icon */}
     <svg
