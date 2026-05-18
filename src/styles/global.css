@@ -42,15 +42,26 @@
 }
 
 html[data-theme='light'] {
-  --bg-base: 245 244 239;     /* warm off-white */
-  --bg-elev: 235 234 227;
-  --bg-elev-2: 223 223 214;
+  /* Paper / parchment tones — distinctly off-white so the page reads as
+     "warm light theme" instead of a stark white sheet. */
+  --bg-base: 232 226 213;
+  --bg-elev: 220 212 197;
+  --bg-elev-2: 205 196 178;
 
   --text-100: 26 26 34;       /* near-black */
   --text-200: 58 58 74;
-  --text-300: 108 108 128;    /* WCAG AA on bg-base */
+  --text-300: 92 92 112;      /* WCAG AA on the warmer bg */
 
-  --border: 207 207 196;
+  --border: 188 178 158;
+
+  /* Accent overrides for light: the dark-theme accents (bright cyan /
+     magenta / amber) wash out completely on a paper background — they
+     would fail WCAG for any text use. Switch to deeper, more saturated
+     variants in the same color family so the brand vibe is preserved
+     while text and chips actually read. */
+  --accent-1: 8 116 139;      /* deeper teal-cyan */
+  --accent-2: 162 28 178;     /* deeper magenta */
+  --accent-3: 161 98 7;       /* deeper amber */
 
   /* Grid switches to a dark ink on light bg so it remains visible. */
   --grid-line: 26 26 34;
