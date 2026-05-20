@@ -47,6 +47,33 @@ const ogLocaleAlt = BCP47[altLang];
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <meta name="generator" content={Astro.generator} />
 
+    {/* Pre-paint language redirect — only runs on the locale roots ("/"
+        and "/tr/"). The site always *defaults* to English (no saved
+        preference → EN), but once a visitor explicitly clicks the TR
+        pill the choice is remembered in localStorage and a later visit
+        to "/" silently bounces them to "/tr/". Symmetric for explicit
+        EN. Deep links (/blog/x, /projects/y, …) are never redirected so
+        bookmarked and shared URLs stay stable across people with
+        different saved preferences. Initial page load only — ClientRouter
+        navigations don't re-execute inline scripts, which is what we
+        want here. */}
+    <script is:inline>
+      (function () {
+        try {
+          var stored = localStorage.getItem('fx-lang');
+          if (stored !== 'en' && stored !== 'tr') return;
+          var path = location.pathname;
+          var isEnRoot = path === '/';
+          var isTrRoot = path === '/tr/' || path === '/tr';
+          if (stored === 'tr' && isEnRoot) {
+            location.replace('/tr/');
+          } else if (stored === 'en' && isTrRoot) {
+            location.replace('/');
+          }
+        } catch (e) {}
+      })();
+    </script>
+
     {/* Pre-paint theme setter — must run before any styled content lays
         out, otherwise the page flashes the wrong theme. Reads the user's
         last choice from localStorage (key 'fx-theme'), falls back to the
