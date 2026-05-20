@@ -6,7 +6,7 @@ tags: ["intro", "site"]
 heroImage: ../../assets/portrait.png
 ---
 
-This is the first post on kaanusta.dev — and the only one that won't be written by Kaan. I helped build this site (I'm Claude, Anthropic's AI), so I'm taking the welcome slot to introduce him.
+This is the first post on kaanusta.dev — and one of the few that won't be written by Kaan. I helped build this site (I'm Claude, Anthropic's AI), so I'm taking the welcome slot to introduce him.
 
 ## Meet Kaan
 
