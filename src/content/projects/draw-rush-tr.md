@@ -19,6 +19,6 @@ order: 4
 lang: tr
 ---
 
-208 Studios'ta iki haftalık bir sprint. Hiper-casual brief: çizim tabanlı mobil bulmaca, 30 saniyede bağımlılık yapan, retention testi için yeterince cilalı.
+208 Studios'ta iki haftalık bir sprint. Hiper-casual brief'i şuydu: çizim tabanlı bir mobil bulmaca olacak, 30 saniyede bağımlılık yapacak ve retention testine girebilecek kadar cilalı olacaktı.
 
-Hiper-casual bir kısıt disiplini. Her sistemin 5 saniyede anlaşılır, 5 dakikada tatmin edici ve 5 günde gönderilebilir olması gerekiyor. Mimari hile: her şeyi gevşek bağlı tutup tasarım ekibinin parametreleri yeniden build almadan canlıya alabilmesini sağlamak.
+Hiper-casual bir kısıt disiplinidir. Her sistemin 5 saniyede anlaşılır, 5 dakikada tatmin edici ve 5 günde gönderilebilir olması gerekir. Mimari hilesi şu: her şeyi gevşek bağlı tutmak; böylece tasarım ekibi parametreleri yeniden build almadan canlıya alabilsin.

@@ -137,7 +137,7 @@ const tr: Dict = {
     eyebrow: '/// PORTFOLYO · BLOG',
     role: 'OYUN GELİŞTİRİCİSİ',
     description:
-      '2020’den beri mobil oyunlar geliştiriyor. Unity uzmanı; hafif ve bağımlılık yapan deneyimlere odaklanır.',
+      '2020’den beri mobil oyunlar çıkarıyor. Unity üzerine uzmanlaşmış; hafif ve kolay bağımlılık yapan deneyimlere odaklanıyor.',
     cta: { viewProjects: '[ Projeleri Gör ]', readBlog: '[ Blogu Oku ]' },
     scroll: 'KAYDIR',
   },
@@ -149,9 +149,9 @@ const tr: Dict = {
   },
   about: {
     title: 'Hakkında',
-    p1: '2020’den beri yazılım ve oyun geliştirme dünyasının içindeyim. Yolculuğum Dijital Oyun Tasarımı lisansıyla başladı — programlamaya ve oyun motorlarına duyduğum merak, zamanla asıl odağım oldu.',
-    p2: `Mobil, PC ve VR’a uzanan projelerde çalıştım; ama uzmanlığımı <span class="text-text-100">mobil oyun geliştirme</span> üzerinde derinleştirmeyi tercih ettim. İki haftada kurulan hiper-casual prototiplerden, beş ay boyunca geliştirilen roguelike sistemlere kadar tüm yelpazeyi seviyorum: oynanış programlaması, sistem tasarımı ve bir oyunu canlı hissettiren küçük ayrıntılar.`,
-    p3: `Şu anda <span class="text-accent-1">Unity</span> ve <span class="text-accent-1">C#</span> üzerine yoğunlaşıyorum; yan ilgi alanlarımda custom engine işleri, VR fizik ve ECS mimarisi var.`,
+    p1: '2020’den bu yana yazılım ve oyun geliştirme dünyasının içindeyim. Yolculuğum üniversitede Dijital Oyun Tasarımı okuyarak başladı — programlamaya ve oyun motorlarına duyduğum merak, zamanla asıl odağım haline geldi.',
+    p2: `Mobil, PC ve VR’a uzanan projelerde çalıştım; ama uzmanlığımı <span class="text-text-100">mobil oyun geliştirme</span> tarafında derinleştirmeyi tercih ettim. İki haftada yapılan hiper-casual prototiplerden beş ay boyunca geliştirdiğim roguelike sistemlere kadar bu işin tüm yelpazesini seviyorum: oynanış programlaması, sistem tasarımı ve bir oyunu yaşatan o küçük ayrıntılar.`,
+    p3: `Şu sıralar <span class="text-accent-1">Unity</span> ve <span class="text-accent-1">C#</span> üzerine yoğunlaşıyorum. Yan tarafta custom engine geliştirme, VR fizik ve ECS mimarisiyle ilgileniyorum.`,
   },
   featured: { title: 'Öne Çıkan Projeler', seeAll: '[ Tüm Projeler → ]' },
   latest: { title: 'Son Yazılar', allPosts: '[ Tüm Yazılar → ]', empty: 'Yakında.' },
@@ -166,7 +166,7 @@ const tr: Dict = {
   projectsIndex: {
     title: 'Projeler',
     subtitle:
-      'Mobil, PC ve VR oyun ve prototip seçkisi — iki haftalık hiper-casual sprintlerden jam yapımlarına ve aylar süren roguelike sistemlere uzanır.',
+      'Mobil, PC ve VR’dan bir oyun ve prototip seçkisi — iki haftalık hiper-casual sprintlerden game jam yapımlarına, aylarca süren roguelike sistemlere kadar uzanıyor.',
   },
   projectDetail: {
     back: '← Projelere Dön',
@@ -184,7 +184,7 @@ const tr: Dict = {
     // "GAME OVER" stays as proper-noun gaming reference — Turkish gamers
     // recognize it directly and the iconography is the point.
     gameOver: 'GAME OVER',
-    body: 'Aradığın sayfa yok — belki kırık bir link, belki hiç yayınlanmamış bir sayfa.',
+    body: 'Aradığın sayfa burada yok — kırık bir link ya da hiç yayımlanmamış bir sayfa olabilir.',
     restart: '[ YENİDEN BAŞLA ]',
   },
   toggle: { theme: 'Temayı değiştir', language: 'Dili değiştir' },
@@ -199,10 +199,10 @@ const tr: Dict = {
   meta: {
     siteTitle: 'Kaan Usta — Oyun Geliştirici',
     siteDescription:
-      '2020’den beri mobil oyunlar geliştiriyor. Unity uzmanı; hafif ve bağımlılık yapan deneyimlere odaklanır.',
+      '2020’den beri mobil oyunlar çıkarıyor. Unity üzerine uzmanlaşmış; hafif ve kolay bağımlılık yapan deneyimlere odaklanıyor.',
     blogTitle: 'Blog',
     blogDescription:
-      'Kaan Usta’dan oyun geliştirme üzerine devloglar, post-mortem’ler ve notlar.',
+      'Kaan Usta’nın oyun geliştirme üzerine devlogları, post-mortem’leri ve notları.',
     projectsTitle: 'Projeler',
     projectsDescription:
       'Kaan Usta’nın oyun ve prototipleri — mobil, PC ve VR.',

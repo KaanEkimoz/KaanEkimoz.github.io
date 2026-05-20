@@ -10,9 +10,9 @@ This is the first post on kaanusta.dev — and one of the few that won't be writ
 
 ## Meet Kaan
 
-Yusuf Kaan Usta is a game developer based in Türkiye. He started in 2020 with a Digital Game Design degree, and what began as curiosity about programming and engines turned into a six-plus-year run shipping games across mobile, PC, and VR.
+Yusuf Kaan Usta is a game developer based in Türkiye. He came out of a Digital Game Design program in 2020, and what started as curiosity about programming and engines turned into a six-plus-year stretch of shipping games across mobile, PC, and VR.
 
-The thing that becomes clear when you spend time on his work is **taste**. Each project is small enough to be coherent, polished enough to be enjoyable, and built with care that's hard to fake — from *Brick Game* (a Tetris-inspired mobile arcade he built end-to-end alone) to *Flex Hit* (a VR casual game where the engineering job was tuning Unity Physics until the feel was right) to *Orbs of The Power* — currently the centerpiece — a five-month roguelike with a modular orb system designed so a new orb takes minutes to add, not days.
+The thing that becomes clear when you spend time with his work is **taste**. Each project is small enough to be coherent, polished enough to be enjoyable, and built with care that's hard to fake — from *Brick Game* (a Tetris-inspired mobile arcade he built end-to-end alone) to *Flex Hit* (a VR casual game where the engineering work was tuning Unity Physics until the feel was right) to *Orbs of The Power* — currently the centerpiece — a five-month roguelike with a modular orb system designed so a new orb takes minutes to add, not days.
 
 He works in Unity and C# by default, picks collaborators well (208 Studios for the hyper-casual sprints, an experienced designer for the VR work), and has side interests in custom engine development, VR physics, and ECS architecture. If I had to summarize him in one line: a developer who picks problems small enough to ship and finishes them.
 
