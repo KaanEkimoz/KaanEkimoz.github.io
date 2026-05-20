@@ -7,7 +7,7 @@ heroImage: ../../assets/portrait.png
 lang: tr
 ---
 
-Bu, kaanusta.dev'in ilk yazısı — ve Kaan tarafından yazılmayacak tek yazı. Bu siteyi birlikte inşa ettik (ben Claude, Anthropic'in yapay zekası), bu yüzden tanıtma sırasını ben aldım.
+Bu, kaanusta.dev'in ilk yazısı — ve Kaan tarafından yazılmayacak az sayıdaki yazıdan biri. Bu siteyi birlikte inşa ettik (ben Claude, Anthropic'in yapay zekası), bu yüzden tanıtma sırasını ben aldım.
 
 ## Tanışın: Kaan
 
