@@ -5,7 +5,7 @@ genres: ["Hyper-casual"]
 year: 2022
 duration: "2 hafta"
 role: "Tek geliştirici (tasarımcı + 3D sanatçıyla birlikte)"
-description: "Stackball mekaniğini endless runner oynanışıyla birleştiriyor. 208 Studios'ta inşa edildi."
+description: "Stackball mekaniğini endless runner oynanışıyla birleştiren bir mobil oyun. 208 Studios'ta yapıldı."
 techStack: ["Unity", "C#"]
 links:
   github: "https://github.com/KaanEkimoz/Stackball-Runner"
@@ -19,6 +19,6 @@ order: 5
 lang: tr
 ---
 
-208 Studios'ta iki haftalık başka bir sprint — bu sefer stackball çarpma döngüsünü endless runner temposuyla birleştirdik. Tasarım hipotezi: bilinen tatmin edici bir çekirdeği (yığınları parçalamak) alıp daha uzun bir oturum döngüsüne uzatmak.
+208 Studios'ta bir başka iki haftalık sprint — bu sefer stackball çarpma döngüsünü endless runner temposuyla birleştirdik. Tasarım hipotezi şuydu: tatmin edici, herkesin bildiği bir çekirdek mekaniği (yığınları parçalamak) alıp onu daha uzun bir oturum döngüsüne uzatmak.
 
-Prosedürel seviye üretimi, zorluk ölçekleme ve tepkili kamera işi mühendisliğin merkeziydi. Hiper-casual runner'larda zorluk: kamerayı "hızlı" hissettirirken ucuz telefonlarda oyuncuyu midesi bulanmayacak şekilde tutmak.
+Prosedürel seviye üretimi, zorluk ölçekleme ve tepkili kamera çalışması mühendisliğin merkezindeydi. Hiper-casual runner'larda asıl zorluk şu: kamerayı "hızlı" hissettireceksin, ama ucuz telefonlarda oyuncunun midesini bulandırmadan.

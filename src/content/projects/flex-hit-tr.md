@@ -5,7 +5,7 @@ genres: ["Casual"]
 year: 2023
 duration: "2 ay"
 role: "Tek geliştirici (deneyimli bir tasarımcıyla günlük iş birliği)"
-description: "Unity Physics hakimiyetinin oynanış hissinin merkezinde olduğu bir VR casual oyun. Erişilebilirlik ve kısa oturumlar için tasarlandı."
+description: "Oynanış hissinin tamamen Unity Physics ustalığına bağlı olduğu bir VR casual oyun. Erişilebilirlik ve kısa oturumlar düşünülerek tasarlandı."
 techStack: ["Unity", "Unity XR", "C#", "Unity Physics"]
 links: {}
 coverImage: "../../assets/projects/flex-hit/cover.png"
@@ -18,12 +18,12 @@ order: 3
 lang: tr
 ---
 
-Her şeyin fizik hissine indiği bir VR casual oyun. Brief basitti — erişilebilir olsun, çabuk öğrenilsin, vuruşları tatmin edici hissetsin — ama altta yatan Unity Physics ince ayarı işin tamamıydı.
+Her şeyin fizik hissine indiği bir VR casual oyun. Brief basitti — erişilebilir olacak, çabuk öğrenilecek, vuruşlar tatmin edici hissedilecek — ama altta yatan Unity Physics ince ayarı işin tamamıydı.
 
-Deneyimli bir tasarımcıyla günlük çalışmak, VR'a bakışımı değiştirdi. Donanım göz ardı edilemeyecek kısıtlar getiriyor: fiziksel yorgunluk, mevcudiyet hissi, konfor. Her etkileşim başlık takılı halde test edildi, her iterasyon "yeni bir oyuncu kolları yorulana kadar ne kadar oynayabiliyor?" ölçütüyle ölçüldü.
+Deneyimli bir tasarımcıyla her gün çalışmak, VR'a bakışımı değiştirdi. Donanım göz ardı edilemeyecek kısıtlar getiriyor: fiziksel yorgunluk, presence hissi, konfor. Her etkileşim başlık takılı halde test edildi; her iterasyon "yeni bir oyuncu kolları yorulana kadar ne kadar oynayabiliyor?" sorusuyla ölçüldü.
 
 ## VR bana ne öğretti
 
-- **Fizik ≠ gerçekçilik.** VR hissi simüle edilmez, ince ayarlanır.
-- **Erişilebilirlik tasarımdır, kutucuk değil.** Oturarak mod, boy kalibrasyonu, konfor seçenekleri.
-- **Sürekli başlıkta test et.** Sadece editörde iterasyon yalan söyler.
+- **Fizik ≠ gerçekçilik.** VR hissi simüle edilmiyor, ince ayarlanıyor.
+- **Erişilebilirlik bir tasarım kararıdır, kutucuk değil.** Oturarak oynama modu, boy kalibrasyonu, konfor seçenekleri.
+- **Sürekli başlıkta test et.** Yalnızca editörde iterasyon insanı yanıltır.

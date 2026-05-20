@@ -8,11 +8,6 @@ interface Props {
 
 const { lang = DEFAULT_LOCALE } = Astro.props;
 const year = new Date().getFullYear();
-
-const stack = {
-  en: { built: 'Built with', hosted: 'Hosted on GitHub Pages', tagline: 'Made with curiosity in' },
-  tr: { built: 'Yapım', hosted: 'GitHub Pages üzerinde', tagline: 'Merakla yapıldı:' },
-}[lang];
 ---
 
 <footer class="border-t border-border mt-24">
@@ -21,19 +16,42 @@ const stack = {
   >
     <div class="space-y-1">
       <div>© {year} {SITE.author}</div>
+      {/* Built-with / hosted line — TR word order needs the Astro link in
+          front, so we branch the JSX instead of trying to glue fragments
+          from the dictionary. */}
       <div>
-        {stack.built}
-        <a
-          href="https://astro.build"
-          class="hover:text-accent-1"
-          target="_blank"
-          rel="noopener">Astro</a
-        >
-        · {stack.hosted}
+        {
+          lang === 'tr' ? (
+            <>
+              <a
+                href="https://astro.build"
+                class="hover:text-accent-1"
+                target="_blank"
+                rel="noopener">Astro</a> ile yapıldı · GitHub Pages üzerinde barındırılıyor
+            </>
+          ) : (
+            <>
+              Built with <a
+                href="https://astro.build"
+                class="hover:text-accent-1"
+                target="_blank"
+                rel="noopener">Astro</a> · Hosted on GitHub Pages
+            </>
+          )
+        }
       </div>
     </div>
+    {/* Tagline — same word-order story: in TR "Türkiye" comes first
+        ("Türkiye'de merakla yapıldı"), in EN it comes last
+        ("Made with curiosity in Türkiye"). */}
     <div class="text-text-300">
-      {stack.tagline} <span class="text-accent-1">Türkiye</span>
+      {
+        lang === 'tr' ? (
+          <><span class="text-accent-1">Türkiye</span>’de merakla yapıldı</>
+        ) : (
+          <>Made with curiosity in <span class="text-accent-1">Türkiye</span></>
+        )
+      }
     </div>
   </div>
 </footer>

@@ -5,7 +5,7 @@ genres: ["Casual", "Arcade"]
 year: 2022
 duration: "2 Months"
 role: "Solo (everything from scratch — code, visuals, UI, SFX)"
-description: "A modern Tetris-inspired mobile game with new graphics, levels, and gamemodes. Built entirely from scratch including all visuals, UI, and sound effects."
+description: "A modern Tetris-inspired mobile game with new graphics, levels, and game modes. Built entirely from scratch including all visuals, UI, and sound effects."
 techStack: ["Unity", "C#"]
 links:
   github: "https://github.com/KaanEkimoz/Brick-Game"
