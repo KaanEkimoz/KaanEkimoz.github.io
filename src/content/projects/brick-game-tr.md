@@ -4,9 +4,9 @@ platform: Mobile
 genres: ["Casual", "Arcade"]
 year: 2022
 duration: "2 ay"
-role: "Solo (her şey sıfırdan — kod, görseller, UI, SFX)"
-description: "Yeni grafikler, seviyeler ve oyun modlarıyla Tetris esintili modern bir mobil oyun. Tüm görseller, arayüz ve ses efektleri dahil sıfırdan yapıldı."
-techStack: ["Unity", "C#"]
+role: "Solo (kod, görsel, arayüz, ses, monetizasyon)"
+description: "Tek başına baştan sona geliştirilmiş, cilalı bir mobil blok puzzle."
+techStack: ["Unity", "C#", "LevelPlay (ironSource)", "Unity IAP"]
 links:
   github: "https://github.com/KaanEkimoz/Brick-Game"
   googlePlay: "https://play.google.com/store/apps/details?id=com.ekimozgames.brickgame"
@@ -24,12 +24,17 @@ order: 2
 lang: tr
 ---
 
-Tetris esintili arcade formatına modern bir bakış. Tek başıma, baştan sona geliştirdim: kod, görsel, arayüz, ses efektleri. Boş bir Unity projesinden birden fazla oyun modu içeren cilalı bir mobil sürüme iki ayda ulaştım.
+Düşen-blok arcade formatına modern bir bakış — çekirdek mekanik blok yığma; Classic modunun yanında Bomb ve Laser yetenekleri ekleyen bir Extended mod var. Çapraz platform (Android yayında, iOS başvuru aşamasında).
 
-"Her şeyi kendin yap" kısıtının kendisi olayın özüydü. Arayüz tasarlamak, programcıların çoğu zaman görmediği şeyleri öğretti; Audacity'de SFX kesmek de ses tasarımcılarının gerçekte ne yaptığını gösterdi.
+## Teknik öne çıkanlar
 
-## Yapım notları
+- Sürümlü migration'lar ve 7-bag parça randomizer'ı içeren özel save sistemi.
+- LevelPlay reklamlar + Unity IAP entegrasyonu, restore-purchases akışıyla birlikte.
+- 5 aşamalı zorluk eğrisi, lock-delay tuning, hard/soft-drop fizik.
+- Restart-state sızıntıları için bug-hunting turları (HUD, level, bag, ability buffer).
 
-- Tüm görsel kodla ya da basit primitive'lerle yapıldı; üçüncü taraf asset kullanılmadı.
-- Spreadsheet'lerde tasarladığım ilerleme eğrileriyle çalışan, özel bir seviye sistemi.
-- Audacity'de, public-domain örnekleri taban alarak sıfırdan yapılmış ses tasarımı.
+## Süreç notları
+
+- Tüm görseller engine içinde yapıldı — üçüncü taraf sanat asset'i kullanılmadı.
+- SFX, Audacity'de public-domain örnekler üzerinden sıfırdan kesildi.
+- Level temposu, koda dökülmeden önce spreadsheet simülasyonlarıyla ince ayarlandı.
