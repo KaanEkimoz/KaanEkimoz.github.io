@@ -12,9 +12,12 @@ links:
   googlePlay: "https://play.google.com/store/apps/details?id=com.ekimozgames.brickgame"
 coverImage: "../../assets/projects/brick-game/cover.png"
 gallery:
-  - "../../assets/projects/brick-game/cover.png"
-  - "../../assets/projects/brick-game/gallery/01.png"
-  - "../../assets/projects/brick-game/gallery/02.png"
+  - "../../assets/projects/brick-game/gallery/00-title-tr.png"
+  - "../../assets/projects/brick-game/gallery/01-classic-tr.png"
+  - "../../assets/projects/brick-game/gallery/02-tetris-tr.png"
+  - "../../assets/projects/brick-game/gallery/03-bomb-tr.png"
+  - "../../assets/projects/brick-game/gallery/04-laser-tr.png"
+  - "../../assets/projects/brick-game/gallery/05-colors-tr.png"
 youtubeId: "8HeRix3L7K0"
 featured: true
 order: 2
