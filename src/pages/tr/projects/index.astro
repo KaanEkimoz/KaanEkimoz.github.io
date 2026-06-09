@@ -15,6 +15,7 @@ const projects = (
 const PLATFORM_ORDER = ['Mobile', 'PC', 'VR', 'Web'] as const;
 const present = new Set(projects.map((p) => p.data.platform));
 const platforms = PLATFORM_ORDER.filter((p) => present.has(p));
+const hasPublished = projects.some((p) => p.data.published);
 ---
 
 <BaseLayout
@@ -30,12 +31,15 @@ const platforms = PLATFORM_ORDER.filter((p) => present.has(p));
       </p>
     </header>
 
-    <ProjectFilter platforms={platforms} lang={lang} />
+    <ProjectFilter platforms={platforms} showPublished={hasPublished} lang={lang} />
 
     <div class="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
       {
         projects.map((project) => (
-          <div data-project-platform={project.data.platform}>
+          <div
+            data-project-platform={project.data.platform}
+            data-project-published={project.data.published ? 'true' : undefined}
+          >
             <ProjectCard project={project} lang={lang} />
           </div>
         ))

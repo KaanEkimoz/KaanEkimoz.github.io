@@ -20,6 +20,7 @@ gallery:
   - "../../assets/projects/brick-game/gallery/05-colors-tr.png"
 youtubeId: "8HeRix3L7K0"
 featured: true
+published: true
 order: 2
 lang: tr
 ---
