@@ -9,6 +9,7 @@ description: "Yeni grafikler, seviyeler ve oyun modlarıyla Tetris esintili mode
 techStack: ["Unity", "C#"]
 links:
   github: "https://github.com/KaanEkimoz/Brick-Game"
+  googlePlay: "https://play.google.com/store/apps/details?id=com.ekimozgames.brickgame"
 coverImage: "../../assets/projects/brick-game/cover.png"
 gallery:
   - "../../assets/projects/brick-game/cover.png"
