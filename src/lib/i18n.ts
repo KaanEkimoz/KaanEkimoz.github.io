@@ -43,7 +43,7 @@ type Dict = {
     links: string;
     screenshots: string;
   };
-  projectFilter: { all: string; aria: string };
+  projectFilter: { all: string; published: string; aria: string };
   projectCard: { view: string };
   blogCard: { read: string };
   notFound: { errorTag: string; gameOver: string; body: string; restart: string };
@@ -100,7 +100,7 @@ const en: Dict = {
     links: 'Links',
     screenshots: 'Screenshots',
   },
-  projectFilter: { all: 'All', aria: 'Filter projects by platform' },
+  projectFilter: { all: 'All', published: 'Published', aria: 'Filter projects' },
   projectCard: { view: 'View →' },
   blogCard: { read: 'Read →' },
   notFound: {
@@ -176,7 +176,7 @@ const tr: Dict = {
     links: 'Bağlantılar',
     screenshots: 'Ekran Görüntüleri',
   },
-  projectFilter: { all: 'Tümü', aria: 'Projeleri platforma göre filtrele' },
+  projectFilter: { all: 'Tümü', published: 'Yayında', aria: 'Projeleri filtrele' },
   projectCard: { view: 'Aç →' },
   blogCard: { read: 'Oku →' },
   notFound: {

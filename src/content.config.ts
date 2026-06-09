@@ -26,6 +26,10 @@ const projects = defineCollection({
         })
         .default({}),
       featured: z.boolean().default(false),
+      // Published on a real storefront (Play / App Store / Steam …). Drives
+      // the "Published" filter pill on /projects so visitors can narrow
+      // straight to the shipped catalog.
+      published: z.boolean().default(false),
       // Cover image — used as hero on detail page + thumbnail on cards.
       coverImage: image().optional(),
       // Optional gallery — additional screenshots shown on detail page.

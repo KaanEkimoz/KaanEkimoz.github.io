@@ -2,26 +2,33 @@
 /**
  * ProjectFilter
  *
- * Pills above the /projects grid that filter cards by platform.
- * Filtering is client-side — every card on the page carries a
- * data-platform attribute; the script toggles `hidden` on the
- * non-matching ones and mirrors the choice in the URL as
- * `?platform=mobile` so a filtered view is shareable.
+ * Pills above the /projects grid that narrow the catalog.
  *
- * Only platforms that actually have a project show up as pills;
- * we don't render an empty "Web" pill just because the enum
- * allows it.
+ * Two filter dimensions live in the same row:
+ * - **Platform** pills (Mobile / PC / VR / Web) — only the platforms
+ *   with at least one project show up, in a fixed natural order.
+ * - **Published** pill — only shown if at least one project is
+ *   actually shipped on a store. Sits AFTER the platform pills so
+ *   the row reads platforms → status.
+ *
+ * Filtering is client-side: every card carries a `data-project-platform`
+ * attribute, and published cards additionally carry
+ * `data-project-published="true"`. The current pill choice is mirrored
+ * in the URL as `?platform=<value>` (kept for backward compat with the
+ * earlier platform-only version) so a filtered view is shareable.
  */
 import { DEFAULT_LOCALE, t, type Lang } from '@lib/i18n';
 
 interface Props {
   /** Platforms that have at least one project, in the order to render. */
   platforms: Array<'Mobile' | 'PC' | 'VR' | 'Web'>;
-  /** Locale — drives the "All" label and aria text. */
+  /** Render the Published pill — only when there's at least one published project. */
+  showPublished?: boolean;
+  /** Locale — drives pill labels + aria text. */
   lang?: Lang;
 }
 
-const { platforms, lang = DEFAULT_LOCALE } = Astro.props;
+const { platforms, showPublished = false, lang = DEFAULT_LOCALE } = Astro.props;
 
 const variantFor: Record<string, string> = {
   Mobile: 'cyan',
@@ -59,6 +66,19 @@ const variantFor: Record<string, string> = {
       </button>
     ))
   }
+  {
+    showPublished && (
+      <button
+        type="button"
+        class="filter-pill"
+        data-value="published"
+        data-variant="status"
+        aria-pressed="false"
+      >
+        {t('projectFilter.published', lang)}
+      </button>
+    )
+  }
 </div>
 
 <style>
@@ -87,15 +107,28 @@ const variantFor: Record<string, string> = {
   .filter-pill[aria-pressed='true'][data-variant='amber'] {
     @apply border-accent-3 text-accent-3;
   }
+  /* Status filter (Published) — picks up a subtle elevated background
+     when active so it reads as "different dimension" instead of just
+     another color-coded platform pill. */
+  .filter-pill[aria-pressed='true'][data-variant='status'] {
+    @apply border-text-100 text-text-100 bg-bg-elev;
+  }
 </style>
 
 <script>
-  type FilterValue = string; // 'all' | platform name
+  type FilterValue = string; // 'all' | platform name | 'published'
 
   function apply(filter: FilterValue) {
     const cards = document.querySelectorAll<HTMLElement>('[data-project-platform]');
     cards.forEach((card) => {
-      const match = filter === 'all' || card.dataset.projectPlatform === filter;
+      let match: boolean;
+      if (filter === 'all') {
+        match = true;
+      } else if (filter === 'published') {
+        match = card.dataset.projectPublished === 'true';
+      } else {
+        match = card.dataset.projectPlatform === filter;
+      }
       card.hidden = !match;
     });
     document.querySelectorAll<HTMLButtonElement>('[data-project-filter] .filter-pill').forEach((btn) => {
