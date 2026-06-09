@@ -15,7 +15,7 @@ gallery:
   - "../../assets/projects/brick-game/cover.png"
   - "../../assets/projects/brick-game/gallery/01.png"
   - "../../assets/projects/brick-game/gallery/02.png"
-youtubeId: "C_O8qqyZQSA"
+youtubeId: "8HeRix3L7K0"
 featured: true
 order: 2
 lang: tr
