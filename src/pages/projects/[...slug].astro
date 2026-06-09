@@ -39,10 +39,13 @@ const {
 const platformVariant =
   platform === 'Mobile' ? 'cyan' : platform === 'PC' ? 'magenta' : 'amber';
 
-const screenshots =
-  coverImage && !gallery.some((g) => g.src === coverImage.src)
-    ? [coverImage, ...gallery]
-    : gallery;
+// Cover image is the card hero only — it's a branded marketing asset, not
+// a screenshot, so it never belongs in the Screenshots grid (mixed aspect
+// ratios looked off, and most projects already list cover.png in `gallery`
+// from earlier data). Filter it out by `.src` if present.
+const screenshots = coverImage
+  ? gallery.filter((g) => g.src !== coverImage.src)
+  : gallery;
 ---
 
 <BaseLayout lang={lang} title={title} description={description}>
