@@ -1,0 +1,181 @@
+---
+/**
+ * BrickCrack için Gizlilik Politikası — TR mirror.
+ * EN versiyon /brickcrack-privacy adresinde; ASC kaydında EN link kullanılır.
+ * Bu sayfa, header'daki dil toggle'ı 404 vermesin ve Türkçe ziyaretçi
+ * politikaya kendi dilinde ulaşabilsin diye burada duruyor. Site
+ * navigasyonundan hiçbir yerden link verilmiyor.
+ */
+import BaseLayout from '@layouts/BaseLayout.astro';
+import { type Lang } from '@lib/i18n';
+
+const lang: Lang = 'tr';
+---
+
+<BaseLayout
+  lang={lang}
+  title="Gizlilik Politikası — BrickCrack"
+  description="Ekimoz Games'in mobil blok puzzle oyunu BrickCrack (iOS) / Brick Game (Android) için gizlilik politikası."
+>
+  <article class="max-w-3xl mx-auto px-6 py-16">
+    <header class="mb-10 border-b border-border pb-8">
+      <h1
+        class="font-mono font-semibold text-3xl sm:text-4xl text-text-100 tracking-wide"
+      >
+        Gizlilik Politikası — BrickCrack
+      </h1>
+      <p class="mt-3 text-text-300 font-mono text-xs uppercase tracking-widest">
+        Yürürlük tarihi: 9 Haziran 2026
+      </p>
+    </header>
+
+    <div class="prose-content space-y-4 text-text-200 leading-relaxed">
+      <p>
+        Bu Gizlilik Politikası, Türkiye'de yaşayan Yusuf Kaan Usta (Ekimoz Games)
+        tarafından geliştirilen <strong>BrickCrack</strong> (Google Play'de
+        <em>Brick Game</em> adıyla yayımlanır; birlikte "Uygulama", "biz", "bizim"),
+        iOS veya Android'de kullanıldığında bilgilerin nasıl işlendiğini açıklar.
+      </p>
+      <p>
+        Uygulamayı, hesap açmayı gerektirmeyecek ve mümkün olan en az bilgiyi
+        toplayacak şekilde tasarladık. İşlenen tek veri; Uygulamanın reklam, uygulama
+        içi satın alma ve mağaza dağıtımı için kullandığı üçüncü taraf servisler
+        üzerinden akar. Kendi kullanıcı veritabanımızı tutmuyoruz ve kendi sunucularımızda
+        birinci-taraf analytics çalıştırmıyoruz.
+      </p>
+
+      <h2>Toplanan bilgiler</h2>
+      <p>
+        Uygulama; sizden isim, e-posta, telefon numarası veya başka bir kimlik
+        belirleyici bilgi istemez. Aşağıdaki bilgiler Uygulamanın gömdüğü üçüncü
+        taraf servisler tarafından işlenir.
+      </p>
+      <ul>
+        <li>
+          <strong>Reklam tanımlayıcıları ve reklam sinyalleri.</strong> Uygulama,
+          interstitial ve rewarded reklamlar için LevelPlay (ironSource / Unity Ads)
+          kullanır. LevelPlay ve aracılık ettiği reklam ağları; cihazınızın reklam
+          tanımlayıcısına (iOS'ta IDFA, Android'de GAID), IP adresinizden türetilen
+          yaklaşık konuma, cihaz türüne, işletim sistemi sürümüne ve reklamla olan
+          etkileşim olaylarınıza erişebilir. iOS tarafında, tracking-enabled SDK'lar
+          IDFA'ya erişmeden önce Uygulama App Tracking Transparency izni ister ve
+          verdiğiniz cevaba uyulur.
+        </li>
+        <li>
+          <strong>Satın alma kayıtları.</strong> Uygulama içi bir satın alma
+          yaptığınızda işlemi Apple App Store ya da Google Play yürütür ve geri
+          olarak Uygulamaya yalnızca satın almayı açmak veya geri yüklemek için
+          gerekli olan makbuzu iletir. Kart numaranızı, fatura adresinizi veya
+          mağaza hesabı şifrenizi hiçbir zaman görmeyiz.
+        </li>
+        <li>
+          <strong>Çökme ve kararlılık verisi (platform varsayılanı).</strong>
+          Apple App Store Connect ve Google Play Console, Uygulamadan toplu çökme
+          loglarını toplayabilir. Bu, Uygulamanın açtığı bir seçenek değil;
+          platformun varsayılan davranışıdır.
+        </li>
+      </ul>
+
+      <h2>Bilgilerin kullanım amacı</h2>
+      <ul>
+        <li>Uygulama içinde reklam göstermek ve geliştirmesini finanse etmek (LevelPlay).</li>
+        <li>
+          Yaptığınız uygulama içi satın almaları açmak ve yeni cihazda geri
+          yüklemenize izin vermek (Apple App Store / Google Play Billing üzerinden
+          Unity IAP).
+        </li>
+        <li>Platform düzeyindeki çökme raporları gerçek bir hatayı işaret ettiğinde, hataları gidermek.</li>
+      </ul>
+      <p>
+        Kişisel bilgileri satmıyoruz veya kiralamıyoruz, Uygulama ile ilgili veriyi
+        BrickCrack'i işletmekle ilgisiz bir amaç için kullanmıyoruz.
+      </p>
+
+      <h2>Üçüncü taraf servisler</h2>
+      <p>
+        Uygulamanın bağlı olduğu üçüncü taraf servislerin, topladıkları veriyi nasıl
+        işlediklerine dair kendi gizlilik politikaları vardır:
+      </p>
+      <ul>
+        <li>
+          LevelPlay (ironSource / Unity Ads) —
+          <a href="https://www.is.com/privacy-policy/" target="_blank" rel="noopener">
+            https://www.is.com/privacy-policy/
+          </a>
+        </li>
+        <li>
+          Apple App Store / Apple In-App Purchase —
+          <a href="https://www.apple.com/legal/privacy/" target="_blank" rel="noopener">
+            https://www.apple.com/legal/privacy/
+          </a>
+        </li>
+        <li>
+          Google Play / Google Play Billing —
+          <a href="https://policies.google.com/privacy" target="_blank" rel="noopener">
+            https://policies.google.com/privacy
+          </a>
+        </li>
+        <li>
+          Unity (engine + IAP SDK) —
+          <a href="https://unity.com/legal/privacy-policy" target="_blank" rel="noopener">
+            https://unity.com/legal/privacy-policy
+          </a>
+        </li>
+      </ul>
+
+      <h2>Çocukların gizliliği</h2>
+      <p>
+        BrickCrack genel kitleye yönelik bir oyundur ve 13 yaşın altındaki çocuklara
+        doğrudan hitap etmez. Çocuklardan bilerek kişisel bilgi toplamayız. Bir
+        çocuğun Uygulama üzerinden kişisel bilgi sağladığını düşünüyorsanız, lütfen
+        aşağıdaki adresten bizimle iletişime geçin; üçüncü taraf sağlayıcılarımızla
+        çalışarak bilgiyi kaldırırız.
+      </p>
+
+      <h2>Haklarınız</h2>
+      <p>
+        Yaşadığınız yere göre (örneğin Avrupa Birliği, Birleşik Krallık, Türkiye,
+        Kaliforniya veya Brezilya), hakkınızdaki kişisel bilgilere erişme,
+        düzeltme, silme veya işlenmesini sınırlandırma ya da belirli veri
+        kullanımlarından çıkma haklarınız olabilir.
+      </p>
+      <ul>
+        <li>
+          LevelPlay veya diğer reklam ortaklarına karşı haklarınızı kullanmak için
+          yukarıda bağlantılı politikalarına bakın — alttaki toplamayı onlar
+          yürütür.
+        </li>
+        <li>Bize doğrudan ulaşmak için aşağıdaki adresi kullanabilirsiniz.</li>
+      </ul>
+      <p>
+        Kişiselleştirilmiş reklamları işletim sistemi düzeyinde de devre dışı
+        bırakabilirsiniz: <strong>iOS</strong> Ayarlar → Gizlilik ve Güvenlik →
+        İzleme; <strong>Android</strong> Ayarlar → Gizlilik → Reklamlar.
+      </p>
+
+      <h2>Veri saklama</h2>
+      <p>
+        Uygulama kendi kullanıcı veritabanını tutmadığı için bizim tarafımızda
+        saklanacak bir şey yoktur. Yukarıdaki üçüncü taraf servisler, veriyi kendi
+        politikalarına göre saklar.
+      </p>
+
+      <h2>Politika değişiklikleri</h2>
+      <p>
+        Uygulamanın veri uygulamaları değiştiğinde bu Gizlilik Politikasını
+        güncelleyebiliriz. Sayfanın üstündeki Yürürlük tarihi, son revizyonu
+        yansıtır. Önemli değişiklikler App Store listelemeleri üzerinden duyurulur.
+      </p>
+
+      <h2>İletişim</h2>
+      <p>
+        Bu politika ya da BrickCrack hakkında sorularınız için:
+      </p>
+      <p>
+        <strong>Yusuf Kaan Usta</strong> (Ekimoz Games)<br />
+        <a href="mailto:kaanekimoz@gmail.com">kaanekimoz@gmail.com</a><br />
+        Türkiye
+      </p>
+    </div>
+  </article>
+</BaseLayout>

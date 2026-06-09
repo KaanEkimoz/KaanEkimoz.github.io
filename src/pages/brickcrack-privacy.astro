@@ -1,0 +1,180 @@
+---
+/**
+ * Privacy Policy — BrickCrack (iOS) / Brick Game (Android)
+ *
+ * Standalone page linked from the App Store Connect / Google Play listings.
+ * Not linked from anywhere on the site nav by design. A TR mirror lives at
+ * /tr/brickcrack-privacy so the header's language toggle doesn't break for
+ * Turkish visitors who land here from a store listing.
+ */
+import BaseLayout from '@layouts/BaseLayout.astro';
+import { type Lang } from '@lib/i18n';
+
+const lang: Lang = 'en';
+---
+
+<BaseLayout
+  lang={lang}
+  title="Privacy Policy — BrickCrack"
+  description="Privacy policy for BrickCrack (iOS) / Brick Game (Android), the mobile block-puzzle by Ekimoz Games."
+>
+  <article class="max-w-3xl mx-auto px-6 py-16">
+    <header class="mb-10 border-b border-border pb-8">
+      <h1
+        class="font-mono font-semibold text-3xl sm:text-4xl text-text-100 tracking-wide"
+      >
+        Privacy Policy — BrickCrack
+      </h1>
+      <p class="mt-3 text-text-300 font-mono text-xs uppercase tracking-widest">
+        Effective date: June 9, 2026
+      </p>
+    </header>
+
+    <div class="prose-content space-y-4 text-text-200 leading-relaxed">
+      <p>
+        This Privacy Policy describes how <strong>BrickCrack</strong> (published as
+        <em>Brick Game</em> on Google Play; together, "the App", "we", "our",
+        or "us"), made by Yusuf Kaan Usta (Ekimoz Games), based in Türkiye, handles
+        information when you use the App on iOS or Android.
+      </p>
+      <p>
+        We designed the App to require no account and to collect as little
+        information as possible. The only data processed flows through third-party
+        services that the App relies on for ads, in-app purchases, and store
+        distribution. We do not maintain our own user database, and we do not run
+        any first-party analytics on our own servers.
+      </p>
+
+      <h2>Information collected</h2>
+      <p>
+        The App itself does not ask you for a name, email address, phone number,
+        or any other personally identifying information. The information below is
+        processed by the third-party services the App embeds.
+      </p>
+      <ul>
+        <li>
+          <strong>Advertising identifiers and ad signals.</strong> The App uses
+          LevelPlay (ironSource / Unity Ads) to serve interstitial and rewarded
+          ads. LevelPlay and the ad networks it mediates may access your device's
+          advertising identifier (IDFA on iOS, GAID on Android), an approximate
+          location derived from your IP address, device type, operating-system
+          version, and ad interaction events. On iOS, the App requests App Tracking
+          Transparency permission before any tracking-enabled SDK can read the
+          IDFA, and your answer is honored.
+        </li>
+        <li>
+          <strong>Purchase records.</strong> When you make an in-app purchase,
+          Apple App Store or Google Play handles the transaction and shares back
+          only the receipt the App needs to unlock or restore the purchase. We
+          never see your card number, billing address, or store-account password.
+        </li>
+        <li>
+          <strong>Crash and stability data (platform default).</strong> Apple App
+          Store Connect and Google Play Console may collect aggregated crash logs
+          from the App. This is platform behavior, not an opt-in by the App.
+        </li>
+      </ul>
+
+      <h2>How the information is used</h2>
+      <ul>
+        <li>To show ads inside the App and fund its development (LevelPlay).</li>
+        <li>
+          To unlock in-app purchases you have made and let you restore them on a
+          new device (Unity IAP via Apple App Store / Google Play Billing).
+        </li>
+        <li>
+          To fix bugs when platform-level crash reports surface a real problem.
+        </li>
+      </ul>
+      <p>
+        We do not sell or rent personal information, and we do not use App-related
+        data for any purpose unrelated to operating BrickCrack.
+      </p>
+
+      <h2>Third-party services</h2>
+      <p>
+        The third-party services the App relies on have their own privacy policies
+        that govern how they handle the data they collect:
+      </p>
+      <ul>
+        <li>
+          LevelPlay (ironSource / Unity Ads) —
+          <a href="https://www.is.com/privacy-policy/" target="_blank" rel="noopener">
+            https://www.is.com/privacy-policy/
+          </a>
+        </li>
+        <li>
+          Apple App Store / Apple In-App Purchase —
+          <a href="https://www.apple.com/legal/privacy/" target="_blank" rel="noopener">
+            https://www.apple.com/legal/privacy/
+          </a>
+        </li>
+        <li>
+          Google Play / Google Play Billing —
+          <a href="https://policies.google.com/privacy" target="_blank" rel="noopener">
+            https://policies.google.com/privacy
+          </a>
+        </li>
+        <li>
+          Unity (engine + IAP SDK) —
+          <a href="https://unity.com/legal/privacy-policy" target="_blank" rel="noopener">
+            https://unity.com/legal/privacy-policy
+          </a>
+        </li>
+      </ul>
+
+      <h2>Children's privacy</h2>
+      <p>
+        BrickCrack is intended for a general audience and is not directed at
+        children under the age of 13. We do not knowingly collect personal
+        information from children. If you believe a child has provided personal
+        information through the App, please contact us at the address below and we
+        will work with our third-party providers to remove it.
+      </p>
+
+      <h2>Your rights</h2>
+      <p>
+        Depending on where you live (for example the European Union, United
+        Kingdom, Türkiye, California, or Brazil), you may have rights to access,
+        correct, delete, or restrict the processing of personal information about
+        you, or to opt out of certain data uses.
+      </p>
+      <ul>
+        <li>
+          For rights against LevelPlay or other ad partners, refer to their
+          privacy policies linked above — they handle the underlying collection.
+        </li>
+        <li>To reach us directly, write to the contact address below.</li>
+      </ul>
+      <p>
+        You can also disable personalized advertising at the operating-system
+        level: <strong>iOS</strong> Settings → Privacy &amp; Security → Tracking, or
+        <strong>Android</strong> Settings → Privacy → Ads.
+      </p>
+
+      <h2>Data retention</h2>
+      <p>
+        Because the App does not maintain its own user database, there is nothing
+        for us to retain on our side. The third-party services listed above retain
+        data according to their own policies.
+      </p>
+
+      <h2>Changes to this policy</h2>
+      <p>
+        We may update this Privacy Policy when the App's data practices change.
+        The Effective date at the top of this page reflects the last revision.
+        Material changes will be announced through the App store listings.
+      </p>
+
+      <h2>Contact</h2>
+      <p>
+        For questions about this policy or about BrickCrack, please write to:
+      </p>
+      <p>
+        <strong>Yusuf Kaan Usta</strong> (Ekimoz Games)<br />
+        <a href="mailto:kaanekimoz@gmail.com">kaanekimoz@gmail.com</a><br />
+        Türkiye
+      </p>
+    </div>
+  </article>
+</BaseLayout>
