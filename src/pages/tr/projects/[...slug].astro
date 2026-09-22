@@ -102,12 +102,17 @@ const screenshots = coverImage
     </div>
 
     {
-      (links.github || links.youtube || links.googlePlay || links.itchio) && (
+      (links.website || links.github || links.youtube || links.googlePlay || links.appStore || links.itchio) && (
         <div class="mb-12">
           <div class="font-mono text-xs uppercase tracking-widest text-text-300 mb-3">
             {t('projectDetail.links', lang)}
           </div>
           <div class="flex flex-wrap gap-2">
+            {links.website && (
+              <Button href={links.website} variant="primary" external>
+                [ Siteyi Ziyaret Et ]
+              </Button>
+            )}
             {links.github && (
               <Button href={links.github} variant="secondary" external>
                 [ GitHub ]
@@ -121,6 +126,11 @@ const screenshots = coverImage
             {links.googlePlay && (
               <Button href={links.googlePlay} variant="secondary" external>
                 [ Play Store ]
+              </Button>
+            )}
+            {links.appStore && (
+              <Button href={links.appStore} variant="secondary" external>
+                [ App Store ]
               </Button>
             )}
             {links.itchio && (

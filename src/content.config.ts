@@ -22,7 +22,10 @@ const projects = defineCollection({
           github: z.string().url().optional(),
           youtube: z.string().url().optional(),
           googlePlay: z.string().url().optional(),
+          appStore: z.string().url().optional(),
           itchio: z.string().url().optional(),
+          // For non-game / SaaS entries — the live product URL.
+          website: z.string().url().optional(),
         })
         .default({}),
       featured: z.boolean().default(false),
