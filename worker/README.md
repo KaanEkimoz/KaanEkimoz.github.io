@@ -4,16 +4,24 @@
 Tarayıcı (kaanusta.dev/chat) → bu Worker (anahtar burada) → api.anthropic.com/v1/messages
 ```
 
-Anthropic API anahtarı ve sohbet parolası **yalnızca** Worker secret'larında durur.
-Repoda, commit geçmişinde ve sitenin JS'inde hiçbiri yok.
+Anthropic API anahtarı ve parolalar **yalnızca** Worker secret'larında durur.
+Repoda, commit geçmişinde ve sitenin JS'inde hiçbiri yok. Her kişinin kendi parolası
+var; sohbet geçmişi ve kişisel talimatlar Cloudflare D1'de kişi başına (şifresiz)
+saklanır ve cihazlar arasında eşitlenir.
 
 | Ayar | Nerede | Not |
 |---|---|---|
 | `ANTHROPIC_API_KEY` | `wrangler secret put` | Anthropic Console'dan |
-| `ACCESS_TOKEN` | `wrangler secret put` | Paylaşılan parola; uzun ve rastgele olsun |
+| `ACCESS_TOKEN` | `wrangler secret put` | "partner" kullanıcısının parolası |
+| `ACCESS_TOKEN_KAAN` | `wrangler secret put` | "kaan" kullanıcısının parolası |
+| D1 `kaanusta-chat` | `wrangler.toml` → `[[d1_databases]]` | Sohbetler + kişisel talimatlar; şema `migrations/` |
+| Web araması | `src/index.js` → `WEB_SEARCH_TOOL` | Sayfadaki "Web" düğmesiyle açılır; arama başına $0,01 |
+| `FILE_REF_SECRET` | `wrangler secret put` | Dosya referanslarını imzalayan rastgele anahtar; yoksa dosya yükleme kapalı |
 | `ALLOWED_ORIGINS` | `wrangler.toml` → `[vars]` | CORS listesi |
-| Rate limit | `wrangler.toml` → `[[ratelimits]]` | IP başına 20 istek / 60 sn |
-| Model, `max_tokens`, effort, system prompt | `src/index.js` en üstteki sabitler | İstemci değiştiremez |
+| Rate limit | `wrangler.toml` → `[[ratelimits]]` | IP başına 60 istek / 60 sn |
+| Seçilebilir modeller / güç seviyeleri | `src/index.js` → `MODELS`, `EFFORTS` | Sayfadaki liste `src/lib/constants.ts`'te; ikisini birlikte güncelle |
+| `max_tokens`, system prompt | `src/index.js` | İstemci değiştiremez |
+| Dosya ekleri | `src/index.js` → `UPLOAD_TYPES`, `MAX_UPLOAD_BYTES` | Görsel (JPEG/PNG/GIF/WebP), PDF, düz metin; en fazla 15 MB; 90 gün sonra otomatik silinir |
 | Mesaj sayısı / boyut sınırları | `src/index.js` → `MAX_*` | 60 mesaj, mesaj başına 20k, toplam 120k karakter |
 
 ## İlk kurulum
@@ -52,15 +60,59 @@ npx wrangler secret put ANTHROPIC_API_KEY
 npx wrangler secret put ACCESS_TOKEN
 ```
 
+Dosya yükleme için imza anahtarı (değeri kimsenin bilmesi gerekmez, rastgele üretilip doğrudan yüklenir):
+
+```bash
+openssl rand -base64 32 | npx wrangler secret put FILE_REF_SECRET
+```
+
 5. Sitede Worker adresi: `src/lib/constants.ts` → `CHAT_WORKER_URL` (şu an `https://kaanusta-chat.kaanekimoz.workers.dev`). Adres değişirse burayı güncelle, sonra normal akış: `dev/claude` → PR → `main` → GitHub Actions deploy.
 
 > **iCloud notu:** Repo `~/Documents` altında iCloud'a eşitleniyorsa ve dosyalar yerelde indirilmemişse `npx wrangler` takılır. O durumda `worker/` klasörünü iCloud dışına kopyalayıp (örn. `~/kaanusta-chat-worker`) komutları orada `npx -y wrangler@4 ...` ile çalıştır.
 
+6. Sohbet geçmişi veritabanı (bir kez):
+
+```bash
+npx wrangler d1 create kaanusta-chat
+```
+
+Çıkan `database_id`'yi `wrangler.toml`'a yaz, sonra şemayı uygula:
+
+```bash
+npx wrangler d1 migrations apply kaanusta-chat --remote
+```
+
+Yeni bir `migrations/000N_*.sql` eklendiğinde aynı komut yalnızca eksik olanları uygular.
+
+## Özellikler ve nerede durdukları
+
+| Özellik | Sayfada | Worker'da |
+|---|---|---|
+| Model / güç seçimi | Yazı kutusunun üstü | `MODELS`, `EFFORTS` |
+| Web araması + bağlantı okuma | "Web" düğmesi | `WEB_TOOLS` (arama başına $0,01; okuma ücretsiz, yalnızca token) |
+| Kod çalıştırma, dosya üretme (Excel/Word/PDF/grafik) | "Kod" düğmesi; Office dosyası eklenince kendiliğinden açılır | `CODE_TOOL`; çıktılar `outputs` tablosunda kişiye bağlı, `/outputs/<id>` ile iner. Ayda 1.550 konteyner-saati ücretsiz, sonra saatte $0,05 |
+| Hafıza | Menü → Hafıza (görüntüle/sil); Kişisel talimatlar → aç/kapa | `MEMORY_TOOL` + `runMemory()`; `memories` tablosu. Worker araç döngüsünü kendisi yürütür |
+| Projeler (kalıcı dosya + talimat) | Menüdeki proje seçici | `projects` tablosu; proje dosyaları süresiz, proje silinince silinir |
+| Uzun sohbet | ~120k token ya da 120 mesajda eski kısım otomatik özetlenir | `/compact` (Sonnet 5.5) |
+| Kullanım ve maliyet | Her yanıtın altında + altta bağlam göstergesi + menüde aylık toplam | `PRICES`; `usage` tablosu (tahmindir; kesin tutar Claude Console'da) |
+| Ana ekran uygulaması | Telefonda "Ana Ekrana Ekle" | `public/chat/` (manifest, simgeler, service worker; yalnızca `/chat/` kapsamı) |
+
+> **CPU notu:** Worker artık akışı okuyup araç döngüsünü kendisi yürüttüğü için istek başına biraz daha CPU harcıyor. Ücretsiz Workers planında (istek başına 10 ms CPU) uzun yanıtlarda `1102` hatası görülürse Workers Paid ($5/ay) planına geçmek yeterli.
+
 ## Sonraki değişiklikler
 
 - Worker kodunu/ayarını değiştirdin → `npx wrangler deploy`
-- Parolayı değiştir → `npx wrangler secret put ACCESS_TOKEN` (eski parolayla açık olan sayfa bir sonraki mesajda parolayı tekrar sorar)
+- Parolayı değiştir → `npx wrangler secret put ACCESS_TOKEN` (ya da `ACCESS_TOKEN_KAAN`); eski parolayla açık sayfa bir sonraki istekte parolayı tekrar sorar. Geçmiş kullanıcıya bağlı olduğu için parola değişse de kaybolmaz.
+- Veritabanını görmek → Cloudflare paneli → Storage & Databases → D1 → `kaanusta-chat` (sohbetler şifresiz saklanır)
 - Loglar (hata ayıklama; anahtar loglanmaz) → `npx wrangler tail`
+
+## Dosya ekleri
+
+- Dosyalar Anthropic Files API'ye yüklenir; mesajlarda yeniden gönderilmez, kimlikleriyle anılır.
+- Yüklenen dosyalar API anahtarının **bütün workspace'ine** açıktır. Bu yüzden sayfa çıplak `file_id` görmez: Worker `<file_id>.<imza>` verir ve yalnızca kendi imzaladığı referansları kabul eder. Bu sohbet için ayrı bir workspace ve o workspace'e ait bir API anahtarı kullanmak en temizidir.
+- Her dosya 90 gün sonra kendiliğinden silinir; sohbet silinince ekleri de hemen silinir. Süresi dolan ekler eski sohbette "süresi doldu" olarak görünür ve modele not olarak gider.
+- `FILE_REF_SECRET` değişirse eski eklerin referansları geçersiz olur; o sohbetler eklerle devam edemez.
+- Ekler her mesajda yeniden token olarak sayılır (büyük bir PDF onlarca bin token eder). Worker konuşmayı önbelleğe alarak (prompt caching) tekrarlanan kısmın maliyetini düşürür.
 
 ## Rate limiting
 

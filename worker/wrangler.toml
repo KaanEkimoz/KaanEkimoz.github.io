@@ -14,7 +14,8 @@ workers_dev = true
 # http://localhost:4321 temporarily, then remove it and redeploy.
 ALLOWED_ORIGINS = "https://kaanusta.dev,https://www.kaanusta.dev,https://kaanekimoz.github.io"
 
-# Per-IP rate limit: 20 requests per 60 seconds. Also throttles password
+# Per-IP rate limit: 60 requests per 60 seconds (opening the page syncs
+# history, so one visit makes a few requests). Also throttles password
 # guessing, since it runs before the token check. `namespace_id` is any
 # positive integer unique within your account.
 [[ratelimits]]
@@ -22,8 +23,16 @@ name = "RATE_LIMITER"
 namespace_id = "4101"
 
   [ratelimits.simple]
-  limit = 20
+  limit = 60
   period = 60
+
+# Per-user chat history and settings. Schema lives in migrations/; apply
+# with `npx wrangler d1 migrations apply kaanusta-chat --remote`.
+[[d1_databases]]
+binding = "DB"
+database_name = "kaanusta-chat"
+database_id = "e9da0476-502f-4673-a5f5-e17736a5957e"
+migrations_dir = "migrations"
 
 [observability]
 enabled = true

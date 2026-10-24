@@ -48,9 +48,9 @@ export const CHAT_MODELS = [
 ] as const;
 
 export const CHAT_EFFORTS = [
-  { id: 'low', label: 'Hızlı' },
-  { id: 'medium', label: 'Dengeli' },
-  { id: 'high', label: 'Derin' },
+  { id: 'low', label: 'Düşük' },
+  { id: 'medium', label: 'Orta' },
+  { id: 'high', label: 'Yüksek' },
 ] as const;
 
 // StatsCard rows. Labels render from i18n.ts (`stats.class`, etc.) so they
