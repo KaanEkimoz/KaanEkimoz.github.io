@@ -228,6 +228,9 @@ import '../styles/global.css';
         save(KEY_TOKEN_AT, String(Date.now()));
         tokenExpired = false;
       }
+      // Sent URL-encoded: headers only carry Latin-1, so a raw ö/ş/ğ/ı would
+      // be mangled or rejected. The Worker decodes and NFC-normalizes it.
+      const authHeader = (token: string) => `Bearer ${encodeURIComponent(token.normalize('NFC'))}`;
       function forgetToken() {
         remove(KEY_TOKEN);
         remove(KEY_TOKEN_AT);
@@ -418,7 +421,7 @@ import '../styles/global.css';
         gateSubmit.textContent = 'Kontrol ediliyor…';
         try {
           const res = await fetch(`${CHAT_WORKER_URL}/auth`, {
-            headers: { Authorization: `Bearer ${token}` },
+            headers: { Authorization: authHeader(token) },
           });
           if (res.status === 204) {
             rememberToken(token);
@@ -513,7 +516,7 @@ import '../styles/global.css';
         try {
           const res = await fetch(CHAT_WORKER_URL, {
             method: 'POST',
-            headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
+            headers: { Authorization: authHeader(token), 'Content-Type': 'application/json' },
             body: JSON.stringify({ messages: convo.messages }),
             signal: controller.signal,
           });

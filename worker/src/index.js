@@ -10,6 +10,7 @@
  * Secrets (set with `wrangler secret put`, never in code):
  *   ANTHROPIC_API_KEY  — Anthropic Console key
  *   ACCESS_TOKEN       — shared password the chat page sends as a Bearer token
+ *                        (URL-encoded, so Turkish letters like ö/ş survive)
  *
  * Vars (wrangler.toml):
  *   ALLOWED_ORIGINS    — comma-separated list of origins allowed by CORS
@@ -97,8 +98,8 @@ export default {
     }
 
     const auth = request.headers.get('Authorization') ?? '';
-    const token = auth.startsWith('Bearer ') ? auth.slice(7) : '';
-    if (!(await tokensMatch(token, env.ACCESS_TOKEN))) {
+    const token = auth.startsWith('Bearer ') ? decodeToken(auth.slice(7)) : '';
+    if (!(await tokensMatch(token, normalizeToken(env.ACCESS_TOKEN)))) {
       return json({ error: 'Parola hatalı.' }, 401, cors);
     }
 
@@ -264,6 +265,21 @@ function corsHeaders(origin, allowed) {
     'Access-Control-Max-Age': '86400',
     Vary: 'Origin',
   };
+}
+
+// HTTP headers can only carry Latin-1, so the page URL-encodes the password
+// (ö, ş, ğ, ı… arrive as %C3%B6 etc.). Both sides are NFC-normalized so a
+// decomposed "o + ¨" typed on macOS still matches a precomposed "ö".
+function decodeToken(value) {
+  let decoded = value;
+  try {
+    decoded = decodeURIComponent(value);
+  } catch {}
+  return normalizeToken(decoded);
+}
+
+function normalizeToken(value) {
+  return value.trim().normalize('NFC');
 }
 
 // Constant-time comparison. Hashing first makes both sides the same length,
