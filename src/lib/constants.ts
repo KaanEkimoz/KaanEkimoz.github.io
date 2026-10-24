@@ -42,9 +42,9 @@ export const CHAT_WORKER_URL = 'https://kaanusta-chat.kaanekimoz.workers.dev';
 // (MODELS / EFFORTS in worker/src/index.js) and rejects anything else, so
 // add a model in both places. First entry is the default.
 export const CHAT_MODELS = [
-  { id: 'claude-opus-5-5', label: 'Opus 5.5 · en güçlü' },
-  { id: 'claude-sonnet-5-5', label: 'Sonnet 5.5 · hızlı ve güçlü' },
-  { id: 'claude-haiku-5-5', label: 'Haiku 5.5 · en hızlı' },
+  { id: 'claude-opus-5-5', label: 'Opus 5.5', hint: 'En güçlü' },
+  { id: 'claude-sonnet-5-5', label: 'Sonnet 5.5', hint: 'Hızlı ve güçlü' },
+  { id: 'claude-haiku-5-5', label: 'Haiku 5.5', hint: 'En hızlı, en ucuz' },
 ] as const;
 
 export const CHAT_EFFORTS = [
