@@ -40,8 +40,8 @@
  *   GET    /convos/<id>          → { id, title, updatedAt, projectId, conversation }
  *   PUT    /convos/<id>          → save (raw conversation JSON body, see saveConvo)
  *   DELETE /convos/<id>          → delete
- *   GET    /settings             → { instructions, memory }
- *   PUT    /settings             → save { instructions, memory }
+ *   GET    /settings             → { name, instructions, memory }
+ *   PUT    /settings             → save any of { name, instructions, memory }
  *   GET    /projects             → { items: [project] }
  *   PUT    /projects/<id>        → save { name, instructions, files }
  *   DELETE /projects/<id>        → delete (and its files)
@@ -167,6 +167,7 @@ const MAX_ATTACHMENTS_PER_MESSAGE = 5;
 const MAX_ATTACHMENTS_TOTAL = 30; // attachments are re-sent every turn
 const MAX_CONVO_BYTES = 1_500_000; // one saved conversation (D1 rows top out at 2 MB)
 const MAX_INSTRUCTIONS_CHARS = 2_000;
+const MAX_NAME_CHARS = 40;
 const MAX_PROJECT_INSTRUCTIONS_CHARS = 4_000;
 const MAX_PROJECT_FILES = 10;
 const MAX_MEMORY_FILES = 50;
@@ -489,7 +490,7 @@ async function runTurn(req, user, env, ctx, cors) {
   const body = {
     model: req.model,
     max_tokens: EFFORTS[req.effort],
-    system: systemPrompt(settings.instructions, req, memoryOn ? await memoryFiles(user, env) : null),
+    system: systemPrompt(settings, req, memoryOn ? await memoryFiles(user, env) : null),
     messages: req.messages,
     // Thinking stays adaptive; "summarized" lets the page show what the
     // model was thinking about (the raw chain of thought is never sent).
@@ -753,12 +754,13 @@ function upstreamError(status) {
 
 // ─── Prompt ────────────────────────────────────────────────────────────────
 
-function systemPrompt(instructions, req, memory) {
+function systemPrompt({ name, instructions }, req, memory) {
   const today = new Intl.DateTimeFormat('tr-TR', {
     dateStyle: 'full',
     timeZone: 'Europe/Istanbul',
   }).format(new Date());
   const parts = [SYSTEM_PROMPT, `Today is ${today} (Europe/Istanbul).`];
+  if (name) parts.push(`The person you're talking to is called ${name}.`);
 
   if (req.web) {
     parts.push('You can search the web and read web pages. Use them for anything current or when the person shares a link.');
@@ -980,9 +982,11 @@ async function saveConvo(request, user, id, url, env, cors) {
 // ─── Settings (D1) ─────────────────────────────────────────────────────────
 
 async function loadSettings(user, env) {
-  if (!env.DB) return { instructions: '', memory: false };
-  const row = await env.DB.prepare('SELECT instructions, memory_enabled FROM settings WHERE user = ?').bind(user).first();
-  return { instructions: row?.instructions ?? '', memory: (row?.memory_enabled ?? 1) === 1 };
+  if (!env.DB) return { name: '', instructions: '', memory: false };
+  const row = await env.DB.prepare('SELECT display_name, instructions, memory_enabled FROM settings WHERE user = ?')
+    .bind(user)
+    .first();
+  return { name: row?.display_name ?? '', instructions: row?.instructions ?? '', memory: (row?.memory_enabled ?? 1) === 1 };
 }
 
 async function saveSettings(request, user, env, cors) {
@@ -995,17 +999,22 @@ async function saveSettings(request, user, env, cors) {
   const current = await loadSettings(user, env);
   const instructions = typeof data?.instructions === 'string' ? data.instructions.trim() : current.instructions;
   const memory = typeof data?.memory === 'boolean' ? data.memory : current.memory;
+  // A name, not a prompt: one line, no markup.
+  const name = typeof data?.name === 'string' ? data.name.replace(/[\s<>]+/g, ' ').trim() : current.name;
   if (instructions.length > MAX_INSTRUCTIONS_CHARS) {
     return json({ error: `Talimatlar en fazla ${MAX_INSTRUCTIONS_CHARS} karakter olabilir.` }, 413, cors);
   }
+  if (name.length > MAX_NAME_CHARS) {
+    return json({ error: `Ad en fazla ${MAX_NAME_CHARS} karakter olabilir.` }, 413, cors);
+  }
   await env.DB.prepare(
-    `INSERT INTO settings (user, instructions, memory_enabled, updated_at) VALUES (?, ?, ?, ?)
-     ON CONFLICT (user) DO UPDATE SET instructions = excluded.instructions,
+    `INSERT INTO settings (user, display_name, instructions, memory_enabled, updated_at) VALUES (?, ?, ?, ?, ?)
+     ON CONFLICT (user) DO UPDATE SET display_name = excluded.display_name, instructions = excluded.instructions,
        memory_enabled = excluded.memory_enabled, updated_at = excluded.updated_at`,
   )
-    .bind(user, instructions, memory ? 1 : 0, Date.now())
+    .bind(user, name, instructions, memory ? 1 : 0, Date.now())
     .run();
-  return json({ instructions, memory }, 200, cors);
+  return json({ name, instructions, memory }, 200, cors);
 }
 
 // ─── Projects (D1) ─────────────────────────────────────────────────────────
