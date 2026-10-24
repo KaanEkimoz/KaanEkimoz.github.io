@@ -31,6 +31,7 @@ npm install
 npm run dev              # http://localhost:4321
 npm run dev -- --host    # also expose on LAN for phone testing
 npm run build            # production build to dist/
+npm run check            # type-check .astro / .ts files
 npm run preview          # serve the production build locally
 ```
 
@@ -46,13 +47,15 @@ src/
     portrait.png
   components/     # Header, Footer, Hero, ProjectCard, ProjectModal, ...
   layouts/        # BaseLayout (head, nav, footer)
-  pages/          # EN routes (index, projects, blog, chat, privacy pages)
+  views/          # page bodies shared by the EN and TR routes (take a `lang` prop)
+  pages/          # EN routes — thin wrappers around views/ (+ chat, privacy pages)
     tr/           # TR mirror of the public routes
   styles/
     global.css    # CSS variables, @layer components, prose styles
   lib/
     constants.ts  # site + social + nav + stats + chat settings
     i18n.ts       # EN / TR UI strings and path helpers
+    content.ts    # collection queries (per-locale, sorted) + slug helper
 public/
   favicon.svg
   og-image.jpg

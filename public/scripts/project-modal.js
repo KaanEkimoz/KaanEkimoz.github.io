@@ -28,7 +28,6 @@
     if (!isOpen) return;
     if (updateUrl === undefined) updateUrl = true;
     var modal = $('project-modal');
-    var contentEl = $('project-modal-content');
     if (modal) modal.classList.remove('is-open');
     document.documentElement.classList.remove('modal-open');
     isOpen = false;

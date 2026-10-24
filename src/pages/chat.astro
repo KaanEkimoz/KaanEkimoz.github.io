@@ -1946,7 +1946,7 @@ import { CHAT_EFFORTS, CHAT_MODELS } from '@lib/constants';
       // Expired files are swapped for a note so old chats keep working.
       function toApiMessage(m: Message): { role: Role; content: string | Record<string, string>[] } {
         if (!m.attachments?.length) return { role: m.role, content: m.content };
-        const blocks: Record<string, string>[] = m.attachments.map((a) =>
+        const blocks = m.attachments.map((a): Record<string, string> =>
           isExpired(a)
             ? { type: 'text', text: `[Ek: ${a.name} — süresi dolduğu için artık kullanılamıyor]` }
             : a.kind === 'image'
@@ -2206,7 +2206,8 @@ import { CHAT_EFFORTS, CHAT_MODELS } from '@lib/constants';
 
       // Parse a text/event-stream body into JSON event objects.
       async function* readSSE(body: ReadableStream<Uint8Array>) {
-        const reader = body.pipeThrough(new TextDecoderStream()).getReader();
+        // Cast: TS's DOM lib types TextDecoderStream's input too narrowly.
+        const reader = body.pipeThrough(new TextDecoderStream() as TransformStream<Uint8Array, string>).getReader();
         let buffer = '';
         while (true) {
           const { value, done } = await reader.read();

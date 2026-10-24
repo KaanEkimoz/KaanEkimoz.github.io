@@ -18,6 +18,7 @@ Astro 5 static site + content collections, Tailwind CSS (theme via CSS variables
 npm ci
 npm run dev      # http://localhost:4321
 npm run build    # dist/
+npm run check    # astro check (types) — keep it at 0 errors
 ```
 
 ## Branches, PRs, deploy
@@ -41,8 +42,8 @@ npm run build    # dist/
 /rss.xml, /tr/rss.xml
 ```
 
-- **i18n:** EN at `/…` (default, no prefix), TR at `/tr/…`. Strings + helpers in `src/lib/i18n.ts` (`t`, `localizedPath`, `alternateUrl`, `langFromPath`). `LanguageToggle` remembers the choice in `localStorage.fx-lang`; the pre-paint redirect in `BaseLayout` only runs on the root paths.
-- **Content files:** EN `foo.md`, TR `foo-tr.md` (dash, not dot — Astro strips dots from ids). Slug pages drop the `-tr` suffix so both languages share one slug. Schemas in `src/content.config.ts` (`lang`, `published`, `featured`, `youtubeId`, `coverImage`, `gallery`…).
+- **i18n:** EN at `/…` (default, no prefix), TR at `/tr/…`. Strings + helpers in `src/lib/i18n.ts` (`t`, `localizedPath`, `alternateUrl`). Page bodies live once in `src/views/*.astro` and take a `lang` prop; `src/pages/…` and `src/pages/tr/…` are thin wrappers, so a page change is made in the view, not twice. `LanguageToggle` remembers the choice in `localStorage.fx-lang`; the pre-paint redirect in `BaseLayout` only runs on the root paths.
+- **Content files:** EN `foo.md`, TR `foo-tr.md` (dash, not dot — Astro strips dots from ids). Slug pages drop the `-tr` suffix (`slugOf` in `src/lib/content.ts`) so both languages share one slug; `getProjects(lang)` / `getPosts(lang)` there return a locale's entries already filtered and sorted. Schemas in `src/content.config.ts` (`lang`, `published`, `featured`, `youtubeId`, `coverImage`, `gallery`…).
 - **Theme:** design tokens in `src/styles/global.css` are **space-separated RGB triplets** (`--accent-1: 0 217 255`) so Tailwind's `rgb(var(--x) / <alpha-value>)` works. Dark in `:root`, light in `html[data-theme='light']`. Don't put hex values back into `tailwind.config.mjs`. In canvas/inline styles wrap tokens with `rgb(...)`.
 - **Key components:** `BaseLayout` (head, pre-paint theme + language scripts, hreflang), `HeroCanvas` (target mini-game), `ProjectFilter`, `ProjectCard`, `ProjectModal`, `LiteYouTube`, `CustomCursor` (hides over iframes), `ThemeToggle`, `LanguageToggle`.
 - **Images:** put content images in `src/assets/` (Astro optimizes them); `public/` is served as-is. Keep big PNGs under ~2 MB.

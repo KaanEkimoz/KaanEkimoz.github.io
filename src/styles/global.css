@@ -166,7 +166,7 @@ html[data-theme='light'] {
     border: 0;
   }
 
-  /* Prose content — shared between project detail pages and the modal */
+  /* Prose content — blog posts, project detail pages and the modal */
   .prose-content h2 {
     @apply font-mono text-text-100 text-xl mt-10 mb-4 uppercase tracking-widest;
   }
@@ -184,6 +184,9 @@ html[data-theme='light'] {
   }
   .prose-content strong {
     @apply text-text-100;
+  }
+  .prose-content em {
+    @apply text-text-100 italic;
   }
   .prose-content a {
     @apply text-accent-1 hover:underline underline-offset-4;
