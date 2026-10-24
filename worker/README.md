@@ -36,7 +36,7 @@ npx wrangler login
 npx wrangler deploy
 ```
 
-3. Parolayı üret ya da kendin belirle (en az 12–16 karakter; **ş, ğ, ı, İ, Ş, Ğ ve emoji kullanma**, tarayıcı bunları HTTP başlığında gönderemez; başta/sonda boşluk olmasın). Sevgiline güvenli bir kanaldan ilet:
+3. Parolayı üret ya da kendin belirle (en az 12–16 karakter; Türkçe harfler olur, başta/sonda boşluk olmasın). Sevgiline güvenli bir kanaldan ilet:
 
 ```bash
 openssl rand -base64 24
