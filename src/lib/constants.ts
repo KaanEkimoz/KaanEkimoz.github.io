@@ -33,6 +33,11 @@ export const SOCIAL = {
   itchio: 'https://ekimozkaan.itch.io',
 } as const;
 
+// Cloudflare Worker that proxies /chat to the Anthropic API (see worker/).
+// Public URL only — the API key and the chat password live in the Worker's
+// secrets, never here.
+export const CHAT_WORKER_URL = 'https://kaanusta-chat.kaanekimoz.workers.dev';
+
 // StatsCard rows. Labels render from i18n.ts (`stats.class`, etc.) so they
 // translate per locale; values are short proper-noun strings that stay
 // identical across languages ("Unity", "Mobile", "Türkiye", "6+ years").

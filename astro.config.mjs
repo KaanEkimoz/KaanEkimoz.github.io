@@ -21,6 +21,8 @@ export default defineConfig({
       applyBaseStyles: false,
     }),
     sitemap({
+      // /chat is a private page — keep it out of the sitemap.
+      filter: (page) => !page.includes('/chat'),
       // Tell crawlers which pages are translations of which, so EN and TR
       // versions don't get treated as duplicates.
       i18n: {
