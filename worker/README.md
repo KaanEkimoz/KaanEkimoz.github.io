@@ -15,14 +15,14 @@ saklanır ve cihazlar arasında eşitlenir.
 | `ACCESS_TOKEN` | `wrangler secret put` | "partner" kullanıcısının parolası |
 | `ACCESS_TOKEN_KAAN` | `wrangler secret put` | "kaan" kullanıcısının parolası |
 | D1 `kaanusta-chat` | `wrangler.toml` → `[[d1_databases]]` | Sohbetler + kişisel talimatlar; şema `migrations/` |
-| Web araması | `src/index.js` → `WEB_SEARCH_TOOL` | Sayfadaki "Web" düğmesiyle açılır; arama başına $0,01 |
+| Web araması | `src/index.js` → `WEB_TOOLS` | Sayfadaki "Web" düğmesiyle açılır; arama başına $0,01 |
 | `FILE_REF_SECRET` | `wrangler secret put` | Dosya referanslarını imzalayan rastgele anahtar; yoksa dosya yükleme kapalı |
 | `ALLOWED_ORIGINS` | `wrangler.toml` → `[vars]` | CORS listesi |
 | Rate limit | `wrangler.toml` → `[[ratelimits]]` | IP başına 60 istek / 60 sn |
 | Seçilebilir modeller / güç seviyeleri | `src/index.js` → `MODELS`, `EFFORTS` | Sayfadaki liste `src/lib/constants.ts`'te; ikisini birlikte güncelle |
 | `max_tokens`, system prompt | `src/index.js` | İstemci değiştiremez |
 | Dosya ekleri | `src/index.js` → `UPLOAD_TYPES`, `MAX_UPLOAD_BYTES` | Görsel (JPEG/PNG/GIF/WebP), PDF, düz metin; en fazla 15 MB; 90 gün sonra otomatik silinir |
-| Mesaj sayısı / boyut sınırları | `src/index.js` → `MAX_*` | 60 mesaj, mesaj başına 20k, toplam 120k karakter |
+| Mesaj sayısı / boyut sınırları | `src/index.js` → `MAX_*` | 200 mesaj, mesaj başına 30k, toplam 400k karakter; mesaj başına 5, toplam 30 ek |
 
 ## İlk kurulum
 
@@ -58,6 +58,10 @@ npx wrangler secret put ANTHROPIC_API_KEY
 
 ```bash
 npx wrangler secret put ACCESS_TOKEN
+```
+
+```bash
+npx wrangler secret put ACCESS_TOKEN_KAAN
 ```
 
 Dosya yükleme için imza anahtarı (değeri kimsenin bilmesi gerekmez, rastgele üretilip doğrudan yüklenir):
@@ -132,7 +136,7 @@ Worker'ı Cloudflare'de yönetilen bir alan adına bağlamak gerekir.
 - [ ] Yabancı origin 403 döner: `curl -i -X POST URL -H "Origin: https://example.com"`
 - [ ] Akış çalışır (SSE satırları peş peşe gelir):
   `curl -N -X POST URL -H "Authorization: Bearer PAROLA" -H "Content-Type: application/json" -d '{"messages":[{"role":"user","content":"Merhaba"}]}'`
-- [ ] İstemcinin gönderdiği `model` / `max_tokens` yok sayılır (yanıttaki `message_start` → `"model":"claude-opus-5-5"`)
+- [ ] Listede olmayan `model` 400 döner; `max_tokens` istemciden alınmaz (model belirtilmezse yanıttaki `message_start` → `"model":"claude-opus-5-5"`)
 - [ ] `kaanusta.dev/chat`: yanlış parola hata gösterir, doğrusu sohbeti açar
 - [ ] Yanıt akarak gelir; Durdur butonu yarıda keser, "Durduruldu." notu çıkar
 - [ ] Sayfayı yenile: parola ve sohbet geçmişi duruyor

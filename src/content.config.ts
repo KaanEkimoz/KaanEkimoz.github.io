@@ -41,7 +41,7 @@ const projects = defineCollection({
       youtubeId: z.string().optional(),
       order: z.number().optional(),
       // Locale of this entry. Files without a frontmatter value default to
-      // English; Turkish entries set `lang: tr` (paired with a `.tr.md`
+      // English; Turkish entries set `lang: tr` (paired with a `-tr.md`
       // filename so the id stays distinct from the English counterpart).
       lang: z.enum(['en', 'tr']).default('en'),
     }),
@@ -62,7 +62,7 @@ const blog = defineCollection({
       heroImage: image().optional(),
       draft: z.boolean().default(false),
       // Locale of this post. Defaults to English; Turkish posts use a
-      // `.tr.md` filename and set `lang: tr` so the page can pair them
+      // `-tr.md` filename and set `lang: tr` so the page can pair them
       // with the English counterpart for the language toggle.
       lang: z.enum(['en', 'tr']).default('en'),
     }),

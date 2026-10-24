@@ -4,15 +4,17 @@ Personal portfolio and blog for **Kaan Usta** — game developer, Unity / C#, mo
 
 **Live:** [kaanusta.dev](https://kaanusta.dev)
 
-![kaanusta.dev](public/og-image.png)
+![kaanusta.dev](public/og-image.jpg)
 
 ## Highlights
 
 - ⚡ **Lighthouse 100 / 100 / 100 / 100** on both mobile and desktop (Performance, Accessibility, Best Practices, SEO)
-- 🎮 Six game projects with cover + gallery + lazy-embedded YouTube trailers
+- 🎮 Seven projects (six games + Patimania) with cover + gallery + lazy-embedded YouTube trailers
 - 🪟 Project modal that fetches and injects detail pages over the home view, with full deep-link + View Transitions support
 - 🎨 Custom CSS parallax hero, scroll-in animations, optional crosshair cursor and 8-bit Web Audio sound FX
 - 🌙 Dark-first design with a small cyan / magenta / amber accent palette
+- 🌍 English at `/`, Turkish mirror at `/tr/`
+- 💬 Private, password-protected Claude chat at `/chat` (see [Chat](#chat))
 
 ## Stack
 
@@ -43,30 +45,38 @@ src/
     projects/     # per-project cover + gallery images
     portrait.png
   components/     # Header, Footer, Hero, ProjectCard, ProjectModal, ...
-  layouts/        # BaseLayout (head, nav, footer), ProjectLayout
-  pages/          # routes (index, projects, blog)
+  layouts/        # BaseLayout (head, nav, footer)
+  pages/          # EN routes (index, projects, blog, chat, privacy pages)
+    tr/           # TR mirror of the public routes
   styles/
     global.css    # CSS variables, @layer components, prose styles
   lib/
-    constants.ts  # site + social + nav + stats
+    constants.ts  # site + social + nav + stats + chat settings
+    i18n.ts       # EN / TR UI strings and path helpers
 public/
   favicon.svg
-  og-image.png
+  og-image.jpg
+  chat/           # /chat PWA manifest, icons, service worker
   scripts/        # is:inline JS (project modal)
+  drawrush-privacy/
 scripts/
   og-image.svg    # source for the OG image — regenerate with sharp
+  chat-icon.svg   # source for the /chat app icons
+worker/           # Cloudflare Worker behind /chat (deployed separately)
 ```
 
 ## Adding a project
 
 1. Drop cover + gallery images under `src/assets/projects/<slug>/` (cover.png, gallery/01.png, ...)
-2. Create `src/content/projects/<slug>.md` — match the frontmatter schema defined in `src/content.config.ts` (title, platform, genres, year, duration, role, description, techStack, links, coverImage, gallery, youtubeId, featured, order)
-3. `npm run build` — the schema validates everything at build time
+2. Create `src/content/projects/<slug>.md` — match the frontmatter schema defined in `src/content.config.ts` (title, platform, genres, year, duration, role, description, techStack, links, coverImage, gallery, youtubeId, featured, published, order)
+3. Create the Turkish mirror `src/content/projects/<slug>-tr.md` with `lang: tr`
+4. `npm run build` — the schema validates everything at build time
 
 ## Adding a blog post
 
 1. Create `src/content/blog/<slug>.md` with title / description / pubDate / tags
 2. Write in Markdown (or MDX if you need components)
+3. Add the Turkish mirror `src/content/blog/<slug>-tr.md` (or `.mdx`) with `lang: tr`
 
 ## Regenerating the OG image
 
@@ -75,6 +85,10 @@ Edit `scripts/og-image.svg`, then:
 ```sh
 node -e "require('sharp')(require('fs').readFileSync('scripts/og-image.svg')).flatten({background:'#0a0a14'}).jpeg({quality:88,mozjpeg:true}).toFile('public/og-image.jpg')"
 ```
+
+## Chat
+
+`/chat` is a private page (noindex, kept out of the sitemap). The page lives in `src/pages/chat.astro` and talks to a Cloudflare Worker in `worker/`, which holds the Anthropic API key and the passwords. The Worker is deployed separately with `npx wrangler deploy` — setup, secrets and the database are documented in [`worker/README.md`](worker/README.md).
 
 ## Deployment
 
