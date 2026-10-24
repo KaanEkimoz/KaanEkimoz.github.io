@@ -82,6 +82,23 @@ npx wrangler d1 create kaanusta-chat
 npx wrangler d1 migrations apply kaanusta-chat --remote
 ```
 
+Yeni bir `migrations/000N_*.sql` eklendiğinde aynı komut yalnızca eksik olanları uygular.
+
+## Özellikler ve nerede durdukları
+
+| Özellik | Sayfada | Worker'da |
+|---|---|---|
+| Model / güç seçimi | Yazı kutusunun üstü | `MODELS`, `EFFORTS` |
+| Web araması + bağlantı okuma | "Web" düğmesi | `WEB_TOOLS` (arama başına $0,01; okuma ücretsiz, yalnızca token) |
+| Kod çalıştırma, dosya üretme (Excel/Word/PDF/grafik) | "Kod" düğmesi; Office dosyası eklenince kendiliğinden açılır | `CODE_TOOL`; çıktılar `outputs` tablosunda kişiye bağlı, `/outputs/<id>` ile iner. Ayda 1.550 konteyner-saati ücretsiz, sonra saatte $0,05 |
+| Hafıza | Menü → Hafıza (görüntüle/sil); Kişisel talimatlar → aç/kapa | `MEMORY_TOOL` + `runMemory()`; `memories` tablosu. Worker araç döngüsünü kendisi yürütür |
+| Projeler (kalıcı dosya + talimat) | Menüdeki proje seçici | `projects` tablosu; proje dosyaları süresiz, proje silinince silinir |
+| Uzun sohbet | ~120k token ya da 120 mesajda eski kısım otomatik özetlenir | `/compact` (Sonnet 5.5) |
+| Kullanım ve maliyet | Her yanıtın altında + altta bağlam göstergesi + menüde aylık toplam | `PRICES`; `usage` tablosu (tahmindir; kesin tutar Claude Console'da) |
+| Ana ekran uygulaması | Telefonda "Ana Ekrana Ekle" | `public/chat/` (manifest, simgeler, service worker; yalnızca `/chat/` kapsamı) |
+
+> **CPU notu:** Worker artık akışı okuyup araç döngüsünü kendisi yürüttüğü için istek başına biraz daha CPU harcıyor. Ücretsiz Workers planında (istek başına 10 ms CPU) uzun yanıtlarda `1102` hatası görülürse Workers Paid ($5/ay) planına geçmek yeterli.
+
 ## Sonraki değişiklikler
 
 - Worker kodunu/ayarını değiştirdin → `npx wrangler deploy`

@@ -25,6 +25,13 @@ import { CHAT_EFFORTS, CHAT_MODELS } from '@lib/constants';
     <meta name="theme-color" content="#0a0a14" />
     <title>Sohbet</title>
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    {/* Installable app, scoped to /chat/ only (see public/chat/). */}
+    <link rel="manifest" href="/chat/manifest.webmanifest" />
+    <link rel="apple-touch-icon" href="/chat/apple-touch-icon.png" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-title" content="Sohbet" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
 
     {/* Same pre-paint theme setter as BaseLayout, so /chat follows the
         visitor's saved dark/light choice without a flash. */}
@@ -55,7 +62,7 @@ import { CHAT_EFFORTS, CHAT_MODELS } from '@lib/constants';
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M3 6h18M3 12h18M3 18h18" /></svg>
         </button>
         <span class="font-mono text-xs uppercase tracking-widest text-text-100 truncate">
-          <span class="text-accent-1">◆</span> Sohbet
+          <span class="text-accent-1">◆</span> Sohbet<span id="project-label" class="project-label" hidden></span>
         </span>
         <div class="ml-auto flex items-center gap-2">
           <button id="new-btn" type="button" class="pill-btn">
@@ -93,6 +100,10 @@ import { CHAT_EFFORTS, CHAT_MODELS } from '@lib/constants';
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="12" cy="12" r="9" /><path d="M3 12h18M12 3a14 14 0 0 1 0 18M12 3a14 14 0 0 0 0 18" /></svg>
             <span>Web</span>
           </button>
+          <button id="code-btn" type="button" class="toggle-btn" aria-pressed="false" title="Kod çalıştırsın, dosya üretsin (Excel, Word, PDF, grafik)">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M8 7l-5 5 5 5M16 7l5 5-5 5" /></svg>
+            <span>Kod</span>
+          </button>
         </div>
         <div id="attach-tray" class="max-w-3xl mx-auto px-4 pt-2 flex flex-wrap gap-2" hidden></div>
         <form id="composer" class="max-w-3xl mx-auto px-4 pt-2 pb-3 flex items-end gap-2">
@@ -103,9 +114,12 @@ import { CHAT_EFFORTS, CHAT_MODELS } from '@lib/constants';
             id="file-input"
             type="file"
             multiple
-            accept="image/png,image/jpeg,image/gif,image/webp,application/pdf,text/plain,.txt,.md,.csv,.json"
+            accept="image/png,image/jpeg,image/gif,image/webp,application/pdf,text/plain,.txt,.md,.csv,.json,.xlsx,.xls,.docx,.pptx"
             hidden
           />
+          <button id="mic-btn" type="button" class="action-btn action-btn--ghost" aria-label="Sesle yaz" aria-pressed="false" title="Sesle yaz" hidden>
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><rect x="9" y="3" width="6" height="11" rx="3" /><path d="M5 11a7 7 0 0 0 14 0M12 18v3" /></svg>
+          </button>
           <label for="input" class="sr-only">Mesaj</label>
           <textarea
             id="input"
@@ -121,9 +135,10 @@ import { CHAT_EFFORTS, CHAT_MODELS } from '@lib/constants';
             <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><rect x="5" y="5" width="14" height="14" /></svg>
           </button>
         </form>
-        <p class="max-w-3xl mx-auto px-4 pb-2 -mt-1 text-[11px] font-mono text-text-300 hidden sm:block">
-          Enter gönderir · Shift+Enter yeni satır · Dosyayı sürükleyip bırakabilir ya da yapıştırabilirsin
-        </p>
+        <div class="max-w-3xl mx-auto px-4 pb-2 -mt-1 flex justify-between gap-3 text-[11px] font-mono text-text-300">
+          <span class="hidden sm:inline">Enter gönderir · Shift+Enter yeni satır · Dosya sürükle ya da yapıştır</span>
+          <span id="meter" class="meter ml-auto" title="Bağlam: modelin bu sohbette okuduğu toplam token. Ücret tahminidir."></span>
+        </div>
       </footer>
     </div>
 
@@ -141,7 +156,14 @@ import { CHAT_EFFORTS, CHAT_MODELS } from '@lib/constants';
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18" /></svg>
         </button>
       </div>
-      <div class="px-4 pt-3 shrink-0">
+      <div class="px-4 pt-3 shrink-0 flex gap-2">
+        <label class="picker picker--grow">
+          <span class="sr-only">Proje</span>
+          <select id="project-select"></select>
+        </label>
+        <button id="project-edit-btn" type="button" class="pill-btn" hidden>Düzenle</button>
+      </div>
+      <div class="px-4 pt-2 shrink-0">
         <label for="convo-search" class="sr-only">Başlıklarda ara</label>
         <input
           id="convo-search"
@@ -154,10 +176,12 @@ import { CHAT_EFFORTS, CHAT_MODELS } from '@lib/constants';
       <ul id="convo-list" class="flex-1 overflow-y-auto py-2"></ul>
       <div class="p-4 border-t border-border space-y-2 shrink-0">
         <button id="settings-btn" type="button" class="w-full pill-btn justify-center">Kişisel talimatlar</button>
+        <button id="memory-btn" type="button" class="w-full pill-btn justify-center">Hafıza</button>
         <button id="export-btn" type="button" class="w-full pill-btn justify-center">Bu sohbeti indir (.md)</button>
         <button id="clear-btn" type="button" class="w-full pill-btn justify-center">Tüm geçmişi sil</button>
         <button id="logout-btn" type="button" class="w-full pill-btn justify-center">Çıkış yap</button>
-        <p id="sync-status" class="text-[11px] font-mono text-text-300 text-center pt-1"></p>
+        <p id="usage-line" class="text-[11px] font-mono text-text-300 text-center pt-1"></p>
+        <p id="sync-status" class="text-[11px] font-mono text-text-300 text-center"></p>
       </div>
     </aside>
 
@@ -177,10 +201,57 @@ import { CHAT_EFFORTS, CHAT_MODELS } from '@lib/constants';
           maxlength="2000"
           class="w-full bg-bg-base border border-border focus:border-accent-1 outline-none px-3 py-2.5 text-text-100 leading-relaxed"
         ></textarea>
+        <label class="flex items-start gap-2 text-sm text-text-200">
+          <input id="settings-memory" type="checkbox" class="mt-1" />
+          <span>Hafıza açık: Claude seninle ilgili önemli şeyleri not alır ve sonraki sohbetlerde hatırlar. Notları menüdeki "Hafıza"dan görüp silebilirsin.</span>
+        </label>
         <p id="settings-error" class="text-sm text-accent-2 hidden" role="alert"></p>
         <div class="flex justify-end gap-2">
           <button id="settings-cancel" type="button" class="pill-btn">Vazgeç</button>
           <button id="settings-save" type="submit" class="pill-btn pill-btn--primary">Kaydet</button>
+        </div>
+      </form>
+    </dialog>
+
+    <!-- Memory viewer -->
+    <dialog id="memory-dialog" class="settings-dialog">
+      <div class="space-y-4">
+        <div>
+          <div class="font-mono uppercase tracking-widest text-xs text-text-300 mb-2">Hafıza</div>
+          <p class="text-sm text-text-200">Claude'un senin hakkında tuttuğu notlar. İstemediğini silebilirsin.</p>
+        </div>
+        <div id="memory-list" class="memory-list"></div>
+        <div class="flex justify-end">
+          <button id="memory-close" type="button" class="pill-btn">Kapat</button>
+        </div>
+      </div>
+    </dialog>
+
+    <!-- Project editor -->
+    <dialog id="project-dialog" class="settings-dialog">
+      <form id="project-form" method="dialog" class="space-y-4">
+        <div class="font-mono uppercase tracking-widest text-xs text-text-300">Proje</div>
+        <label class="block space-y-1">
+          <span class="text-sm text-text-200">Ad</span>
+          <input id="project-name" maxlength="80" required class="w-full bg-bg-base border border-border focus:border-accent-1 outline-none px-3 py-2 text-text-100" />
+        </label>
+        <label class="block space-y-1">
+          <span class="text-sm text-text-200">Talimatlar (bu projedeki her sohbette geçerli)</span>
+          <textarea id="project-instructions" rows="4" maxlength="4000" class="w-full bg-bg-base border border-border focus:border-accent-1 outline-none px-3 py-2 text-text-100 leading-relaxed"></textarea>
+        </label>
+        <div class="space-y-2">
+          <span class="text-sm text-text-200">Dosyalar (her sohbetin başına eklenir, en fazla 10)</span>
+          <div id="project-files" class="flex flex-wrap gap-2"></div>
+          <button id="project-add-file" type="button" class="pill-btn">Dosya ekle</button>
+          <input id="project-file-input" type="file" multiple hidden accept="image/png,image/jpeg,image/gif,image/webp,application/pdf,text/plain,.txt,.md,.csv,.json,.xlsx,.xls,.docx,.pptx" />
+        </div>
+        <p id="project-error" class="text-sm text-accent-2 hidden" role="alert"></p>
+        <div class="flex justify-between gap-2">
+          <button id="project-delete" type="button" class="pill-btn">Projeyi sil</button>
+          <div class="flex gap-2">
+            <button id="project-cancel" type="button" class="pill-btn">Vazgeç</button>
+            <button id="project-save" type="submit" class="pill-btn pill-btn--primary">Kaydet</button>
+          </div>
         </div>
       </form>
     </dialog>
@@ -206,26 +277,35 @@ import { CHAT_EFFORTS, CHAT_MODELS } from '@lib/constants';
     </div>
 
     <script>
-      import { marked } from 'marked';
+      import { Marked } from 'marked';
+      import { markedHighlight } from 'marked-highlight';
+      import markedKatex from 'marked-katex-extension';
+      import hljs from 'highlight.js/lib/common';
       import DOMPurify from 'dompurify';
       import { CHAT_EFFORTS, CHAT_MODELS, CHAT_WORKER_URL } from '@lib/constants';
 
       type Role = 'user' | 'assistant';
+      type Kind = 'image' | 'document' | 'container';
       interface Attachment {
         ref: string; // signed by the Worker; never a bare file_id
-        kind: 'image' | 'document';
+        kind: Kind;
         name: string;
         expiresAt: string | null;
         thumb?: string; // small JPEG data URL, images only
       }
       interface Source { url: string; title: string }
+      interface OutputFile { id: string; name: string } // made by code execution
+      interface Usage { model: string; input: number; output: number; cost: number; context: number }
       interface Message {
         role: Role;
         content: string;
         attachments?: Attachment[]; // user messages
         thinking?: string; // assistant: summarized thinking, display only
         sources?: Source[]; // assistant: web pages it cited
-        searches?: string[]; // assistant: web queries it ran
+        steps?: string[]; // assistant: tools it used ("searched …")
+        searches?: string[]; // older replies: web queries it ran
+        files?: OutputFile[]; // assistant: files it made
+        usage?: Usage;
       }
       interface Convo {
         id: string;
@@ -234,7 +314,12 @@ import { CHAT_EFFORTS, CHAT_MODELS } from '@lib/constants';
         messages: Message[] | null; // null = only the list entry is cached
         synced?: boolean; // saved on the server as-is
         titled?: boolean; // got its generated title
+        projectId?: string | null;
+        summary?: { text: string; upto: number } | null; // messages[0..upto) summarized
+        containerId?: string | null; // code execution sandbox to reuse
+        context?: number; // tokens the model read on the last reply
       }
+      interface Project { id: string; name: string; instructions: string; files: Attachment[] }
       interface Pending {
         id: string;
         name: string;
@@ -252,6 +337,7 @@ import { CHAT_EFFORTS, CHAT_MODELS } from '@lib/constants';
       const KEY_MODEL = 'fx-chat-model';
       const KEY_EFFORT = 'fx-chat-effort';
       const KEY_WEB = 'fx-chat-web';
+      const KEY_CODE = 'fx-chat-code';
       // Each device asks for the password again after this long. The Worker
       // still accepts it afterwards; this only makes the browser forget it.
       const TOKEN_MAX_AGE_MS = 30 * 24 * 60 * 60 * 1000;
@@ -264,6 +350,20 @@ import { CHAT_EFFORTS, CHAT_MODELS } from '@lib/constants';
       const IMAGE_MAX_SIDE = 2048; // the API downsizes larger images anyway
       const IMAGE_TYPES = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];
       const TEXT_EXT = /\.(txt|md|markdown|csv|tsv|json|xml|html?|css|js|ts|py|cs|java|c|cpp|h|sql|ya?ml|log)$/i;
+      // Office files go to the code sandbox, which reads them with Python.
+      const OFFICE: [RegExp, string][] = [
+        [/\.xlsx$/i, 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'],
+        [/\.xls$/i, 'application/vnd.ms-excel'],
+        [/\.docx$/i, 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'],
+        [/\.pptx$/i, 'application/vnd.openxmlformats-officedocument.presentationml.presentation'],
+      ];
+      const CONTEXT_WINDOW = 1_000_000; // every model in CHAT_MODELS
+      // Long chats: once the model reads this much, older messages are
+      // summarized (keeping the last few as they are) so replies stay fast,
+      // cheap and sharp.
+      const COMPACT_AT_TOKENS = 120_000;
+      const COMPACT_AT_MESSAGES = 120;
+      const KEEP_AFTER_COMPACT = 6;
       const SYNC_EVERY_MS = 30_000; // re-check the server when the tab comes back
       const NOT_CONFIGURED = CHAT_WORKER_URL.includes('YOUR-SUBDOMAIN');
       const TYPING_HTML = '<span class="typing" aria-label="Yazıyor"><i></i><i></i><i></i></span>';
@@ -276,31 +376,61 @@ import { CHAT_EFFORTS, CHAT_MODELS } from '@lib/constants';
       const input = $<HTMLTextAreaElement>('input');
       const sendBtn = $<HTMLButtonElement>('send-btn');
       const stopBtn = $<HTMLButtonElement>('stop-btn');
+      const micBtn = $<HTMLButtonElement>('mic-btn');
       const modelSelect = $<HTMLSelectElement>('model-select');
       const effortSelect = $<HTMLSelectElement>('effort-select');
       const webBtn = $<HTMLButtonElement>('web-btn');
+      const codeBtn = $<HTMLButtonElement>('code-btn');
+      const meter = $<HTMLSpanElement>('meter');
       const attachBtn = $<HTMLButtonElement>('attach-btn');
       const fileInput = $<HTMLInputElement>('file-input');
       const tray = $<HTMLDivElement>('attach-tray');
+      const projectLabel = $<HTMLSpanElement>('project-label');
       const drawer = $<HTMLElement>('drawer');
       const backdrop = $<HTMLDivElement>('drawer-backdrop');
       const historyBtn = $<HTMLButtonElement>('history-btn');
+      const projectSelect = $<HTMLSelectElement>('project-select');
+      const projectEditBtn = $<HTMLButtonElement>('project-edit-btn');
       const convoList = $<HTMLUListElement>('convo-list');
       const convoSearch = $<HTMLInputElement>('convo-search');
+      const usageLine = $<HTMLParagraphElement>('usage-line');
       const syncStatus = $<HTMLParagraphElement>('sync-status');
       const settingsDialog = $<HTMLDialogElement>('settings-dialog');
       const settingsForm = $<HTMLFormElement>('settings-form');
       const settingsInput = $<HTMLTextAreaElement>('settings-input');
+      const settingsMemory = $<HTMLInputElement>('settings-memory');
       const settingsError = $<HTMLParagraphElement>('settings-error');
       const settingsSave = $<HTMLButtonElement>('settings-save');
+      const memoryDialog = $<HTMLDialogElement>('memory-dialog');
+      const memoryList = $<HTMLDivElement>('memory-list');
+      const projectDialog = $<HTMLDialogElement>('project-dialog');
+      const projectForm = $<HTMLFormElement>('project-form');
+      const projectName = $<HTMLInputElement>('project-name');
+      const projectInstructions = $<HTMLTextAreaElement>('project-instructions');
+      const projectFilesEl = $<HTMLDivElement>('project-files');
+      const projectFileInput = $<HTMLInputElement>('project-file-input');
+      const projectError = $<HTMLParagraphElement>('project-error');
       const gate = $<HTMLDivElement>('gate');
       const gateForm = $<HTMLFormElement>('gate-form');
       const gateInput = $<HTMLInputElement>('gate-input');
       const gateError = $<HTMLParagraphElement>('gate-error');
       const gateSubmit = $<HTMLButtonElement>('gate-submit');
 
-      // ─── Markdown (sanitized) ──────────────────────────────────────────
-      marked.setOptions({ gfm: true, breaks: true });
+      // ─── Markdown (highlighted, with math; sanitized) ──────────────────
+      const md = new Marked(
+        markedHighlight({
+          emptyLangClass: 'hljs',
+          langPrefix: 'hljs language-',
+          highlight(code, lang) {
+            const language = hljs.getLanguage(lang) ? lang : 'plaintext';
+            return hljs.highlight(code, { language }).value;
+          },
+        }),
+        // MathML output: the browser draws it natively, so no inline styles
+        // or font files are needed and DOMPurify can keep it as-is.
+        markedKatex({ throwOnError: false, output: 'mathml', nonStandard: true }),
+        { gfm: true, breaks: true },
+      );
       DOMPurify.addHook('afterSanitizeAttributes', (node) => {
         if (node.tagName === 'A') {
           node.setAttribute('target', '_blank');
@@ -310,8 +440,11 @@ import { CHAT_EFFORTS, CHAT_MODELS } from '@lib/constants';
       // Model output is untrusted: marked turns it into HTML (including any
       // raw HTML the model wrote), DOMPurify strips anything executable.
       function renderMarkdown(text: string): string {
-        const html = marked.parse(text, { async: false }) as string;
+        const html = md.parse(text, { async: false }) as string;
         return DOMPurify.sanitize(html, {
+          // KaTeX wraps each formula's TeX source in <semantics><annotation>;
+          // without these two the source text leaks out next to the formula.
+          ADD_TAGS: ['semantics', 'annotation'],
           FORBID_TAGS: ['style', 'form', 'input', 'button', 'textarea', 'select', 'img', 'iframe'],
           FORBID_ATTR: ['style'],
         });
@@ -377,16 +510,30 @@ import { CHAT_EFFORTS, CHAT_MODELS } from '@lib/constants';
         return res;
       }
 
+      // ─── Formatting ────────────────────────────────────────────────────
+      const nf = new Intl.NumberFormat('tr-TR');
+      const tokens = (n: number) => (n >= 1000 ? `${(n / 1000).toLocaleString('tr-TR', { maximumFractionDigits: 1 })}k` : nf.format(n));
+      const money = (n: number) => `$${n.toLocaleString('tr-TR', { minimumFractionDigits: n < 0.1 ? 3 : 2, maximumFractionDigits: n < 0.1 ? 3 : 2 })}`;
+      // claude-opus-5-5 → Opus 5.5
+      const modelName = (id: string) => {
+        const [, family = id, ...v] = id.split('-');
+        return `${family.charAt(0).toUpperCase()}${family.slice(1)} ${v.join('.')}`.trim();
+      };
+
       // ─── State ─────────────────────────────────────────────────────────
       let user: string | null = null;
       let convos: Convo[] = [];
       let activeId: string | null = null;
       let streaming: AbortController | null = null;
       let pending: Pending[] = [];
+      let projects: Project[] = [];
+      let currentProject: string | null = null; // the drawer's filter / new-chat target
 
       const convosKey = () => `fx-chat-convos:${user}`;
       const activeKey = () => `fx-chat-active:${user}`;
+      const projectKey = () => `fx-chat-project:${user}`;
       const active = () => convos.find((c) => c.id === activeId) ?? null;
+      const projectOf = (id?: string | null) => projects.find((p) => p.id === id) ?? null;
 
       function persist() {
         if (!user) return;
@@ -410,6 +557,7 @@ import { CHAT_EFFORTS, CHAT_MODELS } from '@lib/constants';
       function loadLocal() {
         convos = load<Convo[]>(convosKey(), []).filter((c) => c && c.id);
         activeId = read(activeKey());
+        currentProject = read(projectKey());
         // One-time move of chats saved before server history existed.
         const legacy = load<Convo[]>(KEY_LEGACY_CONVOS, []);
         if (legacy.length) {
@@ -437,7 +585,9 @@ import { CHAT_EFFORTS, CHAT_MODELS } from '@lib/constants';
         try {
           const res = await api('/convos');
           if (!res.ok) throw new Error(String(res.status));
-          const { items } = (await res.json()) as { items: { id: string; title: string; updatedAt: number }[] };
+          const { items } = (await res.json()) as {
+            items: { id: string; title: string; updatedAt: number; projectId: string | null }[];
+          };
           const onServer = new Map(items.map((i) => [i.id, i]));
 
           // Gone from the server but saved there before = deleted elsewhere.
@@ -447,7 +597,7 @@ import { CHAT_EFFORTS, CHAT_MODELS } from '@lib/constants';
             if (!local) {
               convos.push({ ...item, messages: null, synced: true, titled: true });
             } else if (item.updatedAt > local.updatedAt && !(streaming && local.id === activeId)) {
-              Object.assign(local, { title: item.title, updatedAt: item.updatedAt, messages: null, synced: true });
+              Object.assign(local, { ...item, messages: null, synced: true });
             } else if (item.updatedAt < local.updatedAt) {
               local.synced = false;
             }
@@ -482,7 +632,17 @@ import { CHAT_EFFORTS, CHAT_MODELS } from '@lib/constants';
             if (activeId === c.id) activeId = null;
           } else if (res.ok) {
             const data = await res.json();
-            Object.assign(c, { title: data.title, updatedAt: data.updatedAt, messages: data.messages ?? [], synced: true });
+            const saved = data.conversation ?? {};
+            Object.assign(c, {
+              title: data.title,
+              updatedAt: data.updatedAt,
+              projectId: data.projectId ?? null,
+              messages: saved.messages ?? [],
+              summary: saved.summary ?? null,
+              containerId: saved.containerId ?? null,
+              context: saved.context ?? 0,
+              synced: true,
+            });
           }
         } catch {}
         persist();
@@ -494,11 +654,18 @@ import { CHAT_EFFORTS, CHAT_MODELS } from '@lib/constants';
       async function push(c: Convo): Promise<boolean> {
         if (!c.messages) return true;
         const savedAt = c.updatedAt;
+        const q = new URLSearchParams({ updatedAt: String(savedAt) });
+        if (c.projectId) q.set('projectId', c.projectId);
         try {
-          const res = await api(`/convos/${c.id}?updatedAt=${savedAt}`, {
+          const res = await api(`/convos/${c.id}?${q}`, {
             method: 'PUT',
             headers: { 'Content-Type': 'application/json', 'X-Title': encodeURIComponent(c.title) },
-            body: JSON.stringify(c.messages),
+            body: JSON.stringify({
+              messages: c.messages,
+              summary: c.summary ?? null,
+              containerId: c.containerId ?? null,
+              context: c.context ?? 0,
+            }),
           });
           if (res.ok && c.updatedAt === savedAt) {
             c.synced = true;
@@ -532,6 +699,155 @@ import { CHAT_EFFORTS, CHAT_MODELS } from '@lib/constants';
       document.addEventListener('visibilitychange', () => {
         if (document.visibilityState === 'visible' && user && !streaming && Date.now() - lastSync > SYNC_EVERY_MS) {
           void sync();
+        }
+      });
+
+      // ─── Projects ──────────────────────────────────────────────────────
+      async function loadProjects() {
+        try {
+          const res = await api('/projects');
+          if (res.ok) projects = (await res.json()).items ?? [];
+        } catch {}
+        if (currentProject && !projectOf(currentProject)) currentProject = null;
+        renderProjectSelect();
+        renderProjectLabel();
+        renderConvoList();
+      }
+
+      function renderProjectSelect() {
+        projectSelect.replaceChildren();
+        const opt = (value: string, label: string) => {
+          const o = document.createElement('option');
+          o.value = value;
+          o.textContent = label;
+          projectSelect.append(o);
+        };
+        opt('', 'Tüm sohbetler');
+        for (const p of projects) opt(p.id, `📁 ${p.name}`);
+        opt('__new', '+ Yeni proje');
+        projectSelect.value = currentProject ?? '';
+        projectEditBtn.hidden = !currentProject;
+      }
+
+      function renderProjectLabel() {
+        const p = projectOf(active()?.projectId ?? currentProject);
+        projectLabel.hidden = !p;
+        projectLabel.textContent = p ? ` · ${p.name}` : '';
+      }
+
+      projectSelect.addEventListener('change', () => {
+        if (projectSelect.value === '__new') {
+          projectSelect.value = currentProject ?? '';
+          openProjectDialog(null);
+          return;
+        }
+        currentProject = projectSelect.value || null;
+        if (currentProject) save(projectKey(), currentProject);
+        else remove(projectKey());
+        projectEditBtn.hidden = !currentProject;
+        renderConvoList();
+        renderProjectLabel();
+      });
+      projectEditBtn.addEventListener('click', () => openProjectDialog(projectOf(currentProject)));
+
+      let editing: { id: string; files: Attachment[]; removed: string[]; uploading: number } | null = null;
+
+      function openProjectDialog(p: Project | null) {
+        closeDrawer();
+        editing = { id: p?.id ?? crypto.randomUUID(), files: [...(p?.files ?? [])], removed: [], uploading: 0 };
+        projectName.value = p?.name ?? '';
+        projectInstructions.value = p?.instructions ?? '';
+        $<HTMLButtonElement>('project-delete').hidden = !p;
+        projectError.classList.add('hidden');
+        renderProjectFiles();
+        projectDialog.showModal();
+      }
+
+      function renderProjectFiles() {
+        projectFilesEl.replaceChildren();
+        if (!editing) return;
+        for (const f of editing.files) {
+          const chip = document.createElement('div');
+          chip.className = 'tray-chip is-ready';
+          const label = document.createElement('span');
+          label.className = 'tray-name';
+          label.textContent = `${f.kind === 'image' ? '🖼' : '📄'} ${f.name}`;
+          const del = document.createElement('button');
+          del.type = 'button';
+          del.className = 'tray-del';
+          del.setAttribute('aria-label', `${f.name} dosyasını kaldır`);
+          del.textContent = '×';
+          del.addEventListener('click', () => {
+            editing!.files = editing!.files.filter((x) => x !== f);
+            editing!.removed.push(f.ref);
+            renderProjectFiles();
+          });
+          chip.append(label, del);
+          projectFilesEl.append(chip);
+        }
+        if (editing.uploading) {
+          const note = document.createElement('span');
+          note.className = 'tray-state';
+          note.textContent = `${editing.uploading} dosya yükleniyor…`;
+          projectFilesEl.append(note);
+        }
+      }
+
+      $<HTMLButtonElement>('project-add-file').addEventListener('click', () => projectFileInput.click());
+      projectFileInput.addEventListener('change', async () => {
+        const files = Array.from(projectFileInput.files ?? []);
+        projectFileInput.value = '';
+        for (const file of files) {
+          if (!editing) return;
+          if (editing.files.length + editing.uploading >= 10) break;
+          const info = classify(file);
+          if (!info) continue;
+          editing.uploading += 1;
+          renderProjectFiles();
+          try {
+            const att = await uploadFile(file, info, true);
+            editing?.files.push(att);
+          } catch (err) {
+            projectError.textContent = `${file.name}: ${(err as Error).message}`;
+            projectError.classList.remove('hidden');
+          } finally {
+            if (editing) editing.uploading -= 1;
+            renderProjectFiles();
+          }
+        }
+      });
+      $<HTMLButtonElement>('project-cancel').addEventListener('click', () => projectDialog.close());
+      $<HTMLButtonElement>('project-delete').addEventListener('click', async () => {
+        if (!editing || !confirm('Proje ve dosyaları silinsin mi? Sohbetler kalır.')) return;
+        await api(`/projects/${editing.id}`, { method: 'DELETE' }).catch(() => {});
+        if (currentProject === editing.id) currentProject = null;
+        convos.forEach((c) => c.projectId === editing!.id && (c.projectId = null));
+        projectDialog.close();
+        await loadProjects();
+      });
+      projectForm.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        if (!editing) return;
+        if (editing.uploading) {
+          projectError.textContent = 'Dosyalar yükleniyor, birazdan kaydet.';
+          projectError.classList.remove('hidden');
+          return;
+        }
+        try {
+          const res = await api(`/projects/${editing.id}`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ name: projectName.value, instructions: projectInstructions.value, files: editing.files }),
+          });
+          if (!res.ok) throw new Error(await errorMessage(res));
+          deleteFiles(editing.removed);
+          currentProject = editing.id;
+          save(projectKey(), currentProject);
+          projectDialog.close();
+          await loadProjects();
+        } catch (err) {
+          projectError.textContent = (err as Error).message || 'Kaydedilemedi.';
+          projectError.classList.remove('hidden');
         }
       });
 
@@ -590,6 +906,54 @@ import { CHAT_EFFORTS, CHAT_MODELS } from '@lib/constants';
         return wrap;
       }
 
+      // Generated files: images preview inline, everything downloads.
+      const outputUrls = new Map<string, Promise<string>>();
+      function outputUrl(f: OutputFile) {
+        if (!outputUrls.has(f.id)) {
+          outputUrls.set(
+            f.id,
+            api(`/outputs/${f.id}`).then(async (res) => {
+              if (!res.ok) throw new Error(await errorMessage(res));
+              return URL.createObjectURL(await res.blob());
+            }),
+          );
+        }
+        return outputUrls.get(f.id)!.catch((err) => {
+          outputUrls.delete(f.id);
+          throw err;
+        });
+      }
+
+      function filesEl(files: OutputFile[]): HTMLElement {
+        const row = document.createElement('div');
+        row.className = 'out-files';
+        for (const f of files) {
+          if (/\.(png|jpe?g|gif|webp)$/i.test(f.name)) {
+            const img = document.createElement('img');
+            img.className = 'out-image';
+            img.alt = f.name;
+            void outputUrl(f).then((u) => (img.src = u)).catch(() => img.remove());
+            row.append(img);
+          }
+          const btn = document.createElement('button');
+          btn.type = 'button';
+          btn.className = 'att-chip out-chip';
+          btn.textContent = `⬇ ${f.name}`;
+          btn.addEventListener('click', async () => {
+            try {
+              const a = document.createElement('a');
+              a.href = await outputUrl(f);
+              a.download = f.name;
+              a.click();
+            } catch (err) {
+              btn.textContent = `⚠ ${(err as Error).message}`;
+            }
+          });
+          row.append(btn);
+        }
+        return row;
+      }
+
       // One builder for both saved and streaming replies, so they look alike.
       function assistantView(m: Message) {
         const root = document.createElement('div');
@@ -605,9 +969,12 @@ import { CHAT_EFFORTS, CHAT_MODELS } from '@lib/constants';
         status.className = 'tool-status';
         const body = document.createElement('div');
         body.className = 'prose-content chat-md';
+        const files = document.createElement('div');
         const sources = document.createElement('div');
         sources.className = 'sources';
-        root.append(thinking, status, body, sources);
+        const meta = document.createElement('div');
+        meta.className = 'msg-meta';
+        root.append(thinking, status, body, files, sources, meta);
 
         const view = {
           root,
@@ -624,6 +991,9 @@ import { CHAT_EFFORTS, CHAT_MODELS } from '@lib/constants';
           },
           setTyping() {
             body.innerHTML = TYPING_HTML;
+          },
+          setFiles(list: OutputFile[]) {
+            files.replaceChildren(...(list.length ? [filesEl(list)] : []));
           },
           setSources(list: Source[]) {
             sources.replaceChildren();
@@ -648,15 +1018,20 @@ import { CHAT_EFFORTS, CHAT_MODELS } from '@lib/constants';
               sources.append(a);
             });
           },
+          setMeta(u?: Usage) {
+            meta.hidden = !u;
+            if (u) meta.textContent = `${modelName(u.model)} · ${tokens(u.input)} → ${tokens(u.output)} token · ≈ ${money(u.cost)}`;
+          },
           finish() {
             addCopyButtons(body);
           },
-          body,
         };
         view.setThinking(m.thinking ?? '');
-        view.setStatus(m.searches?.length ? searchedLabel(m.searches) : '');
+        view.setStatus(m.steps?.length ? m.steps.join(' · ') : m.searches?.length ? searchedLabel(m.searches) : '');
         view.setBody(m.content);
+        view.setFiles(m.files ?? []);
         view.setSources(m.sources ?? []);
+        view.setMeta(m.usage);
         return view;
       }
 
@@ -681,6 +1056,18 @@ import { CHAT_EFFORTS, CHAT_MODELS } from '@lib/constants';
         if (isLast) actions.append(actionBtn('Yeniden oluştur', () => void regenerate()));
         view.root.append(actions);
         return view.root;
+      }
+
+      function summaryEl(c: Convo): HTMLElement {
+        const box = document.createElement('details');
+        box.className = 'summary-divider';
+        const head = document.createElement('summary');
+        head.textContent = `Yukarıdaki ${c.summary!.upto} mesaj özetlendi; Claude onları bu özetten hatırlıyor.`;
+        const text = document.createElement('div');
+        text.className = 'thinking-body';
+        text.textContent = c.summary!.text;
+        box.append(head, text);
+        return box;
       }
 
       function addCopyButtons(root: HTMLElement) {
@@ -714,31 +1101,52 @@ import { CHAT_EFFORTS, CHAT_MODELS } from '@lib/constants';
         const c = active();
         const msgs = c?.messages ?? [];
         const lastUser = msgs.map((m) => m.role).lastIndexOf('user');
-        list.replaceChildren(
-          ...msgs.map((m, i) =>
-            m.role === 'user' ? userEl(m, i === lastUser && i >= msgs.length - 2) : assistantEl(m, i === msgs.length - 1),
-          ),
-        );
+        const nodes: HTMLElement[] = [];
+        msgs.forEach((m, i) => {
+          if (c?.summary && i === c.summary.upto) nodes.push(summaryEl(c));
+          nodes.push(m.role === 'user' ? userEl(m, i === lastUser && i >= msgs.length - 2) : assistantEl(m, i === msgs.length - 1));
+        });
+        list.replaceChildren(...nodes);
         if (c && c.messages === null) list.append(noteEl('Sohbet yükleniyor…'));
         const isEmpty = !c;
         empty.classList.toggle('hidden', !isEmpty);
         empty.classList.toggle('flex', isEmpty);
         list.classList.toggle('hidden', isEmpty);
+        renderMeter();
+        renderProjectLabel();
         scrollToBottom(true);
+      }
+
+      function renderMeter() {
+        const c = active();
+        if (!c?.messages?.length) {
+          meter.textContent = '';
+          return;
+        }
+        const cost = c.messages.reduce((s, m) => s + (m.usage?.cost ?? 0), 0);
+        const ctx = c.context ?? 0;
+        const pct = Math.min(100, (ctx / CONTEXT_WINDOW) * 100);
+        const context = ctx
+          ? `Bağlam ${tokens(ctx)} / 1M (%${pct.toLocaleString('tr-TR', { maximumFractionDigits: 1 })})`
+          : c.summary
+            ? 'Bağlam özetlendi'
+            : '';
+        meter.textContent = [context, `bu sohbet ≈ ${money(cost)}`].filter(Boolean).join(' · ');
       }
 
       function renderConvoList() {
         convoList.replaceChildren();
         const q = convoSearch.value.trim().toLocaleLowerCase('tr');
-        const shown = q
-          ? convos.filter((c) =>
-              `${c.title} ${(c.messages ?? []).map((m) => m.content).join(' ')}`.toLocaleLowerCase('tr').includes(q),
-            )
-          : convos;
+        const shown = convos.filter(
+          (c) =>
+            (!currentProject || c.projectId === currentProject) &&
+            (!q ||
+              `${c.title} ${(c.messages ?? []).map((m) => m.content).join(' ')}`.toLocaleLowerCase('tr').includes(q)),
+        );
         if (shown.length === 0) {
           const li = document.createElement('li');
           li.className = 'px-4 py-3 text-sm text-text-300';
-          li.textContent = q ? 'Eşleşen sohbet yok.' : 'Henüz sohbet yok.';
+          li.textContent = q ? 'Eşleşen sohbet yok.' : currentProject ? 'Bu projede henüz sohbet yok.' : 'Henüz sohbet yok.';
           convoList.append(li);
           return;
         }
@@ -748,7 +1156,8 @@ import { CHAT_EFFORTS, CHAT_MODELS } from '@lib/constants';
           const open = document.createElement('button');
           open.type = 'button';
           open.className = `convo-item ${c.id === activeId ? 'is-active' : ''}`;
-          open.textContent = c.title || 'Yeni sohbet';
+          const p = !currentProject && projectOf(c.projectId);
+          open.textContent = `${p ? '📁 ' : ''}${c.title || 'Yeni sohbet'}`;
           open.addEventListener('click', () => {
             if (streaming) return;
             activeId = c.id;
@@ -790,6 +1199,12 @@ import { CHAT_EFFORTS, CHAT_MODELS } from '@lib/constants';
         drawer.inert = false;
         backdrop.classList.remove('hidden');
         historyBtn.setAttribute('aria-expanded', 'true');
+        void api('/usage')
+          .then((r) => (r.ok ? r.json() : null))
+          .then((u) => {
+            if (u) usageLine.textContent = `Bu ay: ≈ ${money(u.cost)} · ${nf.format(u.requests)} istek`;
+          })
+          .catch(() => {});
       }
       function closeDrawer() {
         drawer.classList.remove('is-open');
@@ -823,15 +1238,17 @@ import { CHAT_EFFORTS, CHAT_MODELS } from '@lib/constants';
       $<HTMLButtonElement>('export-btn').addEventListener('click', () => {
         const c = active();
         if (!c?.messages?.length) return;
-        const md = [`# ${c.title || 'Sohbet'}`, ''];
-        for (const m of c.messages) {
-          md.push(m.role === 'user' ? '## Sen' : '## Claude', '');
-          if (m.attachments?.length) md.push(`_Ekler: ${m.attachments.map((a) => a.name).join(', ')}_`, '');
-          md.push(m.content, '');
-          if (m.sources?.length) md.push('Kaynaklar:', ...m.sources.map((s) => `- [${s.title || s.url}](${s.url})`), '');
-        }
+        const out = [`# ${c.title || 'Sohbet'}`, ''];
+        c.messages.forEach((m, i) => {
+          if (c.summary && i === c.summary.upto) out.push('---', '_Önceki mesajların özeti:_', '', c.summary.text, '---', '');
+          out.push(m.role === 'user' ? '## Sen' : '## Claude', '');
+          if (m.attachments?.length) out.push(`_Ekler: ${m.attachments.map((a) => a.name).join(', ')}_`, '');
+          out.push(m.content, '');
+          if (m.files?.length) out.push(`_Üretilen dosyalar: ${m.files.map((f) => f.name).join(', ')}_`, '');
+          if (m.sources?.length) out.push('Kaynaklar:', ...m.sources.map((s) => `- [${s.title || s.url}](${s.url})`), '');
+        });
         const a = document.createElement('a');
-        a.href = URL.createObjectURL(new Blob([md.join('\n')], { type: 'text/markdown;charset=utf-8' }));
+        a.href = URL.createObjectURL(new Blob([out.join('\n')], { type: 'text/markdown;charset=utf-8' }));
         a.download = `${(c.title || 'sohbet').replace(/[\\/:*?"<>|]+/g, '-').slice(0, 60)}.md`;
         a.click();
         setTimeout(() => URL.revokeObjectURL(a.href), 1000);
@@ -849,13 +1266,16 @@ import { CHAT_EFFORTS, CHAT_MODELS } from '@lib/constants';
         remove(KEY_USER);
         user = null;
         convos = [];
+        projects = [];
         activeId = null;
+        currentProject = null;
+        renderProjectSelect();
         renderConversation();
         closeDrawer();
         showGate();
       });
 
-      // ─── Personal instructions ─────────────────────────────────────────
+      // ─── Personal instructions + memory switch ─────────────────────────
       $<HTMLButtonElement>('settings-btn').addEventListener('click', async () => {
         closeDrawer();
         settingsError.classList.add('hidden');
@@ -864,7 +1284,11 @@ import { CHAT_EFFORTS, CHAT_MODELS } from '@lib/constants';
         settingsDialog.showModal();
         try {
           const res = await api('/settings');
-          if (res.ok) settingsInput.value = (await res.json()).instructions ?? '';
+          if (res.ok) {
+            const s = await res.json();
+            settingsInput.value = s.instructions ?? '';
+            settingsMemory.checked = s.memory !== false;
+          }
         } catch {}
         settingsInput.placeholder = 'Claude sana nasıl yanıt versin?';
       });
@@ -876,7 +1300,7 @@ import { CHAT_EFFORTS, CHAT_MODELS } from '@lib/constants';
           const res = await api('/settings', {
             method: 'PUT',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ instructions: settingsInput.value }),
+            body: JSON.stringify({ instructions: settingsInput.value, memory: settingsMemory.checked }),
           });
           if (!res.ok) throw new Error(await errorMessage(res));
           settingsDialog.close();
@@ -887,6 +1311,45 @@ import { CHAT_EFFORTS, CHAT_MODELS } from '@lib/constants';
           settingsSave.disabled = false;
         }
       });
+
+      // ─── Memory viewer ─────────────────────────────────────────────────
+      async function renderMemory() {
+        memoryList.replaceChildren(noteEl('Yükleniyor…'));
+        try {
+          const res = await api('/memory');
+          if (!res.ok) throw new Error(await errorMessage(res));
+          const { files } = (await res.json()) as { files: { path: string; content: string }[] };
+          memoryList.replaceChildren();
+          if (!files.length) memoryList.append(noteEl('Henüz bir not yok. Claude önemli bir şey öğrendiğinde buraya yazar.'));
+          for (const f of files) {
+            const item = document.createElement('div');
+            item.className = 'memory-item';
+            const head = document.createElement('div');
+            head.className = 'memory-head';
+            const name = document.createElement('span');
+            name.textContent = f.path.replace(/^\/memories\//, '');
+            const del = actionBtn('Sil', async () => {
+              if (!confirm(`"${name.textContent}" notu silinsin mi?`)) return;
+              await api(`/memory?path=${encodeURIComponent(f.path)}`, { method: 'DELETE' }).catch(() => {});
+              void renderMemory();
+            });
+            head.append(name, del);
+            const body = document.createElement('pre');
+            body.className = 'memory-body';
+            body.textContent = f.content;
+            item.append(head, body);
+            memoryList.append(item);
+          }
+        } catch (err) {
+          memoryList.replaceChildren(noteEl((err as Error).message || 'Yüklenemedi.', 'error'));
+        }
+      }
+      $<HTMLButtonElement>('memory-btn').addEventListener('click', () => {
+        closeDrawer();
+        memoryDialog.showModal();
+        void renderMemory();
+      });
+      $<HTMLButtonElement>('memory-close').addEventListener('click', () => memoryDialog.close());
 
       // ─── Password gate ─────────────────────────────────────────────────
       function showGate(message = '') {
@@ -933,6 +1396,7 @@ import { CHAT_EFFORTS, CHAT_MODELS } from '@lib/constants';
         loadLocal();
         renderConversation();
         void sync();
+        void loadProjects();
         input.focus();
       }
 
@@ -968,6 +1432,7 @@ import { CHAT_EFFORTS, CHAT_MODELS } from '@lib/constants';
       }
 
       async function send() {
+        stopDictation();
         const text = input.value.trim();
         if (streaming || !user) return;
         if (pending.some((p) => p.status === 'uploading')) {
@@ -982,7 +1447,13 @@ import { CHAT_EFFORTS, CHAT_MODELS } from '@lib/constants';
         if (convo && convo.messages === null) return; // still loading
         if (!convo) {
           const title = text || attachments.map((a) => a.name).join(', ');
-          convo = { id: crypto.randomUUID(), title: title.slice(0, 60), updatedAt: Date.now(), messages: [] };
+          convo = {
+            id: crypto.randomUUID(),
+            title: title.slice(0, 60),
+            updatedAt: Date.now(),
+            messages: [],
+            projectId: currentProject,
+          };
           convos.unshift(convo);
           activeId = convo.id;
         }
@@ -1003,6 +1474,7 @@ import { CHAT_EFFORTS, CHAT_MODELS } from '@lib/constants';
         const c = active();
         if (streaming || !c?.messages?.length || c.messages.at(-1)!.role !== 'assistant') return;
         c.messages.pop();
+        dropStaleSummary(c);
         touch(c);
         renderConversation();
         await respond(c, null);
@@ -1014,10 +1486,31 @@ import { CHAT_EFFORTS, CHAT_MODELS } from '@lib/constants';
         const i = c.messages.map((m) => m.role).lastIndexOf('user');
         if (i < 0) return;
         const [m] = c.messages.splice(i);
+        dropStaleSummary(c);
         touch(c);
         renderConversation();
         restoreDraft(m.content, m.attachments ?? []);
         input.focus();
+      }
+
+      function dropStaleSummary(c: Convo) {
+        if (c.summary && c.summary.upto >= (c.messages?.length ?? 0)) c.summary = null;
+      }
+
+      // What the Worker gets: messages after the summary, with the summary
+      // put in front of the first one.
+      function apiMessages(c: Convo) {
+        const start = c.summary?.upto ?? 0;
+        const out = c.messages!.slice(start).map(toApiMessage);
+        if (c.summary && out.length) {
+          const first = out[0];
+          const blocks = typeof first.content === 'string' ? [{ type: 'text', text: first.content }] : first.content;
+          first.content = [
+            { type: 'text', text: `<önceki_konuşmanın_özeti>\n${c.summary.text}\n</önceki_konuşmanın_özeti>` },
+            ...blocks,
+          ];
+        }
+        return out;
       }
 
       // Streams one reply for the conversation as it stands. `draft` is the
@@ -1037,11 +1530,21 @@ import { CHAT_EFFORTS, CHAT_MODELS } from '@lib/constants';
         let stopReason: string | null = null;
         let failure = '';
         let frame = 0;
-        const toolInput = new Map<number, string>();
+        const steps = { searches: [] as string[], fetches: [] as string[], code: 0, memoryRead: 0, memoryWrite: 0 };
+        const tools = new Map<number, { name: string; json: string }>();
         const results: Source[] = [];
         const cited: Source[] = [];
         const addSource = (into: Source[], s: { url?: string; title?: string }) => {
           if (s?.url && !into.some((x) => x.url === s.url)) into.push({ url: s.url, title: s.title ?? '' });
+        };
+        const stepsText = () => {
+          const parts: string[] = [];
+          if (steps.searches.length) parts.push(searchedLabel(steps.searches));
+          if (steps.fetches.length) parts.push(`🔗 Okunan sayfa: ${steps.fetches.join(', ')}`);
+          if (steps.code) parts.push(`⚙️ Kod çalıştırıldı (${steps.code} adım)`);
+          if (steps.memoryWrite) parts.push('🧠 Hafıza güncellendi');
+          else if (steps.memoryRead) parts.push('🧠 Hafızaya bakıldı');
+          return parts;
         };
         const paint = () => {
           if (frame) return;
@@ -1053,16 +1556,26 @@ import { CHAT_EFFORTS, CHAT_MODELS } from '@lib/constants';
             if (stick) scrollToBottom(true);
           });
         };
+        const live: Record<string, string> = {
+          web_search: "🔎 Web'de arıyor…",
+          web_fetch: '🔗 Sayfayı okuyor…',
+          bash_code_execution: '⚙️ Kod çalıştırıyor…',
+          text_editor_code_execution: '⚙️ Dosya hazırlıyor…',
+          memory: '🧠 Hafızaya bakıyor…',
+        };
 
         try {
           const res = await fetch(CHAT_WORKER_URL, {
             method: 'POST',
             headers: { Authorization: authHeader(getToken()), 'Content-Type': 'application/json' },
             body: JSON.stringify({
-              messages: convo.messages!.map(toApiMessage),
+              messages: apiMessages(convo),
               model: modelSelect.value,
               effort: effortSelect.value,
-              web: webBtn.getAttribute('aria-pressed') === 'true',
+              web: pressed(webBtn),
+              code: pressed(codeBtn),
+              projectId: convo.projectId ?? undefined,
+              containerId: convo.containerId ?? undefined,
             }),
             signal: controller.signal,
           });
@@ -1077,14 +1590,16 @@ import { CHAT_EFFORTS, CHAT_MODELS } from '@lib/constants';
             for await (const event of readSSE(res.body)) {
               const block = event.content_block;
               const delta = event.delta;
-              if (event.type === 'content_block_start') {
-                if (block?.type === 'server_tool_use' && block.name === 'web_search') {
-                  toolInput.set(event.index, '');
-                  view.setStatus("🔎 Web'de arıyor…");
+              if (event.type === 'message_start') {
+                tools.clear(); // each round of the turn restarts block indices
+              } else if (event.type === 'content_block_start') {
+                if (block?.type === 'server_tool_use' || block?.type === 'tool_use') {
+                  tools.set(event.index, { name: block.name, json: '' });
+                  if (live[block.name]) view.setStatus([...stepsText(), live[block.name]].join(' · '));
                 } else if (block?.type === 'web_search_tool_result' && Array.isArray(block.content)) {
                   block.content.forEach((r: Source) => addSource(results, r));
                 } else if (block?.type === 'text' && msg.content && !msg.content.endsWith('\n')) {
-                  msg.content += '\n\n'; // keep text before and after a search apart
+                  msg.content += '\n\n'; // keep text before and after a tool call apart
                 }
               } else if (event.type === 'content_block_delta') {
                 if (delta?.type === 'text_delta') {
@@ -1093,20 +1608,42 @@ import { CHAT_EFFORTS, CHAT_MODELS } from '@lib/constants';
                 } else if (delta?.type === 'thinking_delta') {
                   msg.thinking = (msg.thinking ?? '') + delta.thinking;
                   paint();
-                } else if (delta?.type === 'citations_delta') {
+                } else if (delta?.type === 'citations_delta' && delta.citation?.url) {
                   addSource(cited, delta.citation);
-                } else if (delta?.type === 'input_json_delta' && toolInput.has(event.index)) {
-                  toolInput.set(event.index, toolInput.get(event.index)! + delta.partial_json);
+                } else if (delta?.type === 'input_json_delta' && tools.has(event.index)) {
+                  tools.get(event.index)!.json += delta.partial_json;
                 }
-              } else if (event.type === 'content_block_stop' && toolInput.has(event.index)) {
+              } else if (event.type === 'content_block_stop' && tools.has(event.index)) {
+                const t = tools.get(event.index)!;
+                tools.delete(event.index);
+                let inputData: Record<string, unknown> = {};
                 try {
-                  const q = JSON.parse(toolInput.get(event.index)!).query;
-                  if (typeof q === 'string' && q) (msg.searches ??= []).push(q);
+                  inputData = JSON.parse(t.json || '{}');
                 } catch {}
-                toolInput.delete(event.index);
-                if (msg.searches?.length) view.setStatus(searchedLabel(msg.searches));
+                if (t.name === 'web_search' && typeof inputData.query === 'string') steps.searches.push(inputData.query);
+                else if (t.name === 'web_fetch' && typeof inputData.url === 'string') {
+                  try {
+                    steps.fetches.push(new URL(inputData.url).hostname);
+                  } catch {}
+                } else if (t.name === 'bash_code_execution' || t.name === 'text_editor_code_execution') steps.code += 1;
+                else if (t.name === 'memory') {
+                  if (inputData.command === 'view') steps.memoryRead += 1;
+                  else steps.memoryWrite += 1;
+                }
+                view.setStatus(stepsText().join(' · '));
               } else if (event.type === 'message_delta' && delta?.stop_reason) {
                 stopReason = delta.stop_reason;
+              } else if (event.type === 'usage_summary') {
+                msg.usage = {
+                  model: event.model,
+                  input: event.input + event.cacheRead + event.cacheWrite,
+                  output: event.output,
+                  cost: event.cost,
+                  context: event.context,
+                };
+                if (Array.isArray(event.files) && event.files.length) msg.files = event.files;
+                if (event.containerId) convo.containerId = event.containerId;
+                if (event.context) convo.context = event.context;
               } else if (event.type === 'error') {
                 failure =
                   event.error?.type === 'overloaded_error'
@@ -1124,18 +1661,20 @@ import { CHAT_EFFORTS, CHAT_MODELS } from '@lib/constants';
         }
 
         const sources = cited.length ? cited : results;
-        if (msg.content.trim()) {
+        const stepList = stepsText();
+        if (msg.content.trim() || msg.files?.length) {
           if (sources.length) msg.sources = sources.slice(0, 12);
+          if (stepList.length) msg.steps = stepList;
           convo.messages!.push(msg);
           touch(convo);
           renderConversation();
           const last = list.lastElementChild!;
           if (controller.signal.aborted) last.append(noteEl('Durduruldu.'));
-          else if (stopReason === 'max_tokens') last.append(noteEl('Yanıt uzunluk sınırına ulaştı ve kesildi.'));
+          else if (stopReason === 'max_tokens') last.append(noteEl('Yanıt uzunluk sınırına ulaştı ve kesildi. Gücü artırıp yeniden oluşturabilirsin.'));
           else if (stopReason === 'refusal') last.append(noteEl('Yanıtın devamı engellendi.'));
-          else if (stopReason === 'pause_turn') last.append(noteEl('Arama yarıda kaldı. "Devam et" yazarak sürdürebilirsin.'));
           if (failure) last.append(noteEl(failure, 'error'));
           if (!convo.titled) void nameConvo(convo);
+          void maybeCompact(convo);
         } else {
           if (draft) {
             // Nothing came back: drop the unanswered message and put it back
@@ -1180,17 +1719,61 @@ import { CHAT_EFFORTS, CHAT_MODELS } from '@lib/constants';
         } catch {}
       }
 
+      // Long chat: summarize everything but the last few messages. The
+      // summary goes in front of the remaining messages from now on.
+      let compacting = false;
+      async function maybeCompact(c: Convo) {
+        const msgs = c.messages ?? [];
+        const start = c.summary?.upto ?? 0;
+        if (compacting || ((c.context ?? 0) < COMPACT_AT_TOKENS && msgs.length - start < COMPACT_AT_MESSAGES)) return;
+        let upto = msgs.length - KEEP_AFTER_COMPACT;
+        while (upto > start && msgs[upto]?.role !== 'user') upto -= 1; // kept part starts with the person
+        if (upto <= start) return;
+
+        compacting = true;
+        meter.textContent = 'Sohbet özetleniyor…';
+        const transcript = [
+          c.summary ? `Önceki özet:\n${c.summary.text}\n` : '',
+          ...msgs.slice(start, upto).map((m) => {
+            const files = m.attachments?.length ? ` [ekler: ${m.attachments.map((a) => a.name).join(', ')}]` : '';
+            return `${m.role === 'user' ? 'Kişi' : 'Claude'}${files}: ${m.content}`;
+          }),
+        ].join('\n\n');
+        try {
+          const res = await api('/compact', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ text: transcript }),
+          });
+          if (res.ok) {
+            const { summary } = await res.json();
+            if (typeof summary === 'string' && summary && c.messages === msgs) {
+              c.summary = { text: summary, upto };
+              c.context = 0;
+              touch(c);
+              if (c.id === activeId && !streaming) renderConversation();
+            }
+          }
+        } catch {
+        } finally {
+          compacting = false;
+          renderMeter();
+        }
+      }
+
       // ─── Attachments ───────────────────────────────────────────────────
       // The Worker wants text or blocks referencing its signed refs.
       // Expired files are swapped for a note so old chats keep working.
-      function toApiMessage(m: Message) {
+      function toApiMessage(m: Message): { role: Role; content: string | Record<string, string>[] } {
         if (!m.attachments?.length) return { role: m.role, content: m.content };
         const blocks: Record<string, string>[] = m.attachments.map((a) =>
           isExpired(a)
             ? { type: 'text', text: `[Ek: ${a.name} — süresi dolduğu için artık kullanılamıyor]` }
             : a.kind === 'image'
               ? { type: 'image', ref: a.ref }
-              : { type: 'document', ref: a.ref, title: a.name },
+              : a.kind === 'container'
+                ? { type: 'container_upload', ref: a.ref }
+                : { type: 'document', ref: a.ref, title: a.name },
         );
         if (m.content) blocks.push({ type: 'text', text: m.content });
         return { role: m.role, content: blocks };
@@ -1200,7 +1783,7 @@ import { CHAT_EFFORTS, CHAT_MODELS } from '@lib/constants';
         return items.flatMap((c) => (c.messages ?? []).flatMap((m) => m.attachments?.map((a) => a.ref) ?? []));
       }
 
-      // Best effort: files also expire on their own after 90 days.
+      // Best effort: chat files also expire on their own after 90 days.
       function deleteFiles(refs: string[]) {
         for (const ref of refs) {
           void api(`/files/${encodeURIComponent(ref)}`, { method: 'DELETE' }).catch(() => {});
@@ -1214,9 +1797,11 @@ import { CHAT_EFFORTS, CHAT_MODELS } from '@lib/constants';
         renderTray();
       }
 
-      function classify(file: File): { kind: Attachment['kind']; type: string } | null {
+      function classify(file: File): { kind: Kind; type: string } | null {
         if (IMAGE_TYPES.includes(file.type)) return { kind: 'image', type: file.type };
         if (file.type === 'application/pdf' || /\.pdf$/i.test(file.name)) return { kind: 'document', type: 'application/pdf' };
+        const office = OFFICE.find(([re]) => re.test(file.name));
+        if (office) return { kind: 'container', type: office[1] };
         if (file.type.startsWith('text/') || file.type === 'application/json' || TEXT_EXT.test(file.name)) {
           return { kind: 'document', type: 'text/plain' };
         }
@@ -1247,62 +1832,6 @@ import { CHAT_EFFORTS, CHAT_MODELS } from '@lib/constants';
           r.readAsDataURL(blob);
         });
 
-      function addFiles(files: Iterable<File>) {
-        for (const file of files) {
-          if (pending.length >= MAX_ATTACHMENTS) {
-            flashTray(`Bir mesaja en fazla ${MAX_ATTACHMENTS} dosya eklenebilir.`);
-            break;
-          }
-          const info = classify(file);
-          const p: Pending = { id: crypto.randomUUID(), name: file.name || 'dosya', status: 'uploading' };
-          pending.push(p);
-          if (!info) {
-            Object.assign(p, { status: 'error', error: 'Desteklenmeyen tür' });
-          } else if (info.type === 'text/plain' && file.size > MAX_TEXT_BYTES) {
-            Object.assign(p, { status: 'error', error: 'En fazla 512 KB' });
-          } else if (file.size > MAX_FILE_BYTES && info.kind !== 'image') {
-            Object.assign(p, { status: 'error', error: 'En fazla 15 MB' });
-          } else {
-            void uploadPending(p, file, info);
-          }
-        }
-        renderTray();
-      }
-
-      async function uploadPending(p: Pending, file: File, info: { kind: Attachment['kind']; type: string }) {
-        try {
-          let body: Blob = file;
-          let type = info.type;
-          if (info.kind === 'image') {
-            p.thumb = await toDataUrl(await drawScaled(file, 160, 0.7));
-            renderTray();
-            // GIFs keep their bytes (scaling would drop animation); others
-            // are shrunk when big so phone photos upload quickly.
-            if (type !== 'image/gif' && (file.size > 3 * 1024 * 1024 || (await isLarge(file)))) {
-              body = await drawScaled(file, IMAGE_MAX_SIDE, 0.85);
-              type = 'image/jpeg';
-            }
-            if (body.size > MAX_FILE_BYTES) throw new Error('En fazla 15 MB');
-          }
-          if (!getToken()) throw new Error('Önce parolayı gir');
-          const res = await api('/files', {
-            method: 'POST',
-            headers: { 'Content-Type': type, 'X-File-Name': encodeURIComponent(p.name) },
-            body,
-          });
-          if (res.status === 401) throw new Error('Parola gerekli');
-          if (!res.ok) throw new Error(await errorMessage(res));
-          const data = await res.json();
-          p.att = { ref: data.ref, kind: data.kind, name: p.name, expiresAt: data.expiresAt ?? null };
-          if (p.thumb) p.att.thumb = p.thumb;
-          p.status = 'ready';
-        } catch (err) {
-          p.status = 'error';
-          p.error = (err as Error).message === 'encode' ? 'Görsel okunamadı' : (err as Error).message || 'Yüklenemedi';
-        }
-        renderTray();
-      }
-
       async function isLarge(file: Blob): Promise<boolean> {
         try {
           const b = await createImageBitmap(file);
@@ -1312,6 +1841,64 @@ import { CHAT_EFFORTS, CHAT_MODELS } from '@lib/constants';
         } catch {
           return false;
         }
+      }
+
+      // Uploads one file through the Worker; `keep` = project file, no expiry.
+      async function uploadFile(file: File, info: { kind: Kind; type: string }, keep = false, thumb?: string): Promise<Attachment> {
+        if (info.type === 'text/plain' && file.size > MAX_TEXT_BYTES) throw new Error('En fazla 512 KB');
+        let body: Blob = file;
+        let type = info.type;
+        if (info.kind === 'image' && type !== 'image/gif' && (file.size > 3 * 1024 * 1024 || (await isLarge(file)))) {
+          // GIFs keep their bytes (scaling would drop animation); others are
+          // shrunk when big so phone photos upload quickly.
+          body = await drawScaled(file, IMAGE_MAX_SIDE, 0.85);
+          type = 'image/jpeg';
+        }
+        if (body.size > MAX_FILE_BYTES) throw new Error('En fazla 15 MB');
+        if (!getToken()) throw new Error('Önce parolayı gir');
+        const res = await api(`/files${keep ? '?keep=1' : ''}`, {
+          method: 'POST',
+          headers: { 'Content-Type': type, 'X-File-Name': encodeURIComponent(file.name || 'dosya') },
+          body,
+        });
+        if (res.status === 401) throw new Error('Parola gerekli');
+        if (!res.ok) throw new Error(await errorMessage(res));
+        const data = await res.json();
+        const att: Attachment = { ref: data.ref, kind: data.kind, name: file.name || 'dosya', expiresAt: data.expiresAt ?? null };
+        if (thumb) att.thumb = thumb;
+        return att;
+      }
+
+      function addFiles(files: Iterable<File>) {
+        for (const file of files) {
+          if (pending.length >= MAX_ATTACHMENTS) {
+            flashTray(`Bir mesaja en fazla ${MAX_ATTACHMENTS} dosya eklenebilir.`);
+            break;
+          }
+          const info = classify(file);
+          const p: Pending = { id: crypto.randomUUID(), name: file.name || 'dosya', status: 'uploading' };
+          pending.push(p);
+          if (!info) Object.assign(p, { status: 'error', error: 'Desteklenmeyen tür' });
+          else if (file.size > MAX_FILE_BYTES && info.kind !== 'image') Object.assign(p, { status: 'error', error: 'En fazla 15 MB' });
+          else void uploadPending(p, file, info);
+        }
+        renderTray();
+      }
+
+      async function uploadPending(p: Pending, file: File, info: { kind: Kind; type: string }) {
+        try {
+          if (info.kind === 'image') {
+            p.thumb = await toDataUrl(await drawScaled(file, 160, 0.7));
+            renderTray();
+          }
+          p.att = await uploadFile(file, info, false, p.thumb);
+          p.status = 'ready';
+          if (info.kind === 'container' && !pressed(codeBtn)) setPressed(codeBtn, KEY_CODE, true);
+        } catch (err) {
+          p.status = 'error';
+          p.error = (err as Error).message === 'encode' ? 'Görsel okunamadı' : (err as Error).message || 'Yüklenemedi';
+        }
+        renderTray();
       }
 
       function renderTray() {
@@ -1382,9 +1969,59 @@ import { CHAT_EFFORTS, CHAT_MODELS } from '@lib/constants';
       });
       document.addEventListener('drop', (e) => {
         document.body.classList.remove('is-dragging');
-        if (!e.dataTransfer?.files.length) return;
+        if (!e.dataTransfer?.files.length || projectDialog.open) return;
         e.preventDefault();
         addFiles(Array.from(e.dataTransfer.files));
+      });
+
+      // ─── Voice input (the browser's own speech recognition) ────────────
+      type Recognition = {
+        lang: string;
+        continuous: boolean;
+        interimResults: boolean;
+        start(): void;
+        stop(): void;
+        onresult: ((e: { resultIndex: number; results: ArrayLike<{ isFinal: boolean; 0: { transcript: string } }> }) => void) | null;
+        onend: (() => void) | null;
+        onerror: ((e: { error: string }) => void) | null;
+      };
+      const SpeechRecognitionCtor = (window as unknown as Record<string, new () => Recognition>).SpeechRecognition ??
+        (window as unknown as Record<string, new () => Recognition>).webkitSpeechRecognition;
+      let recognition: Recognition | null = null;
+      micBtn.hidden = !SpeechRecognitionCtor;
+
+      function stopDictation() {
+        recognition?.stop();
+      }
+      micBtn.addEventListener('click', () => {
+        if (recognition) return stopDictation();
+        const rec = new SpeechRecognitionCtor();
+        rec.lang = 'tr-TR';
+        rec.continuous = true;
+        rec.interimResults = true;
+        const base = input.value ? `${input.value.replace(/\s+$/, '')} ` : '';
+        let final = '';
+        rec.onresult = (e) => {
+          let interim = '';
+          for (let i = e.resultIndex; i < e.results.length; i++) {
+            const r = e.results[i];
+            if (r.isFinal) final += r[0].transcript;
+            else interim += r[0].transcript;
+          }
+          input.value = base + final + interim;
+          autosize();
+        };
+        rec.onerror = (e) => {
+          if (e.error === 'not-allowed') flashTray('Mikrofon izni verilmedi.');
+        };
+        rec.onend = () => {
+          recognition = null;
+          micBtn.setAttribute('aria-pressed', 'false');
+          input.focus();
+        };
+        recognition = rec;
+        micBtn.setAttribute('aria-pressed', 'true');
+        rec.start();
       });
 
       // Parse a text/event-stream body into JSON event objects.
@@ -1412,23 +2049,33 @@ import { CHAT_EFFORTS, CHAT_MODELS } from '@lib/constants';
         }
       }
 
-      // ─── Pickers (remembered per device) ───────────────────────────────
+      // ─── Pickers and toggles (remembered per device) ───────────────────
       function restorePicker(select: HTMLSelectElement, key: string, allowed: readonly { id: string }[]) {
         const stored = read(key);
         if (stored && allowed.some((o) => o.id === stored)) select.value = stored;
         select.addEventListener('change', () => save(key, select.value));
       }
+      const pressed = (btn: HTMLButtonElement) => btn.getAttribute('aria-pressed') === 'true';
+      function setPressed(btn: HTMLButtonElement, key: string, on: boolean) {
+        btn.setAttribute('aria-pressed', on ? 'true' : 'false');
+        save(key, on ? '1' : '0');
+      }
+      function restoreToggle(btn: HTMLButtonElement, key: string) {
+        btn.setAttribute('aria-pressed', read(key) === '1' ? 'true' : 'false');
+        btn.addEventListener('click', () => setPressed(btn, key, !pressed(btn)));
+      }
       restorePicker(modelSelect, KEY_MODEL, CHAT_MODELS);
       restorePicker(effortSelect, KEY_EFFORT, CHAT_EFFORTS);
-      webBtn.setAttribute('aria-pressed', read(KEY_WEB) === '1' ? 'true' : 'false');
-      webBtn.addEventListener('click', () => {
-        const on = webBtn.getAttribute('aria-pressed') !== 'true';
-        webBtn.setAttribute('aria-pressed', on ? 'true' : 'false');
-        save(KEY_WEB, on ? '1' : '0');
-      });
+      restoreToggle(webBtn, KEY_WEB);
+      restoreToggle(codeBtn, KEY_CODE);
 
       // ─── Boot ──────────────────────────────────────────────────────────
+      if ('serviceWorker' in navigator) {
+        navigator.serviceWorker.register('/chat/sw.js', { scope: '/chat/' }).catch(() => {});
+      }
+
       async function boot() {
+        renderProjectSelect();
         renderConversation();
         if (NOT_CONFIGURED) return showGate('Sohbet servisi henüz yapılandırılmadı.');
         const token = getToken();
@@ -1709,6 +2356,134 @@ import { CHAT_EFFORTS, CHAT_MODELS } from '@lib/constants';
   }
   .settings-dialog::backdrop {
     background: rgb(var(--bg-base) / 0.7);
+  }
+  .project-label {
+    color: rgb(var(--accent-1));
+    text-transform: none;
+    letter-spacing: normal;
+  }
+  .meter {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .action-btn[aria-pressed='true'] {
+    background: rgb(var(--accent-2));
+    border-color: rgb(var(--accent-2));
+    color: rgb(var(--bg-base));
+    animation: typing 1.2s ease-in-out infinite;
+  }
+  .msg-meta {
+    margin-top: 0.5rem;
+    font-family: 'JetBrains Mono', ui-monospace, monospace;
+    font-size: 0.66rem;
+    color: rgb(var(--text-300));
+  }
+  .msg-meta[hidden] {
+    display: none;
+  }
+  .out-files {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: flex-start;
+    gap: 0.5rem;
+    margin-top: 0.75rem;
+  }
+  .out-image {
+    max-width: 100%;
+    max-height: 24rem;
+    border: 1px solid rgb(var(--border));
+    background: #fff;
+  }
+  .out-chip {
+    cursor: pointer;
+    color: rgb(var(--accent-1));
+    border-color: rgb(var(--accent-1) / 0.5);
+  }
+  .out-chip:hover {
+    background: rgb(var(--accent-1) / 0.1);
+  }
+  .summary-divider {
+    border-top: 1px dashed rgb(var(--border));
+    border-bottom: 1px dashed rgb(var(--border));
+    padding: 0.5rem 0;
+  }
+  .summary-divider summary {
+    cursor: pointer;
+    font-family: 'JetBrains Mono', ui-monospace, monospace;
+    font-size: 0.72rem;
+    color: rgb(var(--text-300));
+  }
+  .memory-list {
+    max-height: 55vh;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+  }
+  .memory-head {
+    display: flex;
+    justify-content: space-between;
+    gap: 0.5rem;
+    font-family: 'JetBrains Mono', ui-monospace, monospace;
+    font-size: 0.75rem;
+    color: rgb(var(--text-100));
+  }
+  .memory-body {
+    margin-top: 0.3rem;
+    padding: 0.5rem 0.6rem;
+    white-space: pre-wrap;
+    font-size: 0.8rem;
+    color: rgb(var(--text-200));
+    background: rgb(var(--bg-base));
+    border: 1px solid rgb(var(--border));
+  }
+
+  /* Code highlighting (highlight.js classes) in the site's palette. */
+  .chat-md .hljs-keyword,
+  .chat-md .hljs-selector-tag,
+  .chat-md .hljs-meta .hljs-keyword {
+    color: rgb(var(--accent-2));
+  }
+  .chat-md .hljs-string,
+  .chat-md .hljs-attr,
+  .chat-md .hljs-template-tag,
+  .chat-md .hljs-addition {
+    color: rgb(var(--accent-3));
+  }
+  .chat-md .hljs-number,
+  .chat-md .hljs-literal,
+  .chat-md .hljs-title,
+  .chat-md .hljs-title.function_,
+  .chat-md .hljs-built_in,
+  .chat-md .hljs-type {
+    color: rgb(var(--accent-1));
+  }
+  .chat-md .hljs-comment,
+  .chat-md .hljs-quote,
+  .chat-md .hljs-deletion {
+    color: rgb(var(--text-300));
+    font-style: italic;
+  }
+  .chat-md .hljs-variable,
+  .chat-md .hljs-params,
+  .chat-md .hljs-property {
+    color: rgb(var(--text-100));
+  }
+
+  /* Math (MathML drawn by the browser). */
+  .chat-md math {
+    font-size: 1.08em;
+  }
+  /* The TeX source KaTeX keeps for copy/paste; browsers hide it already. */
+  .chat-md annotation {
+    display: none;
+  }
+  .chat-md math[display='block'] {
+    display: block;
+    margin: 0.75em 0;
+    overflow-x: auto;
+    overflow-y: hidden;
   }
   .msg-atts {
     display: flex;

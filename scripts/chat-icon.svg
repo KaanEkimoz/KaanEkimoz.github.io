@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <!-- /chat app icon. Content sits inside the maskable safe zone (inner 80%). -->
+  <rect width="512" height="512" fill="#0a0a14"/>
+  <path d="M146 150 H366 Q386 150 386 170 V300 Q386 320 366 320 H250 L190 372 V320 H146 Q126 320 126 300 V170 Q126 150 146 150 Z" fill="none" stroke="#00d9ff" stroke-width="26" stroke-linejoin="round"/>
+  <circle cx="206" cy="235" r="17" fill="#00d9ff"/>
+  <circle cx="256" cy="235" r="17" fill="#00d9ff"/>
+  <circle cx="306" cy="235" r="17" fill="#ff4dff"/>
+</svg>
