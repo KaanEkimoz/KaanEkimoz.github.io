@@ -11,6 +11,7 @@
  * password. Nothing secret lives in this file.
  */
 import '../styles/global.css';
+import { CHAT_EFFORTS, CHAT_MODELS } from '@lib/constants';
 ---
 
 <!doctype html>
@@ -74,7 +75,21 @@ import '../styles/global.css';
 
       <!-- Composer -->
       <footer class="shrink-0 border-t border-border bg-bg-base composer-safe">
-        <form id="composer" class="max-w-3xl mx-auto px-4 py-3 flex items-end gap-2">
+        <div class="max-w-3xl mx-auto px-4 pt-3 flex items-center gap-2">
+          <label class="picker picker--grow">
+            <span class="sr-only">Model</span>
+            <select id="model-select">
+              {CHAT_MODELS.map((m) => <option value={m.id}>{m.label}</option>)}
+            </select>
+          </label>
+          <label class="picker">
+            <span class="sr-only">Güç</span>
+            <select id="effort-select">
+              {CHAT_EFFORTS.map((e) => <option value={e.id}>{e.label}</option>)}
+            </select>
+          </label>
+        </div>
+        <form id="composer" class="max-w-3xl mx-auto px-4 pt-2 pb-3 flex items-end gap-2">
           <label for="input" class="sr-only">Mesaj</label>
           <textarea
             id="input"
@@ -140,7 +155,7 @@ import '../styles/global.css';
     <script>
       import { marked } from 'marked';
       import DOMPurify from 'dompurify';
-      import { CHAT_WORKER_URL } from '@lib/constants';
+      import { CHAT_EFFORTS, CHAT_MODELS, CHAT_WORKER_URL } from '@lib/constants';
 
       type Role = 'user' | 'assistant';
       interface Message { role: Role; content: string }
@@ -154,8 +169,12 @@ import '../styles/global.css';
       const EXPIRED_MSG = 'Güvenlik için parola 30 günde bir soruluyor. Tekrar gir.';
       const KEY_CONVOS = 'fx-chat-convos';
       const KEY_ACTIVE = 'fx-chat-active';
+      const KEY_MODEL = 'fx-chat-model';
+      const KEY_EFFORT = 'fx-chat-effort';
       const MAX_CONVOS = 50;
       const NOT_CONFIGURED = CHAT_WORKER_URL.includes('YOUR-SUBDOMAIN');
+      const TYPING_HTML = '<span class="typing" aria-label="Yazıyor"><i></i><i></i><i></i></span>';
+      const THINKING_HTML = `${TYPING_HTML}<span class="thinking-label">Düşünüyor…</span>`;
 
       const $ = <T extends HTMLElement>(id: string) => document.getElementById(id) as T;
       const scroller = $<HTMLElement>('scroller');
@@ -165,6 +184,8 @@ import '../styles/global.css';
       const input = $<HTMLTextAreaElement>('input');
       const sendBtn = $<HTMLButtonElement>('send-btn');
       const stopBtn = $<HTMLButtonElement>('stop-btn');
+      const modelSelect = $<HTMLSelectElement>('model-select');
+      const effortSelect = $<HTMLSelectElement>('effort-select');
       const drawer = $<HTMLElement>('drawer');
       const backdrop = $<HTMLDivElement>('drawer-backdrop');
       const historyBtn = $<HTMLButtonElement>('history-btn');
@@ -491,7 +512,7 @@ import '../styles/global.css';
 
         const reply = document.createElement('div');
         reply.className = 'msg-assistant prose-content chat-md';
-        reply.innerHTML = '<span class="typing" aria-label="Yazıyor"><i></i><i></i><i></i></span>';
+        reply.innerHTML = TYPING_HTML;
         list.append(reply);
         scrollToBottom(true);
 
@@ -517,7 +538,11 @@ import '../styles/global.css';
           const res = await fetch(CHAT_WORKER_URL, {
             method: 'POST',
             headers: { Authorization: authHeader(token), 'Content-Type': 'application/json' },
-            body: JSON.stringify({ messages: convo.messages }),
+            body: JSON.stringify({
+              messages: convo.messages,
+              model: modelSelect.value,
+              effort: effortSelect.value,
+            }),
             signal: controller.signal,
           });
 
@@ -536,7 +561,9 @@ import '../styles/global.css';
             failure = await errorMessage(res);
           } else {
             for await (const event of readSSE(res.body)) {
-              if (event.type === 'content_block_delta' && event.delta?.type === 'text_delta') {
+              if (event.type === 'content_block_start' && event.content_block?.type === 'thinking' && !answer) {
+                reply.innerHTML = THINKING_HTML;
+              } else if (event.type === 'content_block_delta' && event.delta?.type === 'text_delta') {
                 answer += event.delta.text;
                 paint();
               } else if (event.type === 'message_delta' && event.delta?.stop_reason) {
@@ -618,6 +645,16 @@ import '../styles/global.css';
         }
       }
 
+      // ─── Model / effort pickers (remembered per device) ────────────────
+      function restorePicker(select: HTMLSelectElement, key: string, allowed: readonly { id: string }[]) {
+        let stored: string | null = null;
+        try { stored = localStorage.getItem(key); } catch {}
+        if (stored && allowed.some((o) => o.id === stored)) select.value = stored;
+        select.addEventListener('change', () => save(key, select.value));
+      }
+      restorePicker(modelSelect, KEY_MODEL, CHAT_MODELS);
+      restorePicker(effortSelect, KEY_EFFORT, CHAT_EFFORTS);
+
       // ─── Boot ──────────────────────────────────────────────────────────
       if (activeId && !active()) activeId = null;
       renderConversation();
@@ -642,6 +679,52 @@ import '../styles/global.css';
   .chat-shell textarea,
   #gate-input {
     font-size: 16px;
+  }
+  .picker {
+    position: relative;
+    display: inline-flex;
+    flex-shrink: 0;
+  }
+  .picker--grow {
+    flex-shrink: 1;
+    min-width: 0;
+  }
+  .picker select {
+    appearance: none;
+    max-width: 100%;
+    padding: 0.35rem 1.6rem 0.35rem 0.6rem;
+    font-family: 'JetBrains Mono', ui-monospace, monospace;
+    font-size: 0.72rem;
+    letter-spacing: 0.04em;
+    color: rgb(var(--text-200));
+    background: rgb(var(--bg-elev));
+    border: 1px solid rgb(var(--border));
+    text-overflow: ellipsis;
+    cursor: pointer;
+  }
+  .picker select:hover,
+  .picker select:focus {
+    border-color: rgb(var(--accent-1));
+    color: rgb(var(--text-100));
+    outline: none;
+  }
+  .picker::after {
+    content: '';
+    position: absolute;
+    right: 0.6rem;
+    top: 50%;
+    width: 0.35rem;
+    height: 0.35rem;
+    border-right: 1.5px solid rgb(var(--text-300));
+    border-bottom: 1.5px solid rgb(var(--text-300));
+    transform: translateY(-70%) rotate(45deg);
+    pointer-events: none;
+  }
+  .thinking-label {
+    margin-left: 0.6rem;
+    font-family: 'JetBrains Mono', ui-monospace, monospace;
+    font-size: 0.75rem;
+    color: rgb(var(--text-300));
   }
   .composer-safe {
     padding-bottom: env(safe-area-inset-bottom);

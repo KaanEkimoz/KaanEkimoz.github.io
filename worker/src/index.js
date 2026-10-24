@@ -3,9 +3,10 @@
  *
  * Browser (/chat on GitHub Pages) → this Worker → Anthropic Messages API.
  * The Anthropic key lives only here, as a Worker secret. The browser sends
- * a shared password (ACCESS_TOKEN) and the conversation's `messages`;
- * everything else about the request (model, max_tokens, system prompt) is
- * fixed below so a client can't change it.
+ * a shared password (ACCESS_TOKEN), the conversation's `messages`, and
+ * optionally a `model` and `effort` picked from the allowlists below.
+ * Everything else (max_tokens, system prompt, fallbacks) is decided here,
+ * and anything outside the allowlists is rejected.
  *
  * Secrets (set with `wrangler secret put`, never in code):
  *   ANTHROPIC_API_KEY  — Anthropic Console key
@@ -25,22 +26,31 @@
 
 // ─── Request shape — change these, not the client ──────────────────────────
 
-// Model ids: https://platform.claude.com/docs/en/about-claude/models/overview
-const MODEL = 'claude-opus-5-5';
+// Models the page may pick. Keep in sync with CHAT_MODELS in
+// src/lib/constants.ts (the page's labels). Model ids:
+// https://platform.claude.com/docs/en/about-claude/models/overview
+//
+// `fallback`: when Anthropic's safety classifiers decline a request, retry
+// it on the recommended fallback model inside the same call. Haiku 5.5 has
+// no server-side fallback, so it's off there.
+const MODELS = {
+  'claude-opus-5-5': { fallback: true }, // $4 / $20 per MTok
+  'claude-sonnet-5-5': { fallback: true }, // $2 / $10 per MTok
+  'claude-haiku-5-5': { fallback: false }, // $0.10 / $0.50 per MTok
+};
+const DEFAULT_MODEL = 'claude-opus-5-5';
 
-// Upper bound on one reply. Opus 5.5 always thinks before answering and the
-// thinking tokens count against this limit, so 1024 would cut long answers
-// short; 4096 leaves room. It's a ceiling — you only pay for what's used.
-const MAX_TOKENS = 4096;
+// Effort levels the page may pick, each with its reply ceiling. All three
+// models think before answering and the thinking counts against
+// max_tokens, so deeper effort gets more room. A ceiling, not a charge —
+// you only pay for what's used.
+const EFFORTS = {
+  low: 4096,
+  medium: 8192,
+  high: 16000,
+};
+const DEFAULT_EFFORT = 'low';
 
-// Opus 5.5 defaults to "medium". "low" is quicker and cheaper and is
-// plenty for everyday chat; use "medium" or "high" for harder questions.
-const EFFORT = 'low';
-
-// When Anthropic's safety classifiers decline a request, retry it on the
-// recommended fallback model inside the same call (server-side). Set to
-// false to turn it off.
-const USE_FALLBACK = true;
 const FALLBACK_BETA = 'server-side-fallback-2026-07-01';
 
 const SYSTEM_PROMPT = `You are a warm, helpful assistant chatting with one person through a small private chat page.
@@ -112,19 +122,19 @@ export default {
       return json({ error: parsed.error }, parsed.status, cors);
     }
 
-    return proxyToAnthropic(parsed.messages, env, cors);
+    return proxyToAnthropic(parsed, env, cors);
   },
 };
 
 // ─── Anthropic ─────────────────────────────────────────────────────────────
 
-async function proxyToAnthropic(messages, env, cors) {
+async function proxyToAnthropic({ messages, model, effort }, env, cors) {
   const body = {
-    model: MODEL,
-    max_tokens: MAX_TOKENS,
+    model,
+    max_tokens: EFFORTS[effort],
     system: SYSTEM_PROMPT,
     messages,
-    output_config: { effort: EFFORT },
+    output_config: { effort },
     stream: true,
   };
   const headers = {
@@ -132,7 +142,7 @@ async function proxyToAnthropic(messages, env, cors) {
     'anthropic-version': ANTHROPIC_VERSION,
     'content-type': 'application/json',
   };
-  if (USE_FALLBACK) {
+  if (MODELS[model].fallback) {
     body.fallbacks = 'default';
     headers['anthropic-beta'] = FALLBACK_BETA;
   }
@@ -244,7 +254,16 @@ async function readMessages(request) {
     return { error: 'Sohbet kullanıcı mesajıyla başlayıp bitmeli.', status: 400 };
   }
 
-  return { messages };
+  const model = data.model ?? DEFAULT_MODEL;
+  const effort = data.effort ?? DEFAULT_EFFORT;
+  if (!Object.hasOwn(MODELS, model)) {
+    return { error: 'Bu model kullanılamıyor.', status: 400 };
+  }
+  if (!Object.hasOwn(EFFORTS, effort)) {
+    return { error: 'Geçersiz güç seviyesi.', status: 400 };
+  }
+
+  return { messages, model, effort };
 }
 
 // ─── Helpers ───────────────────────────────────────────────────────────────
