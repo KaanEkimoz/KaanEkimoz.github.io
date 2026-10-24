@@ -72,13 +72,24 @@ const title = lang === 'tr' ? 'Tema' : 'Theme';
 
 <style>
   .theme-btn {
-    @apply inline-flex items-center justify-center w-7 h-7 border border-border text-text-300 transition-colors;
+    display: inline-grid;
+    place-items: center;
+    width: 36px;
+    height: 36px;
+    border-radius: 10px;
+    color: rgb(var(--text-200));
+    transition: color 0.2s, background 0.2s, transform 0.1s ease-out;
   }
   .theme-btn:hover {
-    @apply text-text-100;
+    color: rgb(var(--text-100));
+    background: rgb(var(--bg-elev-2));
   }
-  .theme-btn[aria-pressed='true'] {
-    @apply text-accent-1 border-accent-1;
+  .theme-btn:active {
+    transform: scale(0.94);
+  }
+  .theme-btn svg {
+    width: 17px;
+    height: 17px;
   }
 
   /* aria-pressed="false" = dark theme (default) → show sun, hide moon */
@@ -97,8 +108,8 @@ const title = lang === 'tr' ? 'Tema' : 'Theme';
   type Theme = 'dark' | 'light';
   const STORAGE_KEY = 'fx-theme';
   const THEME_COLOR: Record<Theme, string> = {
-    dark: '#0a0a14',
-    light: '#f5f4ef',
+    dark: '#050912',
+    light: '#f3f6ff',
   };
 
   let memoryState: Theme | null = null;

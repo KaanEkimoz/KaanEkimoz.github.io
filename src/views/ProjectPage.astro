@@ -3,9 +3,8 @@ import { Image } from 'astro:assets';
 import { render } from 'astro:content';
 import BaseLayout from '@layouts/BaseLayout.astro';
 import Tag from '@components/ui/Tag.astro';
-import Button from '@components/ui/Button.astro';
 import LiteYouTube from '@components/LiteYouTube.astro';
-import { platformVariant, type Project } from '@lib/content';
+import type { Project } from '@lib/content';
 import { localizedPath, t, type Lang } from '@lib/i18n';
 
 interface Props {
@@ -15,153 +14,108 @@ interface Props {
 
 const { project, lang } = Astro.props;
 const { Content } = await render(project);
-const {
-  title,
-  platform,
-  genres,
-  year,
-  duration,
-  role,
-  description,
-  techStack,
-  links,
-  coverImage,
-  gallery,
-  youtubeId,
-} = project.data;
+const { title, platform, genres, year, duration, role, description, techStack, links, coverImage, gallery, youtubeId } =
+  project.data;
 
-// Cover image is the card hero only — it's a branded marketing asset, not
-// a screenshot, so it never belongs in the Screenshots grid (mixed aspect
-// ratios looked off, and most projects already list cover.png in `gallery`
-// from earlier data). Filter it out by `.src` if present.
-const screenshots = coverImage
-  ? gallery.filter((g) => g.src !== coverImage.src)
-  : gallery;
+// The cover is a branded marketing asset, not a screenshot: keep it out of
+// the Screenshots grid even when `gallery` lists it.
+const screenshots = coverImage ? gallery.filter((g) => g.src !== coverImage.src) : gallery;
+const wideShots = screenshots.filter((s) => s.width >= s.height);
+const tallShots = screenshots.filter((s) => s.width < s.height);
+
+// Secondary links, in display order. The live product URL gets the primary button.
+const external = [
+  links.youtube && { href: links.youtube, label: t('projectDetail.trailer', lang) },
+  links.googlePlay && { href: links.googlePlay, label: 'Google Play ↗' },
+  links.appStore && { href: links.appStore, label: 'App Store ↗' },
+  links.itchio && { href: links.itchio, label: 'itch.io ↗' },
+  links.github && { href: links.github, label: 'GitHub ↗' },
+].filter((l): l is { href: string; label: string } => Boolean(l));
+
+// Everything below is styled with utilities / global classes only: the
+// project modal injects this article's HTML into other pages, where this
+// file's scoped CSS would not be loaded.
 ---
 
 <BaseLayout lang={lang} title={title} description={description}>
-  <article id="project-detail" class="max-w-3xl mx-auto px-6 py-16">
-    <a
-      href={localizedPath('/projects', lang)}
-      class="inline-block font-mono text-xs uppercase tracking-widest text-text-300 hover:text-accent-1 mb-8"
-    >
+  <article id="project-detail" class="wrap max-w-4xl pt-12 sm:pt-20">
+    <a href={localizedPath('/projects', lang)} data-back class="eyebrow inline-block mb-8 hover:text-accent-1">
       {t('projectDetail.back', lang)}
     </a>
 
-    {/* Hero: YouTube embed leads instead of a static cover, so the detail
-        page opens with the game in motion. The cover graphic is the first
-        Screenshots item below. */}
+    <header class="mb-10">
+      <div class="flex flex-wrap items-center gap-1.5 mb-5">
+        <Tag variant="accent">{platform}</Tag>
+        {genres.map((g) => <Tag>{g}</Tag>)}
+        <Tag>{year}</Tag>
+      </div>
+      <h1 class="font-display font-medium text-4xl sm:text-5xl tracking-tight text-text-100">{title}</h1>
+      <p class="mt-4 text-text-200 text-lg leading-relaxed max-w-2xl">{description}</p>
+      {
+        (links.website || external.length > 0) && (
+          <div class="mt-7 flex flex-wrap gap-2.5">
+            {links.website && (
+              <a class="btn" href={links.website} target="_blank" rel="noopener noreferrer">
+                {t('projectDetail.visitSite', lang)}
+              </a>
+            )}
+            {external.map((l) => (
+              <a class="btn btn-ghost" href={l.href} target="_blank" rel="noopener noreferrer">
+                {l.label}
+              </a>
+            ))}
+          </div>
+        )
+      }
+    </header>
+
     {
       youtubeId && (
         <div class="mb-10">
-          <LiteYouTube id={youtubeId} title={`${title} — gameplay`} />
+          <LiteYouTube id={youtubeId} title={`${title} — trailer`} />
         </div>
       )
     }
 
-    <header class="mb-10 border-b border-border pb-8">
-      <div class="flex flex-wrap items-center gap-2 mb-4">
-        <Tag variant={platformVariant(platform)}>{platform}</Tag>
-        {genres.map((g) => <Tag variant="muted">{g}</Tag>)}
-        <Tag variant="muted">{year}</Tag>
-      </div>
-      <h1
-        class="font-mono font-semibold text-4xl sm:text-5xl text-text-100 tracking-wide"
-      >
-        {title}
-      </h1>
-      <p class="mt-4 text-text-200 text-lg leading-relaxed">{description}</p>
-    </header>
-
-    <div class="grid sm:grid-cols-2 gap-6 mb-12 text-sm font-mono">
+    <dl class="grid sm:grid-cols-[1fr_1fr_2fr] gap-6 py-6 mb-12 border-y border-border">
       <div>
-        <div class="text-text-300 uppercase tracking-widest text-xs mb-1">
-          {t('projectDetail.role', lang)}
-        </div>
-        <div class="text-text-100">{role}</div>
+        <dt class="eyebrow mb-1.5">{t('projectDetail.role', lang)}</dt>
+        <dd class="text-text-100">{role}</dd>
       </div>
       <div>
-        <div class="text-text-300 uppercase tracking-widest text-xs mb-1">
-          {t('projectDetail.timeline', lang)}
-        </div>
-        <div class="text-text-100">{duration}</div>
+        <dt class="eyebrow mb-1.5">{t('projectDetail.timeline', lang)}</dt>
+        <dd class="text-text-100">{duration}</dd>
       </div>
-      <div class="sm:col-span-2">
-        <div class="text-text-300 uppercase tracking-widest text-xs mb-2">
-          {t('projectDetail.techStack', lang)}
-        </div>
-        <div class="flex flex-wrap gap-2">
-          {techStack.map((tech) => <Tag variant="muted">{tech}</Tag>)}
-        </div>
+      <div>
+        <dt class="eyebrow mb-2">{t('projectDetail.techStack', lang)}</dt>
+        <dd class="flex flex-wrap gap-1.5">{techStack.map((tech) => <span class="mono-chip">{tech}</span>)}</dd>
       </div>
-    </div>
+    </dl>
 
-    {
-      (links.website || links.github || links.youtube || links.googlePlay || links.appStore || links.itchio) && (
-        <div class="mb-12">
-          <div class="font-mono text-xs uppercase tracking-widest text-text-300 mb-3">
-            {t('projectDetail.links', lang)}
-          </div>
-          <div class="flex flex-wrap gap-2">
-            {links.website && (
-              <Button href={links.website} variant="primary" external>
-                {t('projectDetail.visitSite', lang)}
-              </Button>
-            )}
-            {links.github && (
-              <Button href={links.github} variant="secondary" external>
-                [ GitHub ]
-              </Button>
-            )}
-            {links.youtube && (
-              <Button href={links.youtube} variant="secondary" external>
-                [ YouTube ]
-              </Button>
-            )}
-            {links.googlePlay && (
-              <Button href={links.googlePlay} variant="secondary" external>
-                [ Play Store ]
-              </Button>
-            )}
-            {links.appStore && (
-              <Button href={links.appStore} variant="secondary" external>
-                [ App Store ]
-              </Button>
-            )}
-            {links.itchio && (
-              <Button href={links.itchio} variant="secondary" external>
-                [ Itch.io ]
-              </Button>
-            )}
-          </div>
-        </div>
-      )
-    }
-
-    {/* Markdown body */}
-    <div class="prose-content space-y-4 text-text-200 leading-relaxed">
+    <div class="prose-content space-y-4 leading-relaxed max-w-2xl">
       <Content />
     </div>
 
     {
       screenshots.length > 0 && (
-        <section class="mt-16 pt-10 border-t border-border">
-          <h2 class="font-mono uppercase tracking-widest text-text-100 text-sm mb-6">
-            <span class="text-accent-1">///</span> {t('projectDetail.screenshots', lang)}
-          </h2>
-          <div class="grid sm:grid-cols-2 gap-4">
-            {screenshots.map((img, i) => (
-              <div class="border border-border overflow-hidden">
-                <Image
-                  src={img}
-                  alt={`${title} ${i + 1}`}
-                  widths={[400, 800, 1200]}
-                  sizes="(min-width: 768px) 50vw, 100vw"
-                  class="w-full h-auto"
-                />
-              </div>
-            ))}
-          </div>
+        <section class="mt-16">
+          <h2 class="eyebrow mb-5">{t('projectDetail.screenshots', lang)}</h2>
+          {/* Landscape shots two per row, phone shots three per row, each at its own aspect. */}
+          {[wideShots, tallShots].map((group, g) => group.length > 0 && (
+            <div class:list={['grid gap-4 items-start mb-4', g === 0 ? 'sm:grid-cols-2' : 'grid-cols-2 sm:grid-cols-3']}>
+              {group.map((img) => (
+                <div class="rounded-xl border border-border overflow-hidden bg-bg-elev-2">
+                  <Image
+                    src={img}
+                    alt={`${title} ${screenshots.indexOf(img) + 1}`}
+                    widths={g === 0 ? [400, 800, 1200] : [300, 600]}
+                    sizes={g === 0 ? '(min-width: 768px) 440px, 100vw' : '(min-width: 768px) 290px, 50vw'}
+                    class="w-full h-auto"
+                  />
+                </div>
+              ))}
+            </div>
+          ))}
         </section>
       )
     }

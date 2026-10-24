@@ -1,0 +1,318 @@
+---
+/**
+ * Career as a pipeline DAG on a real time axis (2020 → 2027).
+ * Everything is laid out at build time: x positions are fractions of the
+ * plot width, so the chart stays to scale at any width. JS only draws the
+ * edges in as you scroll and swaps the detail line on hover/tap.
+ * Phones get a vertical list instead.
+ */
+import { CAREER, CAREER_EDGES, copy, pick } from '@lib/home';
+import type { Lang } from '@lib/i18n';
+
+interface Props {
+  lang: Lang;
+}
+const { lang } = Astro.props;
+const c = copy.career;
+const Y0 = 2020, Y1 = 2027, PAD_L = 92, PAD_R = 150, HEIGHT = 330;
+const frac = (y: number) => (y - Y0) / (Y1 - Y0);
+const xCss = (f: number) => `calc(${PAD_L}px + (100% - ${PAD_L + PAD_R}px) * ${f.toFixed(4)})`;
+const laneY = [HEIGHT * 0.2, HEIGHT * 0.52, HEIGHT * 0.84];
+const yOf = (n: (typeof CAREER)[number]) => laneY[n.lane] + (n.long ? 13 : 0);
+const years = Array.from({ length: Y1 - Y0 + 1 }, (_, i) => Y0 + i);
+const selected = CAREER.length - 1;
+const edges = CAREER_EDGES.map(([a, b]) => {
+  const A = CAREER[a], B = CAREER[b];
+  const ax = frac(A.s) * 1000, ay = yOf(A), bx = frac(B.s) * 1000, by = yOf(B), mx = (ax + bx) / 2;
+  return ay === by ? `M${ax},${ay} Q${mx},${ay - 34} ${bx},${by}` : `M${ax},${ay} C${mx},${ay} ${mx},${by} ${bx},${by}`;
+});
+const sorted = [...CAREER].sort((a, b) => b.s - a.s);
+---
+
+<section class="sec" id="career">
+  <div class="wrap">
+    <div class="sec-head" data-fade-in>
+      <span class="eyebrow">{pick(c.eyebrow, lang)}</span>
+      <h2 set:html={pick(c.title, lang)} />
+      <p>{pick(c.lede, lang)}</p>
+    </div>
+
+    <div class="dag panel" data-fade-in data-dag>
+      <div class="plot" style={`height:${HEIGHT}px`}>
+        {years.map((y) => (
+          <span class="tick" style={`left:${xCss(frac(y))}`}><i></i><em>{y}</em></span>
+        ))}
+        {c.lanes[lang].map((n, k) => <span class="lane" style={`top:${laneY[k]}px`}>{n}</span>)}
+        {CAREER.map((n) => (
+          <span
+            class:list={['bar', n.sw && 'sw', n.lane === 2 && 'edu', n.long && 'long']}
+            style={`left:${xCss(frac(n.s))};top:${yOf(n)}px;width:calc((100% - ${PAD_L + PAD_R}px) * ${(frac(n.e) - frac(n.s)).toFixed(4)})`}
+          ></span>
+        ))}
+        <svg class="edges" viewBox={`0 0 1000 ${HEIGHT}`} preserveAspectRatio="none" style={`left:${PAD_L}px;width:calc(100% - ${PAD_L + PAD_R}px)`} aria-hidden="true">
+          {edges.map((d) => <path d={d} pathLength="1" vector-effect="non-scaling-stroke"></path>)}
+        </svg>
+        {CAREER.map((n, i) => (
+          <button
+            type="button"
+            class:list={['node', n.sw && 'sw', i === selected && 'on']}
+            style={`left:${xCss(frac(n.s))};top:${yOf(n) + n.lab * 21}px`}
+            data-node={i}
+            data-title={pick(n.title, lang)}
+            data-at={n.at}
+            data-when={pick(n.when, lang)}
+            data-d={pick(n.d, lang)}
+            aria-label={`${pick(n.title, lang)}, ${n.at}, ${pick(n.when, lang)}`}
+          >
+            <i></i><span>{n.at}<small>{pick(n.when, lang)}</small></span>
+          </button>
+        ))}
+      </div>
+      <div class="detail" aria-live="polite" data-detail>
+        <b>{pick(CAREER[selected].title, lang)} · {CAREER[selected].at}</b>
+        <span>{pick(CAREER[selected].when, lang)}</span>
+        <p>{pick(CAREER[selected].d, lang)}</p>
+      </div>
+      <ol class="list">
+        {sorted.map((n) => (
+          <li class:list={[n.sw && 'sw']}>
+            <small>{pick(n.when, lang)}</small>
+            <b>{pick(n.title, lang)} · {n.at}</b>
+            <p>{pick(n.d, lang)}</p>
+          </li>
+        ))}
+      </ol>
+    </div>
+  </div>
+</section>
+
+<style>
+  .dag {
+    padding: 18px 18px 14px;
+  }
+  .plot {
+    position: relative;
+  }
+  .tick {
+    position: absolute;
+    top: 6px;
+    bottom: 0;
+    width: 0;
+  }
+  .tick i {
+    position: absolute;
+    top: 0;
+    bottom: 22px;
+    width: 1px;
+    background: rgb(var(--border));
+  }
+  .tick em {
+    position: absolute;
+    bottom: 2px;
+    transform: translateX(-50%);
+    font: 500 11px 'JetBrains Mono', ui-monospace, monospace;
+    font-style: normal;
+    color: rgb(var(--text-300));
+  }
+  .lane {
+    position: absolute;
+    left: 0;
+    transform: translateY(-50%);
+    font: 500 10px 'JetBrains Mono', ui-monospace, monospace;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: rgb(var(--text-300));
+  }
+  .bar {
+    position: absolute;
+    min-width: 4px;
+    height: 6px;
+    margin-top: -3px;
+    border-radius: 3px;
+    background: rgb(var(--text-300));
+    opacity: 0.85;
+  }
+  .bar.sw {
+    background: rgb(var(--accent-1));
+  }
+  .bar.edu {
+    background: rgb(var(--accent-2));
+  }
+  .bar.long {
+    height: 3px;
+    margin-top: -1.5px;
+    opacity: 0.45;
+  }
+  .edges {
+    position: absolute;
+    top: 0;
+    height: 100%;
+    overflow: visible;
+  }
+  .edges path {
+    fill: none;
+    stroke: rgb(var(--accent-1));
+    stroke-width: 1.5;
+    opacity: 0.6;
+    stroke-dasharray: 1;
+    stroke-dashoffset: 0;
+  }
+  .node {
+    position: absolute;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 0;
+    transform: translate(-6px, -50%);
+    text-align: left;
+  }
+  .node i {
+    flex: none;
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    background: rgb(var(--bg-elev));
+    border: 2px solid rgb(var(--text-300));
+    transition: transform 0.25s cubic-bezier(0.2, 0.8, 0.2, 1), background 0.2s, border-color 0.2s;
+  }
+  .node.sw i {
+    border-color: rgb(var(--accent-1));
+  }
+  .node span {
+    padding: 3px 7px;
+    border-radius: 7px;
+    font-size: 0.8rem;
+    line-height: 1.2;
+    white-space: nowrap;
+    color: rgb(var(--text-200));
+    background: rgb(var(--bg-elev) / 0.85);
+    transition: color 0.2s;
+  }
+  .node small {
+    display: block;
+    font: 0.66rem 'JetBrains Mono', ui-monospace, monospace;
+    color: rgb(var(--text-300));
+  }
+  .node:hover i,
+  .node.on i {
+    transform: scale(1.35);
+    background: rgb(var(--accent-1));
+    border-color: rgb(var(--accent-1));
+  }
+  .node:hover span,
+  .node.on span {
+    color: rgb(var(--text-100));
+  }
+  .detail {
+    margin-top: 10px;
+    padding-top: 14px;
+    border-top: 1px solid rgb(var(--border));
+    min-height: 4.4em;
+    display: grid;
+    gap: 4px;
+  }
+  .detail b {
+    font-weight: 600;
+    color: rgb(var(--text-100));
+  }
+  .detail span {
+    font: 0.74rem 'JetBrains Mono', ui-monospace, monospace;
+    color: rgb(var(--text-300));
+  }
+  .detail p {
+    color: rgb(var(--text-200));
+    font-size: 0.94rem;
+  }
+  .list {
+    display: none;
+  }
+  @media (max-width: 860px) {
+    .plot,
+    .detail {
+      display: none;
+    }
+    .list {
+      display: grid;
+      position: relative;
+      padding-left: 18px;
+    }
+    .list::before {
+      content: '';
+      position: absolute;
+      left: 5px;
+      top: 10px;
+      bottom: 10px;
+      width: 1.5px;
+      background: rgb(var(--accent-1) / 0.4);
+    }
+    .list li {
+      position: relative;
+      display: grid;
+      gap: 2px;
+      padding: 10px 0 12px 14px;
+    }
+    .list li::before {
+      content: '';
+      position: absolute;
+      left: -18px;
+      top: 15px;
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      background: rgb(var(--bg-elev));
+      border: 2px solid rgb(var(--text-300));
+    }
+    .list li.sw::before {
+      background: rgb(var(--accent-1));
+      border-color: rgb(var(--accent-1));
+    }
+    .list small {
+      font: 0.72rem 'JetBrains Mono', ui-monospace, monospace;
+      color: rgb(var(--text-300));
+    }
+    .list b {
+      color: rgb(var(--text-100));
+      font-weight: 600;
+    }
+    .list p {
+      color: rgb(var(--text-200));
+      font-size: 0.9rem;
+    }
+  }
+</style>
+
+<script>
+  let cleanup: (() => void) | null = null;
+
+  function init() {
+    cleanup?.();
+    const dag = document.querySelector<HTMLElement>('[data-dag]');
+    if (!dag) return;
+    const detail = dag.querySelector<HTMLElement>('[data-detail]')!;
+    const nodes = [...dag.querySelectorAll<HTMLButtonElement>('[data-node]')];
+    const select = (b: HTMLButtonElement) => {
+      nodes.forEach((n) => n.classList.toggle('on', n === b));
+      const el = (tag: string, text: string) => Object.assign(document.createElement(tag), { textContent: text });
+      detail.replaceChildren(el('b', `${b.dataset.title} · ${b.dataset.at}`), el('span', b.dataset.when || ''), el('p', b.dataset.d || ''));
+    };
+    nodes.forEach((b) => ['pointerenter', 'focus', 'click'].forEach((ev) => b.addEventListener(ev, () => select(b))));
+
+    // Edges draw in, in time order, as the chart scrolls into view.
+    if (matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+    const paths = [...dag.querySelectorAll<SVGPathElement>('.edges path')];
+    let queued = false;
+    const paint = () => {
+      queued = false;
+      const r = dag.getBoundingClientRect();
+      const p = Math.min(1, Math.max(0, (innerHeight * 0.95 - r.top) / (innerHeight * 0.5)));
+      paths.forEach((path, i) => (path.style.strokeDashoffset = String(1 - Math.min(1, Math.max(0, p * paths.length - i)))));
+    };
+    const onScroll = () => { if (!queued) { queued = true; requestAnimationFrame(paint); } };
+    paint();
+    addEventListener('scroll', onScroll, { passive: true });
+    cleanup = () => { removeEventListener('scroll', onScroll); cleanup = null; };
+  }
+
+  document.addEventListener('astro:page-load', init);
+  document.addEventListener('astro:before-swap', () => cleanup?.());
+</script>

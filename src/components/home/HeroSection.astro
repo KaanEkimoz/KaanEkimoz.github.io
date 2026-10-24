@@ -1,0 +1,474 @@
+---
+import HeroField from '@components/home/HeroField.astro';
+import Mark from '@components/Mark.astro';
+import { SOCIAL } from '@lib/constants';
+import { copy, pick, QA } from '@lib/home';
+import type { Lang } from '@lib/i18n';
+
+interface Props {
+  lang: Lang;
+}
+const { lang } = Astro.props;
+const c = copy.hero;
+const a = copy.ask;
+
+// Everything the client script needs, already in the page's language.
+const data = {
+  qa: QA.map((x) => ({
+    keys: x.keys,
+    q: pick(x.q, lang),
+    a: pick(x.a, lang),
+    stats: x.stats?.[lang] ?? null,
+    src: x.src.map((s) => ({ id: s, label: pick(copy.sources[s], lang) })),
+  })),
+  fallback: pick(a.fallback, lang),
+};
+const first = data.qa[0];
+---
+
+<section class="hero">
+  <HeroField />
+  <div class="wrap grid">
+    <div class="intro">
+      <span class="eyebrow">{pick(c.eyebrow, lang)}</span>
+      <h1 class="grad-em" set:html={pick(c.title, lang)} />
+      <p class="lede">{pick(c.lede, lang)}</p>
+      <ul class="facts">
+        {c.facts.map((f) => <li>{pick(f, lang)}</li>)}
+      </ul>
+      <div class="cta">
+        <a class="btn" href={`mailto:${SOCIAL.email}`}>{pick(c.email, lang)}</a>
+        <a class="btn btn-ghost" href={SOCIAL.linkedin} target="_blank" rel="noopener">LinkedIn ↗</a>
+        <a class="btn btn-ghost" href="#work">{pick(c.seeWork, lang)}</a>
+      </div>
+    </div>
+
+    <div class="ask-col">
+      <div class="ask" data-ask>
+        <div class="ask-head">
+          <b><Mark size={16} /><span>{pick(a.title, lang)}</span></b>
+          <span class="mode">{pick(a.mode, lang)}</span>
+        </div>
+        <div class="convo" aria-live="polite" aria-busy="false" data-convo>
+          <div class="q" data-q>{first.q}</div>
+          <div class="a">
+            <svg class="glyph" viewBox="0 0 26 26" aria-hidden="true"><rect x="0.5" y="0.5" width="25" height="25" rx="8" fill="rgb(var(--accent-1) / 0.14)"></rect><path d="M10 12.2l6-3M10 13.8l6 3" stroke="rgb(var(--text-300))" stroke-width="1.1" fill="none"></path><circle cx="8" cy="13" r="2.2" fill="rgb(var(--accent-2))"></circle><circle cx="18" cy="8.5" r="2.2" fill="rgb(var(--accent-1))"></circle><circle cx="18" cy="17.5" r="2.2" fill="rgb(var(--accent-1))"></circle></svg>
+            <div class="text" data-a>{first.a}</div>
+          </div>
+          <div class="sources" data-sources>
+            {first.src.map((s, i) => <a class="src in" href={`#${s.id}`}><b>{i + 1}</b>{s.label}</a>)}
+          </div>
+        </div>
+        <form class="composer" data-composer autocomplete="off">
+          <input type="text" maxlength="120" placeholder={pick(a.placeholder, lang)} aria-label={pick(a.inputLabel, lang)} data-input />
+          <button class="send" type="submit" aria-label={pick(a.send, lang)} disabled data-send>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 19V5M5 12l7-7 7 7"></path></svg>
+          </button>
+        </form>
+      </div>
+      <div class="chips" data-chips>
+        {data.qa.map((x, i) => <button class="chip" type="button" data-qa={i} aria-pressed={i === 0 ? 'true' : 'false'}>{x.q}</button>)}
+      </div>
+      <p class="disclaim">{pick(a.disclaimer, lang)}</p>
+    </div>
+  </div>
+  <script type="application/json" data-ask-data set:html={JSON.stringify(data)} />
+</section>
+
+<style>
+  .hero {
+    position: relative;
+    overflow: hidden;
+    border-bottom: 1px solid rgb(var(--border));
+    background:
+      radial-gradient(60% 70% at 72% 45%, rgb(var(--accent-1) / 0.14), transparent 70%),
+      linear-gradient(rgb(var(--grid-line) / var(--grid-alpha, 0.06)) 1px, transparent 1px) 0 0 / 48px 48px,
+      linear-gradient(90deg, rgb(var(--grid-line) / var(--grid-alpha, 0.06)) 1px, transparent 1px) 0 0 / 48px 48px;
+  }
+  .grid {
+    position: relative;
+    display: grid;
+    grid-template-columns: minmax(0, 0.95fr) minmax(0, 1.05fr);
+    gap: 48px;
+    align-items: center;
+    padding-block: clamp(56px, 8vw, 96px) clamp(150px, 15vw, 200px);
+  }
+  .intro {
+    display: grid;
+    gap: 22px;
+    align-content: center;
+  }
+  h1 {
+    font-size: clamp(2.2rem, 4.1vw, 3.5rem);
+    line-height: 1.06;
+    letter-spacing: -0.045em;
+    font-weight: 500;
+  }
+  .lede {
+    color: rgb(var(--text-200));
+    font-size: 1.12rem;
+    max-width: 30rem;
+  }
+  .facts {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px 18px;
+    color: rgb(var(--text-200));
+    font-size: 0.9rem;
+  }
+  .facts li {
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+  }
+  .facts li::before {
+    content: '';
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: rgb(var(--accent-2));
+  }
+  .cta {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    margin-top: 4px;
+  }
+
+  /* Ask box */
+  .ask {
+    border: 1px solid transparent;
+    border-radius: 16px;
+    overflow: hidden;
+    display: grid;
+    box-shadow: var(--glow);
+    background:
+      linear-gradient(rgb(var(--bg-elev)), rgb(var(--bg-elev))) padding-box,
+      linear-gradient(135deg, rgb(var(--accent-1)), rgb(var(--border)) 38%, rgb(var(--border)) 62%, rgb(var(--accent-2))) border-box;
+  }
+  .ask-head {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 12px;
+    padding: 14px 18px;
+    border-bottom: 1px solid rgb(var(--border));
+  }
+  .ask-head b {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    font-weight: 600;
+    font-size: 0.92rem;
+    color: rgb(var(--text-100));
+  }
+  .mode {
+    font: 500 0.72rem 'JetBrains Mono', ui-monospace, monospace;
+    color: rgb(var(--text-300));
+  }
+  .convo {
+    padding: 20px 20px 8px;
+    display: grid;
+    gap: 16px;
+    min-height: 360px;
+    align-content: start;
+  }
+  .q {
+    justify-self: end;
+    max-width: 85%;
+    padding: 8px 13px;
+    border-radius: 10px 10px 2px 10px;
+    font-size: 0.94rem;
+    color: rgb(var(--text-100));
+    background: rgb(var(--accent-1) / 0.14);
+    border: 1px solid rgb(var(--border));
+  }
+  .a {
+    display: grid;
+    grid-template-columns: 26px minmax(0, 1fr);
+    gap: 12px;
+  }
+  .glyph {
+    width: 26px;
+    height: 26px;
+  }
+  .text {
+    font-size: 1.04rem;
+    line-height: 1.62;
+    color: rgb(var(--text-100));
+    min-width: 0;
+  }
+  .text :global(.caret) {
+    display: inline-block;
+    width: 0.5em;
+    height: 1.05em;
+    margin-left: 2px;
+    vertical-align: -0.15em;
+    border-radius: 1px;
+    background: rgb(var(--accent-2));
+    box-shadow: 0 0 10px rgb(var(--accent-2));
+    animation: blink 1s steps(2) infinite;
+  }
+  .text :global(.stats) {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    margin-top: 10px;
+  }
+  .text :global(.stats span) {
+    font: 500 0.74rem 'JetBrains Mono', ui-monospace, monospace;
+    padding: 4px 8px;
+    border-radius: 7px;
+    background: rgb(var(--accent-2) / 0.12);
+    color: rgb(var(--accent-2));
+  }
+  .text :global(a) {
+    color: rgb(var(--accent-2));
+    font-family: 'JetBrains Mono', ui-monospace, monospace;
+    font-size: 0.92em;
+  }
+  @keyframes blink {
+    50% {
+      opacity: 0;
+    }
+  }
+  .sources {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    padding-left: 38px;
+    min-height: 28px;
+  }
+  .sources :global(.src) {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 0.76rem;
+    padding: 4px 10px 4px 6px;
+    border-radius: 999px;
+    background: rgb(var(--bg-base));
+    border: 1px solid rgb(var(--border));
+    color: rgb(var(--text-200));
+    opacity: 0;
+    transform: translateY(4px);
+    transition: opacity 0.35s, transform 0.35s, color 0.2s, border-color 0.2s;
+  }
+  .sources :global(.src.in) {
+    opacity: 1;
+    transform: none;
+  }
+  .sources :global(.src:hover) {
+    color: rgb(var(--text-100));
+    border-color: rgb(var(--accent-1));
+  }
+  .sources :global(.src b) {
+    display: grid;
+    place-items: center;
+    width: 16px;
+    height: 16px;
+    border-radius: 50%;
+    background: rgb(var(--accent-1) / 0.14);
+    color: rgb(var(--accent-1));
+    font: 600 0.62rem 'JetBrains Mono', ui-monospace, monospace;
+  }
+  .composer {
+    margin: 8px 12px 12px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 6px 6px 6px 14px;
+    border-radius: 12px;
+    border: 1px solid rgb(var(--border));
+    background: rgb(var(--bg-base));
+    transition: border-color 0.2s, box-shadow 0.2s;
+  }
+  .composer:focus-within {
+    border-color: rgb(var(--accent-1));
+    box-shadow: 0 0 0 4px rgb(var(--accent-1) / 0.14);
+  }
+  .composer input {
+    flex: 1;
+    min-width: 0;
+    border: 0;
+    background: none;
+    outline: none;
+    font-size: 0.96rem;
+    padding: 8px 0;
+    color: rgb(var(--text-100));
+  }
+  .composer input::placeholder {
+    color: rgb(var(--text-300));
+  }
+  .send {
+    width: 36px;
+    height: 36px;
+    border-radius: 9px;
+    display: grid;
+    place-items: center;
+    color: #fff;
+    background: linear-gradient(135deg, rgb(var(--accent-1)), rgb(var(--accent-2)));
+    transition: transform 0.1s ease-out, opacity 0.2s;
+  }
+  .send:disabled {
+    opacity: 0.4;
+    cursor: default;
+  }
+  .send svg {
+    width: 16px;
+    height: 16px;
+  }
+  .chips {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-top: 14px;
+  }
+  .chip {
+    min-height: 36px;
+    padding: 7px 12px;
+    border-radius: 8px;
+    border: 1px solid rgb(var(--border));
+    background: rgb(var(--bg-elev));
+    color: rgb(var(--text-200));
+    font-size: 0.86rem;
+    transition: color 0.2s, border-color 0.2s, background 0.2s, transform 0.1s ease-out;
+  }
+  .chip:hover {
+    color: rgb(var(--text-100));
+    border-color: rgb(var(--accent-1));
+  }
+  .chip:active,
+  .send:active {
+    transform: scale(0.96);
+  }
+  .chip[aria-pressed='true'] {
+    color: rgb(var(--accent-1));
+    border-color: rgb(var(--accent-1));
+    background: rgb(var(--accent-1) / 0.12);
+  }
+  .disclaim {
+    margin-top: 10px;
+    font-size: 0.8rem;
+    color: rgb(var(--text-300));
+  }
+
+  @media (max-width: 860px) {
+    .grid {
+      grid-template-columns: 1fr;
+      gap: 28px;
+      padding-block: 36px 130px;
+    }
+    .intro {
+      gap: 16px;
+    }
+    .lede {
+      font-size: 1rem;
+    }
+    .cta .btn {
+      flex: 1 1 auto;
+    }
+    .convo {
+      min-height: clamp(300px, 52vh, 380px);
+      padding: 16px 14px 6px;
+    }
+    .sources {
+      padding-left: 0;
+    }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .text :global(.caret) {
+      animation: none;
+    }
+    .sources :global(.src) {
+      transition: none;
+    }
+  }
+</style>
+
+<script>
+  type QAItem = { keys: string[]; q: string; a: string; stats: string[] | null; src: { id: string; label: string }[] };
+  type Data = { qa: QAItem[]; fallback: string };
+
+  const reduce = matchMedia('(prefers-reduced-motion: reduce)');
+  const esc = (s: string) => s.replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' })[c]!);
+  const mailLink = (s: string) =>
+    esc(s).replace(/kaanekimoz@gmail\.com/g, '<a href="mailto:kaanekimoz@gmail.com">kaanekimoz@gmail.com</a>');
+
+  function init() {
+    const root = document.querySelector<HTMLElement>('[data-ask]');
+    const dataEl = document.querySelector<HTMLScriptElement>('[data-ask-data]');
+    if (!root || !dataEl || root.dataset.ready) return;
+    root.dataset.ready = '1';
+    const data: Data = JSON.parse(dataEl.textContent || '{}');
+    const convo = root.querySelector<HTMLElement>('[data-convo]')!;
+    const qEl = root.querySelector<HTMLElement>('[data-q]')!;
+    const aEl = root.querySelector<HTMLElement>('[data-a]')!;
+    const srcEl = root.querySelector<HTMLElement>('[data-sources]')!;
+    const form = root.querySelector<HTMLFormElement>('[data-composer]')!;
+    const input = root.querySelector<HTMLInputElement>('[data-input]')!;
+    const send = root.querySelector<HTMLButtonElement>('[data-send]')!;
+    const chips = [...document.querySelectorAll<HTMLButtonElement>('[data-chips] .chip')];
+    let streamId = 0;
+
+    const sourcesHTML = (x: QAItem) => x.src.map((s, i) => `<a class="src" href="#${s.id}"><b>${i + 1}</b>${esc(s.label)}</a>`).join('');
+    const statsHTML = (x: QAItem) => (x.stats ? `<span class="stats">${x.stats.map((s) => `<span>${esc(s)}</span>`).join('')}</span>` : '');
+    const pulse = () => document.dispatchEvent(new CustomEvent('hero:pulse', { detail: root.getBoundingClientRect() }));
+
+    function stream(text: string, done: () => void) {
+      const id = ++streamId;
+      const words = text.split(' ');
+      let n = 0;
+      srcEl.innerHTML = '';
+      convo.setAttribute('aria-busy', 'true');
+      aEl.innerHTML = '<span class="caret"></span>';
+      const tick = () => {
+        if (id !== streamId) return;
+        n = Math.min(words.length, n + 1 + (Math.random() < 0.35 ? 1 : 0));
+        aEl.innerHTML = esc(words.slice(0, n).join(' ')) + (n < words.length ? '<span class="caret"></span>' : '');
+        pulse();
+        if (n < words.length) setTimeout(tick, 34 + Math.random() * 46);
+        else { convo.setAttribute('aria-busy', 'false'); done(); }
+      };
+      setTimeout(tick, 320);
+    }
+
+    function ask(i: number, typed?: string) {
+      chips.forEach((c) => c.setAttribute('aria-pressed', String(+c.dataset.qa! === i)));
+      const x = data.qa[i];
+      qEl.textContent = typed || (x ? x.q : '');
+      const finish = () => {
+        aEl.innerHTML = x ? mailLink(x.a) + statsHTML(x) : mailLink(data.fallback);
+        srcEl.innerHTML = x ? sourcesHTML(x) : '';
+        srcEl.querySelectorAll('.src').forEach((s, k) => setTimeout(() => s.classList.add('in'), reduce.matches ? 0 : 90 * k));
+      };
+      if (reduce.matches) return finish();
+      stream(x ? x.a : data.fallback, finish);
+    }
+
+    // Whole-word (or word-prefix) matching, normalised in both locales.
+    const norm = (t: string) =>
+      t.toLocaleLowerCase('tr').replace(/[^a-z0-9çğıöşüâîû.#+ ]+/g, ' ') + ' ' + t.toLocaleLowerCase('en').replace(/[^a-z0-9.#+ ]+/g, ' ');
+    function match(v: string) {
+      const n = norm(v), words = n.split(/\s+/).filter(Boolean);
+      let best = -1, score = 0;
+      data.qa.forEach((x, i) => {
+        const s = x.keys.reduce((acc, k) => acc + (words.some((w) => w === k || (k.length > 3 && w.startsWith(k))) ? 1 : 0), 0);
+        if (s > score) { score = s; best = i; }
+      });
+      return best;
+    }
+
+    chips.forEach((c) => c.addEventListener('click', () => ask(+c.dataset.qa!)));
+    input.addEventListener('input', () => (send.disabled = !input.value.trim()));
+    form.addEventListener('submit', (e) => {
+      e.preventDefault();
+      const v = input.value.trim();
+      if (!v) return;
+      input.value = '';
+      send.disabled = true;
+      ask(match(v), v);
+    });
+  }
+
+  document.addEventListener('astro:page-load', init);
+</script>

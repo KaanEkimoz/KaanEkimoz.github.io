@@ -1,56 +1,155 @@
 ---
 import { Image } from 'astro:assets';
 import Tag from '@components/ui/Tag.astro';
-import { platformVariant, slugOf, type Project } from '@lib/content';
+import { slugOf, type Project } from '@lib/content';
 import { DEFAULT_LOCALE, localizedPath, t, type Lang } from '@lib/i18n';
 
 interface Props {
   project: Project;
   /** Locale of the surrounding page; localizes the card label + detail href. */
   lang?: Lang;
+  /** Wide layout (image left, text right on large screens) for products. */
+  wide?: boolean;
 }
 
-const { project, lang = DEFAULT_LOCALE } = Astro.props;
-const { title, description, platform, genres, year, coverImage } = project.data;
+const { project, lang = DEFAULT_LOCALE, wide = false } = Astro.props;
+const { title, description, platform, genres, year, coverImage, coverPosition } = project.data;
 const detailHref = localizedPath(`/projects/${slugOf(project.id)}`, lang);
 ---
 
-<a
-  href={detailHref}
-  data-project-modal
-  class="group block border border-border bg-bg-elev transition-all duration-200 hover:border-accent-1 hover:shadow-glow-cyan hover:-translate-y-0.5 overflow-hidden"
->
-  {
-    coverImage && (
-      <div class="aspect-video overflow-hidden border-b border-border">
+<a href={detailHref} data-project-modal class:list={['card', { wide }]}>
+  <div class="img">
+    {
+      coverImage && (
         <Image
           src={coverImage}
-          alt={`${title} cover`}
-          widths={[400, 800]}
-          sizes="(min-width: 1024px) 30vw, (min-width: 640px) 50vw, 100vw"
-          class="w-full h-full object-cover transition-transform duration-300 group-hover:scale-[1.03]"
+          alt=""
+          widths={wide ? [600, 900, 1400] : [400, 800]}
+          sizes={wide ? '(min-width: 1024px) 640px, 100vw' : '(min-width: 1024px) 360px, (min-width: 640px) 50vw, 100vw'}
+          style={coverPosition ? `object-position:${coverPosition}` : undefined}
         />
-      </div>
-    )
-  }
-
-  <div class="p-6">
-    <div class="flex items-start justify-between gap-4 mb-3">
-      <h3 class="font-mono font-semibold text-text-100 text-lg group-hover:text-accent-1 transition-colors">
-        {title}
-      </h3>
-      <span class="font-mono text-xs text-text-300 shrink-0">{year}</span>
+      )
+    }
+  </div>
+  <div class="body">
+    <div class="top">
+      <h2>{title}</h2>
+      <span class="year">{year}</span>
     </div>
-
-    <p class="text-text-200 text-sm mb-4 line-clamp-3">{description}</p>
-
-    <div class="flex flex-wrap items-center gap-2 mb-4">
-      <Tag variant={platformVariant(platform)}>{platform}</Tag>
-      {genres.slice(0, 2).map((g) => <Tag variant="muted">{g}</Tag>)}
+    <p>{description}</p>
+    <div class="tags">
+      <Tag variant="accent">{platform}</Tag>
+      {genres.slice(0, 2).map((g) => <Tag>{g}</Tag>)}
     </div>
-
-    <div class="font-mono text-xs uppercase tracking-widest text-text-300 group-hover:text-accent-1 transition-colors">
-      {t('projectCard.view', lang)}
-    </div>
+    <span class="go">{t('projectCard.view', lang)}</span>
   </div>
 </a>
+
+<style>
+  .card {
+    display: grid;
+    grid-template-rows: auto 1fr;
+    height: 100%;
+    overflow: hidden;
+    border-radius: 16px;
+    border: 1px solid rgb(var(--border));
+    background: rgb(var(--bg-elev));
+    transition: border-color 0.25s, transform 0.25s cubic-bezier(0.2, 0.8, 0.2, 1), box-shadow 0.25s;
+  }
+  .card:hover {
+    border-color: rgb(var(--accent-1) / 0.55);
+    transform: translateY(-2px);
+    box-shadow: var(--glow);
+  }
+  .img {
+    aspect-ratio: 16 / 10;
+    overflow: hidden;
+    background: rgb(var(--bg-elev-2));
+    border-bottom: 1px solid rgb(var(--border));
+  }
+  .img :global(img) {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    transition: transform 0.7s cubic-bezier(0.2, 0.8, 0.2, 1);
+  }
+  .card:hover .img :global(img) {
+    transform: scale(1.04);
+  }
+  .body {
+    display: grid;
+    align-content: start;
+    gap: 10px;
+    padding: 20px;
+  }
+  .top {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 12px;
+  }
+  h2 {
+    font-size: 1.2rem;
+    font-weight: 500;
+    letter-spacing: -0.02em;
+  }
+  .card:hover h2 {
+    color: rgb(var(--accent-1));
+  }
+  .year {
+    font: 0.74rem 'JetBrains Mono', ui-monospace, monospace;
+    color: rgb(var(--text-300));
+  }
+  p {
+    color: rgb(var(--text-200));
+    font-size: 0.92rem;
+    display: -webkit-box;
+    -webkit-line-clamp: 3;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+  .tags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+  }
+  .go {
+    margin-top: 4px;
+    color: rgb(var(--accent-2));
+    font-size: 0.88rem;
+    font-weight: 500;
+  }
+  @media (min-width: 1024px) {
+    .wide {
+      grid-template-rows: none;
+      grid-template-columns: 1.4fr 1fr;
+    }
+    .wide .img {
+      aspect-ratio: auto;
+      min-height: 100%;
+      border-bottom: 0;
+      border-right: 1px solid rgb(var(--border));
+    }
+    .wide .body {
+      align-content: center;
+      padding: 32px;
+    }
+    .wide h2 {
+      font-size: 1.8rem;
+      letter-spacing: -0.035em;
+    }
+    .wide p {
+      font-size: 1rem;
+      -webkit-line-clamp: 5;
+    }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .card,
+    .img :global(img) {
+      transition: none;
+    }
+    .card:hover {
+      transform: none;
+    }
+  }
+</style>

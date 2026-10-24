@@ -4,7 +4,7 @@ Context for Claude sessions working on this repo (local or cloud). The repo is p
 
 ## Owner and how to work with him
 
-- **Kaan Usta** (Yusuf Kaan Usta), based in Türkiye. Unity/C# game developer (mobile-focused, since 2020) and solo full-stack developer of Patimania (Next.js, NestJS, Expo).
+- **Kaan Usta** (Yusuf Kaan Usta), based in Türkiye. Full-stack engineer and the only engineer of Patimania (Next.js, NestJS, Expo); Unity/C# game developer since 2020. The site presents him as a full-stack engineer, with games as where he started.
 - Talk to him in **Turkish**, naturally (not translated-sounding). He gives a lot of autonomy; confirm before merging, deploying or anything hard to undo.
 - His internet drops often: re-read this file and the code before asking where things were left.
 - Plans: write only what will be done — no "out of scope / v2" sections unless he asks what else is possible.
@@ -12,7 +12,7 @@ Context for Claude sessions working on this repo (local or cloud). The repo is p
 
 ## Stack
 
-Astro 5 static site + content collections, Tailwind CSS (theme via CSS variables), TypeScript, self-hosted Inter + JetBrains Mono, `ClientRouter` view transitions. Hosted on **GitHub Pages** (static only — no server code; anything dynamic runs client-side or in the Cloudflare Worker below).
+Astro 5 static site + content collections, Tailwind CSS (theme via CSS variables), TypeScript, self-hosted Sora (display) + Geist (text) + JetBrains Mono (Inter only for `/chat`), `ClientRouter` view transitions. Hosted on **GitHub Pages** (static only — no server code; anything dynamic runs client-side or in the Cloudflare Worker below).
 
 ```sh
 npm ci
@@ -32,8 +32,8 @@ npm run check    # astro check (types) — keep it at 0 errors
 ## Site structure
 
 ```
-/                    hero + mini-game, featured projects, latest posts
-/projects[/<slug>]   grid with filter pills (All | Mobile | PC | VR | Published) and detail pages
+/                    hero (data canvas + Q&A box), Patimania, how I work, career, skills, evals, games, latest posts, contact
+/projects[/<slug>]   grid with filter pills (All | Products & Web | Games) and detail pages
 /blog[/<slug>]       posts (md / mdx)
 /brickcrack-privacy  hidden, for App Store Connect (iOS build name "BrickCrack" = Brick Game)
 /drawrush-privacy    hidden, raw HTML in public/drawrush-privacy/ (bypasses Astro)
@@ -44,17 +44,20 @@ npm run check    # astro check (types) — keep it at 0 errors
 
 - **i18n:** EN at `/…` (default, no prefix), TR at `/tr/…`. Strings + helpers in `src/lib/i18n.ts` (`t`, `localizedPath`, `alternateUrl`). Page bodies live once in `src/views/*.astro` and take a `lang` prop; `src/pages/…` and `src/pages/tr/…` are thin wrappers, so a page change is made in the view, not twice. `LanguageToggle` remembers the choice in `localStorage.fx-lang`; the pre-paint redirect in `BaseLayout` only runs on the root paths.
 - **Content files:** EN `foo.md`, TR `foo-tr.md` (dash, not dot — Astro strips dots from ids). Slug pages drop the `-tr` suffix (`slugOf` in `src/lib/content.ts`) so both languages share one slug; `getProjects(lang)` / `getPosts(lang)` there return a locale's entries already filtered and sorted. Schemas in `src/content.config.ts` (`lang`, `published`, `featured`, `youtubeId`, `coverImage`, `gallery`…).
-- **Theme:** design tokens in `src/styles/global.css` are **space-separated RGB triplets** (`--accent-1: 0 217 255`) so Tailwind's `rgb(var(--x) / <alpha-value>)` works. Dark in `:root`, light in `html[data-theme='light']`. Don't put hex values back into `tailwind.config.mjs`. In canvas/inline styles wrap tokens with `rgb(...)`.
-- **Key components:** `BaseLayout` (head, pre-paint theme + language scripts, hreflang), `HeroCanvas` (target mini-game), `ProjectFilter`, `ProjectCard`, `ProjectModal`, `LiteYouTube`, `CustomCursor` (hides over iframes), `ThemeToggle`, `LanguageToggle`.
+- **Theme:** dark-first navy with blue (`--accent-1`), cyan (`--accent-2`) and indigo (`--accent-3`) accents. Design tokens in `src/styles/global.css` are **space-separated RGB triplets** (`--accent-1: 61 123 255`) so Tailwind's `rgb(var(--x) / <alpha-value>)` works. Dark in `:root`, light in `html[data-theme='light']`. Don't put hex values back into `tailwind.config.mjs`. In canvas/inline styles wrap tokens with `rgb(...)`.
+- **Shared classes** (`@layer components` in `global.css`): `.wrap`, `.sec`, `.sec-head`, `.eyebrow`, `.grad-em`, `.panel`, `.btn`, `.btn-ghost`, `.link`, `.mono-chip`.
+- **Key components:** `BaseLayout` (head, pre-paint theme + language scripts, hreflang), `Header` / `Footer` / `Mark`, the home sections in `src/components/home/` (`HeroField` canvas, `HeroSection` with the pre-written Q&A box, `PatimaniaSection`, `MethodSection`, `CareerSection`, `SkillsSection`, `EvalsSection`, `GamesSection`, `ContactSection`), `ProjectFilter`, `ProjectCard`, `ProjectModal`, `BlogCard`, `PageHeader`, `LiteYouTube`, `ThemeToggle`, `LanguageToggle`.
+- **Home copy and data** (Q&A, career nodes, skills, evals, Patimania numbers) live in `src/lib/home.ts`, EN and TR side by side. Numbers there come from Kaan's profile brief; don't add figures or claims (store status, metrics) he hasn't confirmed.
+- **Client scripts** init on `astro:page-load` and clean up on `astro:before-swap`. The project modal injects `#project-detail` from a detail page into other pages, so `ProjectPage` uses utilities / global classes only (scoped CSS wouldn't load there); its back link carries `data-back` so the modal can hide it.
 - **Images:** put content images in `src/assets/` (Astro optimizes them); `public/` is served as-is. Keep big PNGs under ~2 MB.
-- **OG image:** must be JPEG — WhatsApp silently rejects palette PNGs. Regenerate from `scripts/og-image.svg`:
-  `node -e "require('sharp')(require('fs').readFileSync('scripts/og-image.svg')).flatten({background:'#0a0a14'}).jpeg({quality:88,mozjpeg:true}).toFile('public/og-image.jpg')"`
+- **OG image:** must be JPEG — WhatsApp silently rejects palette PNGs. Regenerate from `scripts/og-image.svg` (Sora, Geist and JetBrains Mono must be installed as system fonts, or librsvg falls back):
+  `node -e "require('sharp')(require('fs').readFileSync('scripts/og-image.svg')).flatten({background:'#050912'}).jpeg({quality:88,mozjpeg:true}).toFile('public/og-image.jpg')"`
 
 ## Content
 
 - **Projects** (`src/content/projects/`, all with `-tr` mirrors): brick-game (Mobile, `published: true`, on Google Play; per-locale Play Store screenshots with `-tr` suffix), draw-rush, flex-hit, orbs-of-the-power, patimania (Web/SaaS, pre-launch, `featured`, no trailer), stack-runner, still.
 - **Blog** (`src/content/blog/`): welcome, april-2026-developer-update (mdx), may-2026-developer-update (mdx), each with `-tr`.
-- Adding a project: `<slug>.md` + `<slug>-tr.md`, `src/assets/projects/<slug>/cover.*` + `gallery/`. A new platform needs the pill in `ProjectFilter.astro` and strings in `i18n.ts`.
+- Adding a project: `<slug>.md` + `<slug>-tr.md`, `src/assets/projects/<slug>/cover.*` + `gallery/`. Set `category: product` for products (wide card on /projects) or leave the default `game` (also shown in the home games strip); `coverPosition` crops the cover in tight tiles.
 - Adding a post: `<slug>.{md,mdx}` + `-tr`, hero image in `src/assets/blog/`; in MDX use `import LiteYouTube from '@components/LiteYouTube.astro'`.
 
 ## Writing rules

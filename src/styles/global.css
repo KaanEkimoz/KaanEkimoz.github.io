@@ -1,9 +1,17 @@
-/* Font imports — only the weights we use, to keep bundle small */
+/* Fonts, self-hosted. Sora for display, Geist for text, JetBrains Mono for
+   labels and data. Inter stays only because /chat uses it. */
+@import '@fontsource/sora/400.css';
+@import '@fontsource/sora/500.css';
+@import '@fontsource/sora/600.css';
+@import '@fontsource/geist/400.css';
+@import '@fontsource/geist/500.css';
+@import '@fontsource/geist/600.css';
+@import '@fontsource/jetbrains-mono/400.css';
+@import '@fontsource/jetbrains-mono/500.css';
+@import '@fontsource/jetbrains-mono/600.css';
 @import '@fontsource/inter/400.css';
 @import '@fontsource/inter/500.css';
 @import '@fontsource/inter/600.css';
-@import '@fontsource/jetbrains-mono/400.css';
-@import '@fontsource/jetbrains-mono/600.css';
 
 @tailwind base;
 @tailwind components;
@@ -11,65 +19,59 @@
 
 /* Design tokens — space-separated RGB triplets so Tailwind's
    `rgb(var(--xxx) / <alpha-value>)` syntax can splice in opacity
-   modifiers (e.g. `bg-bg-base/80`).
-   The :root block holds the DARK theme (the brand default).
-   The light theme is layered on top via the [data-theme="light"] selector. */
+   modifiers (e.g. `bg-bg-base/80`). Use them in component CSS as
+   `rgb(var(--x))` or `rgb(var(--x) / 0.2)`.
+   :root holds the DARK theme (the default): midnight navy, one electric
+   blue, one cyan for data. Light theme mirrors it on a cool white. */
 :root {
-  /* Background layers */
-  --bg-base: 10 10 20;
-  --bg-elev: 20 20 31;
-  --bg-elev-2: 31 31 46;
+  /* Surfaces */
+  --bg-base: 5 9 18;
+  --bg-elev: 11 18 34;
+  --bg-elev-2: 17 27 48;
 
-  /* Accent (cool palette) — same across themes; they're the brand. */
-  --accent-1: 0 217 255;    /* cyan */
-  --accent-2: 255 77 255;   /* magenta */
-  --accent-3: 255 214 10;   /* amber */
+  /* Accents: blue (brand), cyan (data), indigo (third series) */
+  --accent-1: 61 123 255;
+  --accent-2: 34 211 238;
+  --accent-3: 129 140 248;
+  /* Blue that keeps white text above 4.5:1 (buttons, active pills) */
+  --accent-strong: 47 107 240;
 
   /* Text hierarchy */
-  --text-100: 240 240 245;
-  --text-200: 184 184 200;
-  --text-300: 168 168 192;
+  --text-100: 233 239 255; /* headings */
+  --text-200: 149 163 194; /* body, muted */
+  --text-300: 125 139 171; /* meta (≥ 4.5:1 on bg-base) */
 
-  /* Border */
-  --border: 42 42 58;
+  /* Hairlines */
+  --border: 28 40 66;
 
-  /* Decorative grid line color in hero — light-on-dark by default */
-  --grid-line: 255 255 255;
-  --glow-1-alpha: 0.30;
-  --glow-2-alpha: 0.25;
+  /* Hero grid + glows */
+  --grid-line: 120 160 255;
+  --grid-alpha: 0.06;
+  --glow: 0 0 0 1px rgb(61 123 255 / 0.18), 0 24px 60px -30px rgb(61 123 255 / 0.55);
+  --shadow: 0 1px 0 rgb(255 255 255 / 0.04) inset, 0 20px 50px -30px rgb(0 0 0 / 0.9);
 
   color-scheme: dark;
 }
 
 html[data-theme='light'] {
-  /* Paper / parchment tones — distinctly off-white so the page reads as
-     "warm light theme" instead of a stark white sheet. */
-  --bg-base: 232 226 213;
-  --bg-elev: 220 212 197;
-  --bg-elev-2: 205 196 178;
+  --bg-base: 243 246 255;
+  --bg-elev: 255 255 255;
+  --bg-elev-2: 232 238 252;
 
-  --text-100: 26 26 34;       /* near-black */
-  --text-200: 58 58 74;
-  --text-300: 92 92 112;      /* WCAG AA on the warmer bg */
+  --accent-1: 36 89 232;
+  --accent-2: 14 116 144;
+  --accent-3: 79 70 229;
+  --accent-strong: 36 89 232;
 
-  --border: 188 178 158;
+  --text-100: 10 19 48;
+  --text-200: 77 91 124;
+  --text-300: 95 108 140;
 
-  /* Accent overrides for light: the dark-theme accents (bright cyan /
-     magenta / amber) wash out completely on a paper background — they
-     would fail WCAG for any text use. Switch to deeper, more saturated
-     variants in the same color family so the brand vibe is preserved
-     while text and chips actually read. */
-  --accent-1: 8 116 139;      /* deeper teal-cyan */
-  --accent-2: 162 28 178;     /* deeper magenta */
-  --accent-3: 161 98 7;       /* deeper amber */
+  --border: 213 221 240;
 
-  /* Grid switches to a dark ink on light bg so it remains visible. */
-  --grid-line: 26 26 34;
-
-  /* Glows need a stronger alpha on the bright background to register
-     visually — the corner blurs would otherwise wash out completely. */
-  --glow-1-alpha: 0.45;
-  --glow-2-alpha: 0.40;
+  --grid-line: 36 89 232;
+  --glow: 0 0 0 1px rgb(36 89 232 / 0.14), 0 24px 60px -32px rgb(36 89 232 / 0.45);
+  --shadow: 0 1px 2px rgb(10 19 48 / 0.05), 0 20px 50px -30px rgb(10 19 48 / 0.3);
 
   color-scheme: light;
 }
@@ -85,7 +87,9 @@ html[data-theme='light'] {
   }
 
   h1, h2, h3, h4, h5, h6 {
-    @apply font-mono text-text-100;
+    @apply font-display text-text-100;
+    letter-spacing: -0.03em;
+    text-wrap: balance;
   }
 
   a {
@@ -107,7 +111,7 @@ html[data-theme='light'] {
   }
   ::-webkit-scrollbar-thumb {
     background: rgb(var(--bg-elev-2));
-    border-radius: 0;
+    border-radius: 8px;
   }
   ::-webkit-scrollbar-thumb:hover {
     background: rgb(var(--accent-1));
@@ -115,6 +119,103 @@ html[data-theme='light'] {
 }
 
 @layer components {
+  /* Shared building blocks for the redesigned pages. */
+  .wrap {
+    max-width: 72rem;
+    margin-inline: auto;
+    padding-left: max(20px, env(safe-area-inset-left, 0px));
+    padding-right: max(20px, env(safe-area-inset-right, 0px));
+  }
+  .eyebrow {
+    font: 500 0.72rem/1.4 'JetBrains Mono', ui-monospace, monospace;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: rgb(var(--text-200));
+  }
+  .sec {
+    padding-top: clamp(88px, 10vw, 128px);
+    scroll-margin-top: 60px;
+  }
+  .sec-head {
+    display: grid;
+    gap: 14px;
+    margin-bottom: 44px;
+    max-width: 46rem;
+  }
+  .sec-head h2 {
+    font-family: Sora, ui-sans-serif, system-ui, sans-serif;
+    font-size: clamp(1.9rem, 3.8vw, 2.9rem);
+    line-height: 1.08;
+    letter-spacing: -0.04em;
+    font-weight: 500;
+  }
+  .sec-head h2 em {
+    font-style: normal;
+    color: rgb(var(--accent-1));
+  }
+  .sec-head p {
+    color: rgb(var(--text-200));
+    font-size: 1.08rem;
+    max-width: 40rem;
+  }
+  .grad-em em {
+    font-style: normal;
+    background: linear-gradient(100deg, rgb(var(--accent-1)), rgb(var(--accent-2)));
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+  }
+  .panel {
+    background: rgb(var(--bg-elev));
+    border: 1px solid rgb(var(--border));
+    border-radius: 16px;
+    box-shadow: var(--shadow);
+  }
+  .btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    height: 44px;
+    padding: 0 18px;
+    border-radius: 8px;
+    font-weight: 500;
+    font-size: 0.92rem;
+    color: #fff;
+    background: rgb(var(--accent-strong));
+    transition: transform 0.1s ease-out, filter 0.2s, box-shadow 0.2s;
+  }
+  .btn:hover {
+    filter: brightness(1.1);
+  }
+  .btn:active {
+    transform: scale(0.97);
+  }
+  .btn-ghost {
+    color: rgb(var(--text-100));
+    background: transparent;
+    box-shadow: inset 0 0 0 1px rgb(var(--border));
+  }
+  .btn-ghost:hover {
+    filter: none;
+    box-shadow: inset 0 0 0 1px rgb(var(--accent-1));
+  }
+  .link {
+    color: rgb(var(--accent-2));
+    font-weight: 500;
+  }
+  .link:hover {
+    text-decoration: underline;
+    text-underline-offset: 3px;
+  }
+  .mono-chip {
+    font: 0.74rem 'JetBrains Mono', ui-monospace, monospace;
+    padding: 4px 9px;
+    border-radius: 8px;
+    border: 1px solid rgb(var(--border));
+    color: rgb(var(--text-200));
+  }
+
   /* LiteYouTube — global so fetched HTML in modals gets styled too. */
   .lite-yt {
     display: block;
@@ -123,6 +224,7 @@ html[data-theme='light'] {
     aspect-ratio: 16 / 9;
     background: rgb(var(--bg-elev));
     border: 1px solid rgb(var(--border));
+    border-radius: 16px;
     overflow: hidden;
   }
   .lite-yt-btn {
@@ -156,7 +258,7 @@ html[data-theme='light'] {
   }
   .lite-yt-btn:hover .lite-yt-play {
     transform: translate(-50%, -50%) scale(1.05);
-    filter: drop-shadow(0 0 16px rgba(0, 217, 255, 0.6));
+    filter: drop-shadow(0 0 16px rgb(var(--accent-1) / 0.6));
   }
   .lite-yt iframe {
     position: absolute;
@@ -168,10 +270,10 @@ html[data-theme='light'] {
 
   /* Prose content — blog posts, project detail pages and the modal */
   .prose-content h2 {
-    @apply font-mono text-text-100 text-xl mt-10 mb-4 uppercase tracking-widest;
+    @apply font-display text-text-100 text-2xl mt-12 mb-4 font-medium;
   }
   .prose-content h3 {
-    @apply font-mono text-text-100 text-lg mt-8 mb-3;
+    @apply font-display text-text-100 text-lg mt-8 mb-3 font-medium;
   }
   .prose-content p {
     @apply text-text-200;
@@ -189,13 +291,13 @@ html[data-theme='light'] {
     @apply text-text-100 italic;
   }
   .prose-content a {
-    @apply text-accent-1 hover:underline underline-offset-4;
+    @apply text-accent-2 hover:underline underline-offset-4;
   }
   .prose-content code {
-    @apply bg-bg-elev px-1.5 py-0.5 font-mono text-sm text-accent-1 border border-border;
+    @apply bg-bg-elev px-1.5 py-0.5 font-mono text-sm text-accent-2 border border-border rounded-md;
   }
   .prose-content pre {
-    @apply bg-bg-elev p-4 overflow-x-auto border border-border;
+    @apply bg-bg-elev p-4 overflow-x-auto border border-border rounded-xl;
   }
   .prose-content pre code {
     @apply bg-transparent border-0 p-0 text-text-200;
@@ -206,24 +308,20 @@ html[data-theme='light'] {
 }
 
 @layer utilities {
-  /* Scroll-triggered fade-in. Elements start translated and faded;
-     the IO controller in BaseLayout adds .is-visible on viewport entry. */
+  /* Scroll-triggered rise. Elements start a little lower and slide into
+     place; the IO controller in BaseLayout adds .is-visible on viewport
+     entry. Content is never hidden, only offset. */
   [data-fade-in] {
-    opacity: 0;
-    transform: translateY(16px);
-    transition:
-      opacity 0.6s ease-out,
-      transform 0.6s ease-out;
+    transform: translateY(14px);
+    transition: transform 0.7s cubic-bezier(0.16, 1, 0.3, 1);
   }
 
   [data-fade-in].is-visible {
-    opacity: 1;
-    transform: translateY(0);
+    transform: none;
   }
 
   @media (prefers-reduced-motion: reduce) {
     [data-fade-in] {
-      opacity: 1;
       transform: none;
       transition: none;
     }

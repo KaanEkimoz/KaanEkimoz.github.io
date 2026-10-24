@@ -1,0 +1,88 @@
+---
+import { Image } from 'astro:assets';
+import { copy, pick } from '@lib/home';
+import { getProjects, slugOf } from '@lib/content';
+import { localizedPath, t, type Lang } from '@lib/i18n';
+
+interface Props {
+  lang: Lang;
+}
+const { lang } = Astro.props;
+const c = copy.games;
+const games = (await getProjects(lang)).filter((p) => p.data.category === 'game');
+---
+
+<section class="sec" id="games">
+  <div class="wrap">
+    <div class="sec-head" data-fade-in>
+      <span class="eyebrow">{pick(c.eyebrow, lang)}</span>
+      <h2 set:html={pick(c.title, lang)} />
+      <p>{pick(c.lede, lang)}</p>
+    </div>
+    <div class="games" data-fade-in>
+      {games.map((g) => (
+        <a class="game" href={localizedPath(`/projects/${slugOf(g.id)}`, lang)} data-project-modal>
+          <div class="img">
+            {g.data.coverImage && (
+              <Image src={g.data.coverImage} alt={g.data.title} widths={[240, 480]} sizes="(min-width: 860px) 180px, 33vw" style={g.data.coverPosition ? `object-position:${g.data.coverPosition}` : undefined} />
+            )}
+          </div>
+          <b>{g.data.title}</b>
+          <span>{g.data.platform} · {g.data.year}</span>
+        </a>
+      ))}
+    </div>
+    <p class="more"><a class="link" href={localizedPath('/projects', lang)}>{t('nav.projects', lang)} →</a></p>
+  </div>
+</section>
+
+<style>
+  .games {
+    display: grid;
+    grid-template-columns: repeat(6, minmax(0, 1fr));
+    gap: 12px;
+  }
+  .game {
+    display: grid;
+    gap: 8px;
+    align-content: start;
+  }
+  .img {
+    aspect-ratio: 4 / 5;
+    border-radius: 12px;
+    overflow: hidden;
+    background: rgb(var(--bg-elev-2));
+    border: 1px solid rgb(var(--border));
+  }
+  .img :global(img) {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    transition: transform 0.7s cubic-bezier(0.2, 0.8, 0.2, 1);
+  }
+  .game:hover .img :global(img) {
+    transform: scale(1.05);
+  }
+  b {
+    font: 500 0.95rem Sora, ui-sans-serif, sans-serif;
+    letter-spacing: -0.02em;
+    color: rgb(var(--text-100));
+  }
+  span {
+    font: 0.72rem 'JetBrains Mono', ui-monospace, monospace;
+    color: rgb(var(--text-300));
+  }
+  .more {
+    margin-top: 18px;
+  }
+  @media (max-width: 860px) {
+    .games {
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .img :global(img) {
+      transition: none;
+    }
+  }
+</style>

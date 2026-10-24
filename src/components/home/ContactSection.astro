@@ -1,0 +1,137 @@
+---
+import { SOCIAL } from '@lib/constants';
+import { copy, pick } from '@lib/home';
+import type { Lang } from '@lib/i18n';
+
+interface Props {
+  lang: Lang;
+}
+const { lang } = Astro.props;
+const c = copy.contact;
+---
+
+<section class="contact" id="contact">
+  <div class="wrap grid">
+    <div>
+      <span class="eyebrow">{pick(c.eyebrow, lang)}</span>
+      <h2 class="grad-em" set:html={pick(c.title, lang)} />
+      <div class="mail">
+        <a href={`mailto:${SOCIAL.email}`} data-email>{SOCIAL.email}</a>
+        <button class="btn btn-ghost" type="button" data-copy data-copied={pick(c.copied, lang)} data-selected={pick(c.selected, lang)}>{pick(c.copy, lang)}</button>
+      </div>
+      <div class="socials">
+        <a class="link" href={SOCIAL.linkedin} target="_blank" rel="noopener">LinkedIn ↗</a>
+        <a class="link" href={SOCIAL.github} target="_blank" rel="noopener">GitHub ↗</a>
+        <a class="link" href={SOCIAL.itchio} target="_blank" rel="noopener">itch.io ↗</a>
+      </div>
+    </div>
+    <dl class="info">
+      {c.info.map((r) => (
+        <div><dt>{pick(r.k, lang)}</dt><dd>{pick(r.v, lang)}</dd></div>
+      ))}
+    </dl>
+  </div>
+</section>
+
+<style>
+  .contact {
+    margin-top: clamp(88px, 10vw, 128px);
+    padding-block: clamp(64px, 9vw, 112px);
+    border-top: 1px solid rgb(var(--border));
+    scroll-margin-top: 60px;
+  }
+  .grid {
+    display: grid;
+    grid-template-columns: minmax(0, 1.2fr) minmax(0, 0.8fr);
+    gap: 48px;
+    align-items: end;
+  }
+  h2 {
+    margin-top: 16px;
+    font-size: clamp(2.2rem, 5.6vw, 4.2rem);
+    line-height: 1.04;
+    letter-spacing: -0.045em;
+    font-weight: 500;
+    max-width: 14ch;
+  }
+  .mail {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-top: 30px;
+    max-width: 520px;
+    padding: 6px 6px 6px 16px;
+    border-radius: 12px;
+    border: 1px solid rgb(var(--border));
+    background: rgb(var(--bg-elev));
+    box-shadow: var(--glow);
+  }
+  .mail a {
+    flex: 1;
+    min-width: 0;
+    padding-block: 8px;
+    font: 500 1.02rem 'JetBrains Mono', ui-monospace, monospace;
+    color: rgb(var(--text-100));
+    overflow-wrap: anywhere;
+  }
+  .mail a:hover {
+    color: rgb(var(--accent-2));
+  }
+  .socials {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px 22px;
+    margin-top: 18px;
+  }
+  .socials a {
+    padding-block: 8px;
+  }
+  .info {
+    display: grid;
+    border-top: 1px solid rgb(var(--border));
+  }
+  .info div {
+    display: grid;
+    grid-template-columns: 7rem minmax(0, 1fr);
+    gap: 12px;
+    padding: 12px 0;
+    border-bottom: 1px solid rgb(var(--border));
+  }
+  dt {
+    font: 500 0.72rem/1.6 'JetBrains Mono', ui-monospace, monospace;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: rgb(var(--text-200));
+  }
+  dd {
+    font-size: 0.94rem;
+    color: rgb(var(--text-100));
+  }
+  @media (max-width: 860px) {
+    .grid {
+      grid-template-columns: 1fr;
+      gap: 32px;
+    }
+  }
+</style>
+
+<script>
+  function init() {
+    const btn = document.querySelector<HTMLButtonElement>('[data-copy]');
+    const email = document.querySelector<HTMLElement>('[data-email]');
+    if (!btn || !email || btn.dataset.ready) return;
+    btn.dataset.ready = '1';
+    const label = btn.textContent;
+    btn.addEventListener('click', async () => {
+      try {
+        await navigator.clipboard.writeText(email.textContent || '');
+        btn.textContent = btn.dataset.copied || '';
+      } catch {
+        getSelection()?.selectAllChildren(email);
+        btn.textContent = btn.dataset.selected || '';
+      }
+      setTimeout(() => (btn.textContent = label), 1600);
+    });
+  }
+  document.addEventListener('astro:page-load', init);
+</script>

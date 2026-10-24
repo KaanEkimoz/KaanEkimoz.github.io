@@ -1,0 +1,211 @@
+---
+/**
+ * Skills as a small tree per area, on a 4 + 3 grid. The final layout is
+ * plain HTML; on wide screens JS scatters the items first and lets them
+ * settle into their groups as the map scrolls into view. Phones get rows
+ * of chips instead.
+ */
+import { copy, pick, SKILL_GROUPS } from '@lib/home';
+import type { Lang } from '@lib/i18n';
+
+interface Props {
+  lang: Lang;
+}
+const { lang } = Astro.props;
+const c = copy.skills;
+// [left %, top px] of each group on the wide map
+const ANCHORS: Record<string, [number, number]> = {
+  lang: [4, 34], back: [29, 34], front: [54, 34], mob: [79, 34], ai: [16.5, 262], ops: [41.5, 262], game: [66.5, 262],
+};
+---
+
+<section class="sec" id="skills">
+  <div class="wrap">
+    <div class="sec-head" data-fade-in>
+      <span class="eyebrow">{pick(c.eyebrow, lang)}</span>
+      <h2 set:html={pick(c.title, lang)} />
+      <p>{pick(c.lede, lang)}</p>
+    </div>
+
+    <div class="map panel" data-map>
+      {SKILL_GROUPS.map((g) => (
+        <div class="group" style={`--c:${g.color};left:${ANCHORS[g.id][0]}%;top:${ANCHORS[g.id][1]}px`} data-group={g.id}>
+          <h3>{pick(g.label, lang)}</h3>
+          <ul>
+            {g.items.map((n) => <li><i></i><span>{n}</span></li>)}
+          </ul>
+        </div>
+      ))}
+    </div>
+
+    <div class="rows panel">
+      {SKILL_GROUPS.map((g) => (
+        <div style={`--c:${g.color}`}>
+          <h3>{pick(g.label, lang)}</h3>
+          <p>{g.items.map((n) => <span>{n}</span>)}</p>
+        </div>
+      ))}
+    </div>
+  </div>
+</section>
+
+<style>
+  .map {
+    position: relative;
+    height: 470px;
+    overflow: hidden;
+  }
+  .group {
+    position: absolute;
+  }
+  .group h3 {
+    font: 500 0.68rem 'JetBrains Mono', ui-monospace, monospace;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--c);
+    margin-bottom: 8px;
+    transition: opacity 0.4s;
+  }
+  .group ul {
+    position: relative;
+    display: grid;
+    gap: 8px;
+    padding-left: 18px;
+  }
+  /* the stem of the little tree */
+  .group ul::before {
+    content: '';
+    position: absolute;
+    left: 4px;
+    top: -6px;
+    bottom: 9px;
+    width: 1px;
+    background: rgb(var(--border));
+    transition: opacity 0.4s;
+  }
+  .group li {
+    position: relative;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    height: 18px;
+    font-size: 0.8rem;
+    color: rgb(var(--text-200));
+    white-space: nowrap;
+    will-change: transform;
+  }
+  .group li::before {
+    content: '';
+    position: absolute;
+    left: -14px;
+    top: 50%;
+    width: 10px;
+    height: 1px;
+    background: rgb(var(--border));
+    transition: opacity 0.4s;
+  }
+  .group li i {
+    flex: none;
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: var(--c);
+    box-shadow: 0 0 0 3px color-mix(in srgb, var(--c) 18%, transparent);
+  }
+  .group li span {
+    transition: opacity 0.4s;
+  }
+  .map:hover .group:not(:hover) {
+    opacity: 0.35;
+  }
+  .group {
+    transition: opacity 0.25s;
+  }
+  .group:hover li {
+    color: rgb(var(--text-100));
+  }
+  /* while scattered: dots only */
+  .map.scattered h3,
+  .map.scattered ul::before,
+  .map.scattered li::before,
+  .map.scattered li span {
+    opacity: 0;
+  }
+  .rows {
+    display: none;
+  }
+  @media (max-width: 860px) {
+    .map {
+      display: none;
+    }
+    .rows {
+      display: grid;
+      gap: 14px;
+      padding: 16px;
+    }
+    .rows div {
+      display: grid;
+      gap: 8px;
+    }
+    .rows h3 {
+      font: 500 0.72rem 'JetBrains Mono', ui-monospace, monospace;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+      color: var(--c);
+    }
+    .rows p {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+    }
+    .rows span {
+      font-size: 0.84rem;
+      padding: 5px 10px;
+      border-radius: 8px;
+      background: rgb(var(--bg-elev-2));
+      border-left: 2px solid var(--c);
+      color: rgb(var(--text-100));
+    }
+  }
+</style>
+
+<script>
+  let cleanup: (() => void) | null = null;
+
+  function init() {
+    cleanup?.();
+    const map = document.querySelector<HTMLElement>('[data-map]');
+    if (!map || matchMedia('(prefers-reduced-motion: reduce)').matches || !map.offsetWidth) return;
+    const items = [...map.querySelectorAll<HTMLElement>('li')];
+    // Each item gets a fixed random start offset; scroll progress pulls it home.
+    let seed = 42;
+    const rnd = () => ((seed = (seed * 16807) % 2147483647) / 2147483647);
+    const box = map.getBoundingClientRect();
+    const offsets = items.map((li) => {
+      const r = li.getBoundingClientRect();
+      return [box.left + rnd() * box.width - r.left, box.top + rnd() * box.height - r.top];
+    });
+    const ease = (t: number) => (t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2);
+    let queued = false;
+    const paint = () => {
+      queued = false;
+      const r = map.getBoundingClientRect();
+      const p = Math.min(1, Math.max(0, (innerHeight - r.top) / (innerHeight * 0.65)));
+      const k = 1 - ease(p);
+      items.forEach((li, i) => (li.style.transform = k < 0.001 ? '' : `translate(${(offsets[i][0] * k).toFixed(1)}px, ${(offsets[i][1] * k).toFixed(1)}px)`));
+      map.classList.toggle('scattered', p < 0.85);
+    };
+    const onScroll = () => { if (!queued) { queued = true; requestAnimationFrame(paint); } };
+    paint();
+    addEventListener('scroll', onScroll, { passive: true });
+    cleanup = () => {
+      removeEventListener('scroll', onScroll);
+      items.forEach((li) => (li.style.transform = ''));
+      map.classList.remove('scattered');
+      cleanup = null;
+    };
+  }
+
+  document.addEventListener('astro:page-load', init);
+  document.addEventListener('astro:before-swap', () => cleanup?.());
+</script>

@@ -1,6 +1,6 @@
 # kaanusta.dev
 
-Personal portfolio and blog for **Kaan Usta** — game developer, Unity / C#, mobile-focused.
+Personal site and blog for **Kaan Usta** — full-stack engineer (NestJS, Next.js, React Native), building Patimania end to end; Unity / C# games before that.
 
 **Live:** [kaanusta.dev](https://kaanusta.dev)
 
@@ -8,11 +8,11 @@ Personal portfolio and blog for **Kaan Usta** — game developer, Unity / C#, mo
 
 ## Highlights
 
-- ⚡ **Lighthouse 100 / 100 / 100 / 100** on both mobile and desktop (Performance, Accessibility, Best Practices, SEO)
-- 🎮 Seven projects (six games + Patimania) with cover + gallery + lazy-embedded YouTube trailers
-- 🪟 Project modal that fetches and injects detail pages over the home view, with full deep-link + View Transitions support
-- 🎨 Custom CSS parallax hero, scroll-in animations, optional crosshair cursor and 8-bit Web Audio sound FX
-- 🌙 Dark-first design with a small cyan / magenta / amber accent palette
+- 📈 Hero with a live data canvas (streaming bars, node network) and a pre-written "Ask about Kaan" Q&A box
+- 🧭 Scroll-driven sections: Patimania dataset card, career pipeline graph, skills map, evals
+- 🎮 Seven projects (Patimania + six games) with cover + gallery + lazy-embedded YouTube trailers
+- 🪟 Project modal that fetches and injects detail pages over the current page, with full deep-link + View Transitions support
+- 🌙 Dark-first navy design with blue / cyan accents, light theme included, reduced-motion aware
 - 🌍 English at `/`, Turkish mirror at `/tr/`
 - 💬 Private, password-protected Claude chat at `/chat` (see [Chat](#chat))
 
@@ -21,7 +21,7 @@ Personal portfolio and blog for **Kaan Usta** — game developer, Unity / C#, mo
 - [Astro 5](https://astro.build) static site + content collections
 - [Tailwind CSS](https://tailwindcss.com) (custom theme in `tailwind.config.mjs`, CSS variables in `src/styles/global.css`)
 - TypeScript
-- Self-hosted [Inter](https://rsms.me/inter/) + [JetBrains Mono](https://www.jetbrains.com/lp/mono/) via `@fontsource`
+- Self-hosted [Sora](https://fonts.google.com/specimen/Sora), [Geist](https://vercel.com/font) and [JetBrains Mono](https://www.jetbrains.com/lp/mono/) via `@fontsource` (Inter for `/chat`)
 - GitHub Pages + GitHub Actions for deploy
 
 ## Local development
@@ -40,12 +40,13 @@ npm run preview          # serve the production build locally
 ```
 src/
   content/
-    projects/     # one markdown file per game (frontmatter-driven)
+    projects/     # one markdown file per project (frontmatter-driven)
     blog/         # blog posts
   assets/
     projects/     # per-project cover + gallery images
     portrait.png
-  components/     # Header, Footer, Hero, ProjectCard, ProjectModal, ...
+  components/     # Header, Footer, ProjectCard, ProjectModal, ...
+    home/         # home page sections (hero canvas, Q&A, Patimania, career, skills, ...)
   layouts/        # BaseLayout (head, nav, footer)
   views/          # page bodies shared by the EN and TR routes (take a `lang` prop)
   pages/          # EN routes — thin wrappers around views/ (+ chat, privacy pages)
@@ -53,7 +54,8 @@ src/
   styles/
     global.css    # CSS variables, @layer components, prose styles
   lib/
-    constants.ts  # site + social + nav + stats + chat settings
+    constants.ts  # site + social + nav + chat settings
+    home.ts       # home page copy and data, EN + TR
     i18n.ts       # EN / TR UI strings and path helpers
     content.ts    # collection queries (per-locale, sorted) + slug helper
 public/
@@ -71,7 +73,7 @@ worker/           # Cloudflare Worker behind /chat (deployed separately)
 ## Adding a project
 
 1. Drop cover + gallery images under `src/assets/projects/<slug>/` (cover.png, gallery/01.png, ...)
-2. Create `src/content/projects/<slug>.md` — match the frontmatter schema defined in `src/content.config.ts` (title, platform, genres, year, duration, role, description, techStack, links, coverImage, gallery, youtubeId, featured, published, order)
+2. Create `src/content/projects/<slug>.md` — match the frontmatter schema defined in `src/content.config.ts` (title, platform, genres, year, duration, role, description, techStack, links, category, coverImage, coverPosition, gallery, youtubeId, featured, published, order)
 3. Create the Turkish mirror `src/content/projects/<slug>-tr.md` with `lang: tr`
 4. `npm run build` — the schema validates everything at build time
 
@@ -83,10 +85,10 @@ worker/           # Cloudflare Worker behind /chat (deployed separately)
 
 ## Regenerating the OG image
 
-Edit `scripts/og-image.svg`, then:
+Edit `scripts/og-image.svg` (Sora, Geist and JetBrains Mono need to be installed as system fonts), then:
 
 ```sh
-node -e "require('sharp')(require('fs').readFileSync('scripts/og-image.svg')).flatten({background:'#0a0a14'}).jpeg({quality:88,mozjpeg:true}).toFile('public/og-image.jpg')"
+node -e "require('sharp')(require('fs').readFileSync('scripts/og-image.svg')).flatten({background:'#050912'}).jpeg({quality:88,mozjpeg:true}).toFile('public/og-image.jpg')"
 ```
 
 ## Chat

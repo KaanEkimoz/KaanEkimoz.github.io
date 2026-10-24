@@ -1,0 +1,314 @@
+---
+import { Image } from 'astro:assets';
+import { copy, pick, PATIMANIA_MODULES } from '@lib/home';
+import type { Lang } from '@lib/i18n';
+import home from '@/assets/projects/patimania/gallery/01-home.png';
+import search from '@/assets/projects/patimania/gallery/02-search.png';
+import business from '@/assets/projects/patimania/gallery/03-business-profile.png';
+import mobile from '@/assets/projects/patimania/gallery/07-mobile-home.png';
+import panel from '@/assets/projects/patimania/gallery/04-business-panel.png';
+import calendar from '@/assets/projects/patimania/gallery/05-room-calendar.png';
+
+interface Props {
+  lang: Lang;
+}
+const { lang } = Astro.props;
+const c = copy.work;
+const tabs = c.tabs[lang];
+const shots = [
+  { src: home, alt: { en: 'Patimania home page with a location search', tr: 'Konum aramalı Patimania ana sayfası' } },
+  { src: search, alt: { en: 'Search results for pet hotels', tr: 'Pet otel arama sonuçları' } },
+  { src: business, alt: { en: 'A business profile with its booking panel', tr: 'Rezervasyon paneliyle bir işletme profili' } },
+  { src: mobile, alt: { en: 'Patimania mobile app home screen', tr: 'Patimania mobil uygulama ana ekranı' }, mobile: true },
+  { src: panel, alt: { en: 'Business dashboard with reservations', tr: 'Rezervasyonların görüldüğü işletme paneli' } },
+  { src: calendar, alt: { en: 'Room calendar for the next 30 days', tr: 'Önümüzdeki 30 günün oda takvimi' } },
+];
+const stack = ['TypeScript', 'NestJS 11', 'Prisma 6', 'PostgreSQL + PostGIS', 'Next.js 15', 'React 19', 'React Native + Expo', 'iyzico', 'Docker', 'nginx', 'MinIO', 'Cloudflare', 'Sentry'];
+---
+
+<section class="sec" id="work">
+  <div class="wrap">
+    <div class="sec-head" data-fade-in>
+      <span class="eyebrow">{pick(c.eyebrow, lang)}</span>
+      <h2 set:html={pick(c.title, lang)} />
+      <p>{pick(c.lede, lang)}</p>
+    </div>
+    <div class="dataset">
+      <div class="left">
+        <div class="viewer panel" data-fade-in>
+          <div class="tabs" role="tablist" aria-label="Patimania" data-tabs>
+            {tabs.map((n, i) => (
+              <button class="tab" role="tab" type="button" aria-controls="pm-screens" aria-selected={i === 0 ? 'true' : 'false'} tabindex={i === 0 ? 0 : -1} data-tab={i}>{n}</button>
+            ))}
+          </div>
+          <div class="screens" id="pm-screens" data-screens>
+            {shots.map((s, i) => (
+              <Image
+                src={s.src}
+                alt={pick(s.alt, lang)}
+                widths={s.mobile ? [320, 640] : [800, 1200, 1600]}
+                sizes={s.mobile ? '320px' : '(min-width: 1100px) 640px, 100vw'}
+                class:list={[i === 0 && 'on', s.mobile && 'mobile']}
+                loading={i === 0 ? 'eager' : 'lazy'}
+              />
+            ))}
+          </div>
+        </div>
+        <div class="stack">{stack.map((s) => <span class="mono-chip">{s}</span>)}</div>
+        <p class="note">{pick(c.note, lang)}</p>
+        <p><a class="link" href="https://patimania.com" target="_blank" rel="noopener">{pick(c.visit, lang)}</a></p>
+      </div>
+
+      <div class="card panel" data-fade-in data-dcard>
+        <div class="top">
+          <h3>patimania</h3>
+          <span class="status"><i></i>{pick(c.status, lang)}</span>
+        </div>
+        <table class="schema">
+          {c.rows.map((r) => (
+            <tr><td>{pick(r.k, lang)}</td><td set:html={pick(r.v, lang)} /></tr>
+          ))}
+        </table>
+        <div class="units">
+          <div class="row"><span>{pick(c.models, lang)}</span><b data-cell-count>68</b></div>
+          <div class="cells" data-cells>{Array.from({ length: 68 }, () => <i class="on"></i>)}</div>
+        </div>
+        <div class="units">
+          <div class="row"><span>{pick(c.modules, lang)}</span><b>32</b></div>
+          <div class="mods">{PATIMANIA_MODULES.map((m) => <i>{m}</i>)}</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<style>
+  .dataset {
+    display: grid;
+    grid-template-columns: minmax(0, 1.15fr) minmax(0, 0.85fr);
+    gap: 20px;
+    align-items: start;
+  }
+  .left {
+    min-width: 0;
+  }
+  .viewer {
+    overflow: hidden;
+  }
+  .tabs {
+    display: flex;
+    gap: 4px;
+    padding: 10px;
+    border-bottom: 1px solid rgb(var(--border));
+    overflow-x: auto;
+    scrollbar-width: none;
+  }
+  .tabs::-webkit-scrollbar {
+    display: none;
+  }
+  .tab {
+    padding: 6px 11px;
+    border-radius: 8px;
+    font-size: 0.84rem;
+    color: rgb(var(--text-200));
+    white-space: nowrap;
+    transition: background 0.2s, color 0.2s;
+  }
+  .tab[aria-selected='true'] {
+    color: rgb(var(--text-100));
+    background: rgb(var(--bg-elev-2));
+  }
+  .screens {
+    position: relative;
+    aspect-ratio: 16 / 10;
+    background: rgb(var(--bg-elev-2));
+  }
+  .screens :global(img) {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    object-position: top;
+    opacity: 0;
+    transition: opacity 0.5s ease;
+  }
+  .screens :global(img.on) {
+    opacity: 1;
+  }
+  .screens :global(img.mobile) {
+    object-fit: contain;
+    object-position: center;
+    padding: 18px 0;
+  }
+  .stack {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    margin-top: 18px;
+  }
+  .note {
+    margin-top: 14px;
+    color: rgb(var(--text-200));
+    font-size: 0.92rem;
+    max-width: 46rem;
+  }
+  .note + p {
+    margin-top: 12px;
+  }
+  .card {
+    padding: 22px;
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    gap: 16px;
+  }
+  .top {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-between;
+    align-items: baseline;
+    gap: 12px;
+  }
+  .top h3 {
+    font: 500 1.35rem 'JetBrains Mono', ui-monospace, monospace;
+    letter-spacing: -0.02em;
+  }
+  .status {
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    padding: 4px 9px;
+    border-radius: 999px;
+    font: 500 0.74rem 'JetBrains Mono', ui-monospace, monospace;
+    color: rgb(var(--accent-2));
+    background: rgb(var(--accent-2) / 0.12);
+    white-space: nowrap;
+  }
+  .status i {
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    background: currentColor;
+  }
+  .schema {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.88rem;
+    color: rgb(var(--text-100));
+  }
+  .schema td {
+    padding: 8px 0;
+    border-top: 1px solid rgb(var(--border));
+    vertical-align: top;
+  }
+  .schema td:first-child {
+    width: 7.2rem;
+    padding-top: 10px;
+    font: 500 0.74rem 'JetBrains Mono', ui-monospace, monospace;
+    color: rgb(var(--text-300));
+  }
+  .schema :global(b) {
+    font-weight: 600;
+    font-variant-numeric: tabular-nums;
+  }
+  .units {
+    display: grid;
+    gap: 8px;
+  }
+  .row {
+    display: flex;
+    justify-content: space-between;
+    font-size: 0.8rem;
+    color: rgb(var(--text-200));
+  }
+  .row b {
+    font: 500 0.8rem 'JetBrains Mono', ui-monospace, monospace;
+    color: rgb(var(--text-100));
+    font-variant-numeric: tabular-nums;
+  }
+  .cells {
+    display: grid;
+    grid-template-columns: repeat(17, 1fr);
+    gap: 2px;
+  }
+  .cells i {
+    aspect-ratio: 1;
+    border-radius: 2px;
+    background: rgb(var(--bg-elev-2));
+    transition: background 0.25s;
+  }
+  .cells i.on {
+    background: rgb(var(--accent-1) / 0.7);
+  }
+  .cells i.head {
+    background: rgb(var(--accent-2));
+    box-shadow: 0 0 10px rgb(var(--accent-2));
+  }
+  .mods {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px;
+  }
+  .mods i {
+    font: 0.68rem 'JetBrains Mono', ui-monospace, monospace;
+    font-style: normal;
+    padding: 2px 6px;
+    border-radius: 6px;
+    background: rgb(var(--bg-elev-2));
+    color: rgb(var(--text-200));
+  }
+  @media (max-width: 860px) {
+    .dataset {
+      grid-template-columns: minmax(0, 1fr);
+    }
+  }
+</style>
+
+<script>
+  const reduce = matchMedia('(prefers-reduced-motion: reduce)');
+  let cleanup: (() => void) | null = null;
+
+  function init() {
+    cleanup?.();
+    const tabs = [...document.querySelectorAll<HTMLButtonElement>('[data-tabs] .tab')];
+    const imgs = [...document.querySelectorAll<HTMLImageElement>('[data-screens] img')];
+    const card = document.querySelector<HTMLElement>('[data-dcard]');
+    const cells = [...document.querySelectorAll<HTMLElement>('[data-cells] i')];
+    const count = document.querySelector<HTMLElement>('[data-cell-count]');
+    if (!tabs.length || !card) return;
+
+    let shot = 0;
+    const set = (i: number) => {
+      shot = i;
+      imgs.forEach((im, j) => im.classList.toggle('on', j === i));
+      tabs.forEach((b, j) => { b.setAttribute('aria-selected', String(j === i)); b.tabIndex = j === i ? 0 : -1; });
+    };
+    tabs.forEach((b, i) => b.addEventListener('click', () => set(i)));
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key !== 'ArrowRight' && e.key !== 'ArrowLeft') return;
+      const i = (shot + (e.key === 'ArrowRight' ? 1 : tabs.length - 1)) % tabs.length;
+      set(i);
+      tabs[i].focus();
+    };
+    tabs[0].parentElement!.addEventListener('keydown', onKey);
+
+    // The 68 data-model cells fill in as the card scrolls into view.
+    if (reduce.matches) return;
+    let queued = false;
+    const paint = () => {
+      queued = false;
+      const r = card.getBoundingClientRect();
+      const p = Math.min(1, Math.max(0, (innerHeight * 0.95 - r.top) / (innerHeight * 0.55)));
+      const on = Math.round(p * cells.length);
+      cells.forEach((c, i) => { c.classList.toggle('on', i < on); c.classList.toggle('head', i === on - 1 && on < cells.length); });
+      if (count) count.textContent = String(on);
+    };
+    const onScroll = () => { if (!queued) { queued = true; requestAnimationFrame(paint); } };
+    paint();
+    addEventListener('scroll', onScroll, { passive: true });
+    cleanup = () => { removeEventListener('scroll', onScroll); cleanup = null; };
+  }
+
+  document.addEventListener('astro:page-load', init);
+  document.addEventListener('astro:before-swap', () => cleanup?.());
+</script>

@@ -1,6 +1,5 @@
 ---
 import BaseLayout from '@layouts/BaseLayout.astro';
-import Button from '@components/ui/Button.astro';
 import { localizedPath, t, type Lang } from '@lib/i18n';
 
 interface Props {
@@ -10,45 +9,72 @@ interface Props {
 const { lang } = Astro.props;
 ---
 
-<BaseLayout
-  lang={lang}
-  title={`404 — ${t('notFound.gameOver', lang)}`}
-  description={t('notFound.description', lang)}
->
-  <div
-    class="min-h-[70vh] flex flex-col items-center justify-center text-center px-6"
-  >
-    <div
-      class="font-mono uppercase tracking-widest text-xs text-text-300 mb-2"
-    >
-      {t('notFound.errorTag', lang)}
-    </div>
-    <h1
-      class="font-mono font-semibold text-6xl sm:text-8xl text-accent-2 game-over-flicker tracking-widest"
-    >
-      {t('notFound.gameOver', lang)}
-    </h1>
-    <p class="mt-6 text-text-200 max-w-md">
-      {t('notFound.body', lang)}
-    </p>
-    <div class="mt-10">
-      <Button href={localizedPath('/', lang)} variant="primary">{t('notFound.restart', lang)}</Button>
-    </div>
+<BaseLayout lang={lang} title={`404 — ${t('notFound.title', lang)}`} description={t('notFound.description', lang)}>
+  <div class="wrap nf">
+    <span class="eyebrow">{t('notFound.errorTag', lang)}</span>
+    <pre class="query" aria-hidden="true"><span class="k">SELECT</span> * <span class="k">FROM</span> pages
+<span class="k">WHERE</span> path = <span class="s" data-path>'…'</span>;
+<span class="r">-- 0 rows</span></pre>
+    <h1 class="grad-em"><em>{t('notFound.title', lang)}</em></h1>
+    <p>{t('notFound.body', lang)}</p>
+    <a class="btn" href={localizedPath('/', lang)}>{t('notFound.restart', lang)}</a>
   </div>
 </BaseLayout>
 
 <style>
-  @keyframes flicker {
-    0%, 100% { opacity: 1; }
-    45% { opacity: 1; }
-    50% { opacity: 0.4; }
-    55% { opacity: 1; }
+  .nf {
+    min-height: 70vh;
+    display: grid;
+    align-content: center;
+    justify-items: start;
+    gap: 18px;
+    max-width: 44rem;
+    padding-top: 48px;
   }
-  .game-over-flicker {
-    animation: flicker 3s ease-in-out infinite;
-    text-shadow: 0 0 30px rgba(255, 77, 255, 0.5);
+  .query {
+    width: 100%;
+    overflow-x: auto;
+    padding: 16px 18px;
+    border-radius: 12px;
+    border: 1px solid rgb(var(--border));
+    background: rgb(var(--bg-elev));
+    font: 0.86rem/1.7 'JetBrains Mono', ui-monospace, monospace;
+    color: rgb(var(--text-200));
   }
-  @media (prefers-reduced-motion: reduce) {
-    .game-over-flicker { animation: none; }
+  .k {
+    color: rgb(var(--accent-1));
+  }
+  .s {
+    color: rgb(var(--accent-2));
+  }
+  .r {
+    color: rgb(var(--text-300));
+  }
+  h1 {
+    font-size: clamp(2.4rem, 6vw, 4rem);
+    line-height: 1.04;
+    letter-spacing: -0.045em;
+    font-weight: 500;
+  }
+  p {
+    color: rgb(var(--text-200));
+    font-size: 1.05rem;
+    margin-bottom: 8px;
   }
 </style>
+
+<script>
+  // The 404 page is static, so the missing path is filled in on the client.
+  function fill() {
+    const el = document.querySelector('[data-path]');
+    if (!el) return;
+    let path = location.pathname;
+    try {
+      path = decodeURI(path);
+    } catch {
+      /* malformed escape: show it raw */
+    }
+    el.textContent = `'${path.slice(0, 80)}'`;
+  }
+  document.addEventListener('astro:page-load', fill);
+</script>

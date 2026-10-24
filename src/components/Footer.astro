@@ -1,6 +1,6 @@
 ---
-import { SITE } from '@lib/constants';
-import { DEFAULT_LOCALE, type Lang } from '@lib/i18n';
+import { SITE, SOCIAL } from '@lib/constants';
+import { DEFAULT_LOCALE, t, type Lang } from '@lib/i18n';
 
 interface Props {
   lang?: Lang;
@@ -10,48 +10,42 @@ const { lang = DEFAULT_LOCALE } = Astro.props;
 const year = new Date().getFullYear();
 ---
 
-<footer class="border-t border-border mt-24">
-  <div
-    class="max-w-6xl mx-auto px-6 py-8 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 text-xs font-mono text-text-300"
-  >
-    <div class="space-y-1">
-      <div>© {year} {SITE.author}</div>
-      {/* Built-with / hosted line — TR word order needs the Astro link in
-          front, so we branch the JSX instead of trying to glue fragments
-          from the dictionary. */}
-      <div>
-        {
-          lang === 'tr' ? (
-            <>
-              <a
-                href="https://astro.build"
-                class="hover:text-accent-1"
-                target="_blank"
-                rel="noopener">Astro</a> ile yapıldı · GitHub Pages üzerinde barındırılıyor
-            </>
-          ) : (
-            <>
-              Built with <a
-                href="https://astro.build"
-                class="hover:text-accent-1"
-                target="_blank"
-                rel="noopener">Astro</a> · Hosted on GitHub Pages
-            </>
-          )
-        }
-      </div>
-    </div>
-    {/* Tagline — same word-order story: in TR "Türkiye" comes first
-        ("Türkiye'de merakla yapıldı"), in EN it comes last
-        ("Made with curiosity in Türkiye"). */}
-    <div class="text-text-300">
-      {
-        lang === 'tr' ? (
-          <><span class="text-accent-1">Türkiye</span>’de merakla yapıldı</>
-        ) : (
-          <>Made with curiosity in <span class="text-accent-1">Türkiye</span></>
-        )
-      }
-    </div>
+<footer class="site-footer">
+  <div class="inner">
+    <span>© {year} {SITE.author}</span>
+    <nav aria-label={t('footer.links', lang)}>
+      <a href={SOCIAL.linkedin} target="_blank" rel="noopener">LinkedIn</a>
+      <a href={SOCIAL.github} target="_blank" rel="noopener">GitHub</a>
+      <a href={lang === 'tr' ? '/tr/rss.xml' : '/rss.xml'}>RSS</a>
+    </nav>
+    <span>{t('footer.location', lang)}</span>
   </div>
 </footer>
+
+<style>
+  .site-footer {
+    border-top: 1px solid rgb(var(--border));
+    color: rgb(var(--text-300));
+    font-size: 0.82rem;
+  }
+  .inner {
+    max-width: 72rem;
+    margin: 0 auto;
+    padding: 26px max(20px, env(safe-area-inset-right, 0px)) 26px max(20px, env(safe-area-inset-left, 0px));
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-between;
+    align-items: center;
+    gap: 12px 24px;
+  }
+  nav {
+    display: flex;
+    gap: 18px;
+  }
+  a {
+    padding-block: 6px;
+  }
+  a:hover {
+    color: rgb(var(--text-100));
+  }
+</style>
