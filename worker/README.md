@@ -4,16 +4,21 @@
 Tarayıcı (kaanusta.dev/chat) → bu Worker (anahtar burada) → api.anthropic.com/v1/messages
 ```
 
-Anthropic API anahtarı ve sohbet parolası **yalnızca** Worker secret'larında durur.
-Repoda, commit geçmişinde ve sitenin JS'inde hiçbiri yok.
+Anthropic API anahtarı ve parolalar **yalnızca** Worker secret'larında durur.
+Repoda, commit geçmişinde ve sitenin JS'inde hiçbiri yok. Her kişinin kendi parolası
+var; sohbet geçmişi ve kişisel talimatlar Cloudflare D1'de kişi başına (şifresiz)
+saklanır ve cihazlar arasında eşitlenir.
 
 | Ayar | Nerede | Not |
 |---|---|---|
 | `ANTHROPIC_API_KEY` | `wrangler secret put` | Anthropic Console'dan |
-| `ACCESS_TOKEN` | `wrangler secret put` | Paylaşılan parola; uzun ve rastgele olsun |
+| `ACCESS_TOKEN` | `wrangler secret put` | "partner" kullanıcısının parolası |
+| `ACCESS_TOKEN_KAAN` | `wrangler secret put` | "kaan" kullanıcısının parolası |
+| D1 `kaanusta-chat` | `wrangler.toml` → `[[d1_databases]]` | Sohbetler + kişisel talimatlar; şema `migrations/` |
+| Web araması | `src/index.js` → `WEB_SEARCH_TOOL` | Sayfadaki "Web" düğmesiyle açılır; arama başına $0,01 |
 | `FILE_REF_SECRET` | `wrangler secret put` | Dosya referanslarını imzalayan rastgele anahtar; yoksa dosya yükleme kapalı |
 | `ALLOWED_ORIGINS` | `wrangler.toml` → `[vars]` | CORS listesi |
-| Rate limit | `wrangler.toml` → `[[ratelimits]]` | IP başına 20 istek / 60 sn |
+| Rate limit | `wrangler.toml` → `[[ratelimits]]` | IP başına 60 istek / 60 sn |
 | Seçilebilir modeller / güç seviyeleri | `src/index.js` → `MODELS`, `EFFORTS` | Sayfadaki liste `src/lib/constants.ts`'te; ikisini birlikte güncelle |
 | `max_tokens`, system prompt | `src/index.js` | İstemci değiştiremez |
 | Dosya ekleri | `src/index.js` → `UPLOAD_TYPES`, `MAX_UPLOAD_BYTES` | Görsel (JPEG/PNG/GIF/WebP), PDF, düz metin; en fazla 15 MB; 90 gün sonra otomatik silinir |
@@ -65,10 +70,23 @@ openssl rand -base64 32 | npx wrangler secret put FILE_REF_SECRET
 
 > **iCloud notu:** Repo `~/Documents` altında iCloud'a eşitleniyorsa ve dosyalar yerelde indirilmemişse `npx wrangler` takılır. O durumda `worker/` klasörünü iCloud dışına kopyalayıp (örn. `~/kaanusta-chat-worker`) komutları orada `npx -y wrangler@4 ...` ile çalıştır.
 
+6. Sohbet geçmişi veritabanı (bir kez):
+
+```bash
+npx wrangler d1 create kaanusta-chat
+```
+
+Çıkan `database_id`'yi `wrangler.toml`'a yaz, sonra şemayı uygula:
+
+```bash
+npx wrangler d1 migrations apply kaanusta-chat --remote
+```
+
 ## Sonraki değişiklikler
 
 - Worker kodunu/ayarını değiştirdin → `npx wrangler deploy`
-- Parolayı değiştir → `npx wrangler secret put ACCESS_TOKEN` (eski parolayla açık olan sayfa bir sonraki mesajda parolayı tekrar sorar)
+- Parolayı değiştir → `npx wrangler secret put ACCESS_TOKEN` (ya da `ACCESS_TOKEN_KAAN`); eski parolayla açık sayfa bir sonraki istekte parolayı tekrar sorar. Geçmiş kullanıcıya bağlı olduğu için parola değişse de kaybolmaz.
+- Veritabanını görmek → Cloudflare paneli → Storage & Databases → D1 → `kaanusta-chat` (sohbetler şifresiz saklanır)
 - Loglar (hata ayıklama; anahtar loglanmaz) → `npx wrangler tail`
 
 ## Dosya ekleri

@@ -2,30 +2,40 @@
  * kaanusta.dev chat proxy — Cloudflare Worker.
  *
  * Browser (/chat on GitHub Pages) → this Worker → Anthropic Messages API.
- * The Anthropic key lives only here, as a Worker secret. The browser sends
- * a shared password (ACCESS_TOKEN), the conversation's `messages`, and
- * optionally a `model` and `effort` picked from the allowlists below.
- * Everything else (max_tokens, system prompt, fallbacks) is decided here,
- * and anything outside the allowlists is rejected.
+ * The Anthropic key lives only here, as a Worker secret. Each person has
+ * their own password; the Worker maps it to a user id and keeps that
+ * user's conversations and settings in D1. The browser sends the
+ * conversation's `messages` plus a `model`, `effort` and `web` choice from
+ * the allowlists below; everything else (max_tokens, system prompt, tools,
+ * fallbacks) is decided here.
  *
  * Secrets (set with `wrangler secret put`, never in code):
  *   ANTHROPIC_API_KEY  — Anthropic Console key
- *   ACCESS_TOKEN       — shared password the chat page sends as a Bearer token
- *                        (URL-encoded, so Turkish letters like ö/ş survive)
+ *   ACCESS_TOKEN       — password of the "partner" user
+ *   ACCESS_TOKEN_KAAN  — password of the "kaan" user
+ *                        (both sent URL-encoded, so ö/ş/ğ/ı survive)
  *   FILE_REF_SECRET    — random key that signs file references (uploads are
  *                        disabled without it)
  *
  * Vars (wrangler.toml):
  *   ALLOWED_ORIGINS    — comma-separated list of origins allowed by CORS
  *
- * Bindings (wrangler.toml, optional):
+ * Bindings (wrangler.toml):
+ *   DB                 — D1 database with conversations + settings
  *   RATE_LIMITER       — Workers Rate Limiting binding, keyed per client IP
  *
- * Routes:
- *   POST   /             → chat (streams Anthropic SSE back unchanged)
- *   GET    /auth         → 204 if the token is valid, 401 otherwise
- *   POST   /files        → upload one attachment (raw body) to the Files API
- *   DELETE /files/<ref>  → delete an attachment this Worker uploaded
+ * Routes (all need the password):
+ *   GET    /auth             → { user }
+ *   POST   /                 → chat (streams Anthropic SSE back unchanged)
+ *   POST   /title            → { title } for a new conversation (Haiku)
+ *   POST   /files            → upload one attachment (raw body) to the Files API
+ *   DELETE /files/<ref>      → delete an attachment this Worker uploaded
+ *   GET    /convos           → { items: [{ id, title, updatedAt }] }
+ *   GET    /convos/<id>      → { id, title, updatedAt, messages }
+ *   PUT    /convos/<id>      → save (raw messages JSON body, see saveConvo)
+ *   DELETE /convos/<id>      → delete
+ *   GET    /settings         → { instructions }
+ *   PUT    /settings         → save { instructions }
  *
  * Uploaded files are visible to the whole Anthropic workspace, so the page
  * never gets a bare file_id: it gets `<file_id>.<signature>`, and the Worker
@@ -75,6 +85,24 @@ const MAX_UPLOAD_BYTES = 15 * 1024 * 1024;
 const FILE_TTL_SECONDS = 90 * 24 * 60 * 60; // the Files API maximum
 const ANTHROPIC_FILES_URL = 'https://api.anthropic.com/v1/files';
 
+// Users and the secret holding each one's password.
+const USERS = [
+  { id: 'partner', secret: 'ACCESS_TOKEN' },
+  { id: 'kaan', secret: 'ACCESS_TOKEN_KAAN' },
+];
+
+// Web search (server tool, $10 per 1,000 searches on top of tokens). The
+// basic version works on every model in MODELS.
+const WEB_SEARCH_TOOL = {
+  type: 'web_search_20250305',
+  name: 'web_search',
+  max_uses: 5,
+  user_location: { type: 'approximate', country: 'TR', timezone: 'Europe/Istanbul' },
+};
+
+// Conversation titles come from the cheapest model.
+const TITLE_MODEL = 'claude-haiku-5-5';
+
 const SYSTEM_PROMPT = `You are a warm, helpful assistant chatting with one person through a small private chat page.
 Reply in the language the user writes in (usually Turkish). Write naturally, not like a word-for-word translation.
 Keep answers as long as the question needs: short for casual chat, thorough for real questions.
@@ -91,6 +119,22 @@ const MAX_MESSAGE_CHARS = 20_000; // one message
 const MAX_TOTAL_CHARS = 120_000; // whole conversation (~30-40k tokens)
 const MAX_ATTACHMENTS_PER_MESSAGE = 5;
 const MAX_ATTACHMENTS_TOTAL = 20; // attachments are re-sent every turn
+const MAX_CONVO_BYTES = 1_500_000; // one saved conversation (D1 rows top out at 2 MB)
+const MAX_INSTRUCTIONS_CHARS = 2_000;
+
+const ROUTES = [
+  ['GET', /^\/auth$/, 'auth'],
+  ['POST', /^\/$/, 'chat'],
+  ['POST', /^\/title$/, 'title'],
+  ['POST', /^\/files$/, 'upload'],
+  ['DELETE', /^\/files\/([\w.-]{1,200})$/, 'deleteFile'],
+  ['GET', /^\/convos$/, 'listConvos'],
+  ['GET', /^\/convos\/([\w-]{8,64})$/, 'getConvo'],
+  ['PUT', /^\/convos\/([\w-]{8,64})$/, 'saveConvo'],
+  ['DELETE', /^\/convos\/([\w-]{8,64})$/, 'deleteConvo'],
+  ['GET', /^\/settings$/, 'getSettings'],
+  ['PUT', /^\/settings$/, 'saveSettings'],
+];
 
 // ─── Worker ────────────────────────────────────────────────────────────────
 
@@ -112,10 +156,8 @@ export default {
     }
 
     const url = new URL(request.url);
-    const route = `${request.method} ${url.pathname}`;
-    const deleteMatch =
-      request.method === 'DELETE' ? url.pathname.match(/^\/files\/([\w.-]{1,200})$/) : null;
-    if (route !== 'POST /' && route !== 'GET /auth' && route !== 'POST /files' && !deleteMatch) {
+    const route = matchRoute(request.method, url.pathname);
+    if (!route) {
       return json({ error: 'Not found.' }, 404, cors);
     }
 
@@ -128,44 +170,88 @@ export default {
       }
     }
 
-    if (!env.ACCESS_TOKEN || !env.ANTHROPIC_API_KEY) {
-      console.error('Missing ACCESS_TOKEN or ANTHROPIC_API_KEY secret.');
+    if (!env.ANTHROPIC_API_KEY || !USERS.some((u) => env[u.secret])) {
+      console.error('Missing ANTHROPIC_API_KEY or every ACCESS_TOKEN secret.');
       return json({ error: 'Sunucu yapılandırılmamış.' }, 500, cors);
     }
 
-    const auth = request.headers.get('Authorization') ?? '';
-    const token = auth.startsWith('Bearer ') ? decodeToken(auth.slice(7)) : '';
-    if (!(await tokensMatch(token, normalizeToken(env.ACCESS_TOKEN)))) {
+    const user = await identify(request, env);
+    if (!user) {
       return json({ error: 'Parola hatalı.' }, 401, cors);
     }
 
-    if (route === 'GET /auth') {
-      return new Response(null, { status: 204, headers: cors });
-    }
-    if (route === 'POST /files') {
-      return uploadFile(request, env, cors);
-    }
-    if (deleteMatch) {
-      return deleteFile(deleteMatch[1], env, cors);
+    const [name, param] = route;
+    switch (name) {
+      case 'auth':
+        return json({ user }, 200, cors);
+      case 'chat': {
+        const parsed = await readMessages(request, env);
+        if (parsed.error) return json({ error: parsed.error }, parsed.status, cors);
+        return proxyToAnthropic(parsed, user, env, cors);
+      }
+      case 'title':
+        return makeTitle(request, env, cors);
+      case 'upload':
+        return uploadFile(request, env, cors);
+      case 'deleteFile':
+        return deleteFile(param, env, cors);
     }
 
-    const parsed = await readMessages(request, env);
-    if (parsed.error) {
-      return json({ error: parsed.error }, parsed.status, cors);
+    if (!env.DB) {
+      return json({ error: 'Sohbet geçmişi sunucuda açık değil.' }, 503, cors);
     }
-
-    return proxyToAnthropic(parsed, env, cors);
+    switch (name) {
+      case 'listConvos':
+        return listConvos(user, env, cors);
+      case 'getConvo':
+        return getConvo(user, param, env, cors);
+      case 'saveConvo':
+        return saveConvo(request, user, param, url, env, cors);
+      case 'deleteConvo':
+        await env.DB.prepare('DELETE FROM conversations WHERE user = ? AND id = ?').bind(user, param).run();
+        return new Response(null, { status: 204, headers: cors });
+      case 'getSettings':
+        return json({ instructions: await loadInstructions(user, env) }, 200, cors);
+      case 'saveSettings':
+        return saveSettings(request, user, env, cors);
+    }
+    return json({ error: 'Not found.' }, 404, cors);
   },
 };
 
+function matchRoute(method, pathname) {
+  for (const [m, re, name] of ROUTES) {
+    if (m !== method) continue;
+    const match = pathname.match(re);
+    if (match) return [name, match[1]];
+  }
+  return null;
+}
+
+// Returns the user id whose password matches, or null. Every configured
+// password is compared so timing doesn't reveal which one was close.
+async function identify(request, env) {
+  const auth = request.headers.get('Authorization') ?? '';
+  const token = auth.startsWith('Bearer ') ? decodeToken(auth.slice(7)) : '';
+  let found = null;
+  for (const u of USERS) {
+    const secret = env[u.secret];
+    if (secret && (await tokensMatch(token, normalizeToken(secret))) && !found) found = u.id;
+  }
+  return found;
+}
+
 // ─── Anthropic ─────────────────────────────────────────────────────────────
 
-async function proxyToAnthropic({ messages, model, effort }, env, cors) {
+async function proxyToAnthropic({ messages, model, effort, web }, user, env, cors) {
   const body = {
     model,
     max_tokens: EFFORTS[effort],
-    system: SYSTEM_PROMPT,
+    system: systemPrompt(await loadInstructions(user, env)),
     messages,
+    // Thinking stays adaptive; "summarized" lets the page show what the
+    // model was thinking about (the raw chain of thought is never sent).
+    thinking: { type: 'adaptive', display: 'summarized' },
     output_config: { effort },
     // Cache the conversation prefix so a long chat (or an attached PDF)
     // isn't billed at full price again on every turn.
@@ -177,6 +263,7 @@ async function proxyToAnthropic({ messages, model, effort }, env, cors) {
     'anthropic-version': ANTHROPIC_VERSION,
     'content-type': 'application/json',
   };
+  if (web) body.tools = [WEB_SEARCH_TOOL];
   if (MODELS[model].fallback) {
     body.fallbacks = 'default';
     headers['anthropic-beta'] = FALLBACK_BETA;
@@ -293,7 +380,7 @@ async function readMessages(request, env) {
     return { error: 'Geçersiz güç seviyesi.', status: 400 };
   }
 
-  return { messages, model, effort };
+  return { messages, model, effort, web: data.web === true };
 }
 
 // A message is either a string or a list of blocks:
@@ -342,6 +429,145 @@ async function readContent(content, role, env, counts) {
     return { error: 'Bu sohbette çok fazla dosya var. Yeni bir sohbet başlat.', status: 413 };
   }
   return { value: blocks };
+}
+
+// ─── Prompt ────────────────────────────────────────────────────────────────
+
+function systemPrompt(instructions) {
+  const today = new Intl.DateTimeFormat('tr-TR', {
+    dateStyle: 'full',
+    timeZone: 'Europe/Istanbul',
+  }).format(new Date());
+  let prompt = `${SYSTEM_PROMPT}\n\nToday is ${today} (Europe/Istanbul).`;
+  if (instructions) {
+    prompt += `\n\nThe person you're talking to left these standing instructions. Follow them unless they would make you unsafe or dishonest:\n<user_instructions>\n${instructions}\n</user_instructions>`;
+  }
+  return prompt;
+}
+
+async function makeTitle(request, env, cors) {
+  let text = '';
+  try {
+    const data = await request.json();
+    text = typeof data?.text === 'string' ? data.text.slice(0, 2000) : '';
+  } catch {}
+  if (!text.trim()) return json({ error: 'Metin gerekli.' }, 400, cors);
+
+  try {
+    const res = await fetch(ANTHROPIC_URL, {
+      method: 'POST',
+      headers: {
+        'x-api-key': env.ANTHROPIC_API_KEY,
+        'anthropic-version': ANTHROPIC_VERSION,
+        'content-type': 'application/json',
+      },
+      body: JSON.stringify({
+        model: TITLE_MODEL,
+        max_tokens: 300,
+        output_config: { effort: 'low' },
+        system:
+          'Write a short title (at most 6 words) for a chat that starts with the message below. Use the language of the message. Reply with the title only: no quotes, no trailing punctuation.',
+        messages: [{ role: 'user', content: text }],
+      }),
+    });
+    if (!res.ok) throw new Error(`Anthropic ${res.status}`);
+    const msg = await res.json();
+    const title = (msg.content ?? [])
+      .filter((b) => b.type === 'text')
+      .map((b) => b.text)
+      .join('')
+      .replace(/^["'“”]+|["'“”.]+$/g, '')
+      .trim()
+      .slice(0, 60);
+    return title ? json({ title }, 200, cors) : json({ error: 'Başlık üretilemedi.' }, 502, cors);
+  } catch (err) {
+    console.error('Title failed:', err);
+    return json({ error: 'Başlık üretilemedi.' }, 502, cors);
+  }
+}
+
+// ─── History (D1) ──────────────────────────────────────────────────────────
+
+async function listConvos(user, env, cors) {
+  const { results } = await env.DB.prepare(
+    'SELECT id, title, updated_at FROM conversations WHERE user = ? ORDER BY updated_at DESC LIMIT 500',
+  )
+    .bind(user)
+    .all();
+  return json(
+    { items: results.map((r) => ({ id: r.id, title: r.title, updatedAt: r.updated_at })) },
+    200,
+    cors,
+  );
+}
+
+async function getConvo(user, id, env, cors) {
+  const row = await env.DB.prepare(
+    'SELECT id, title, updated_at, data FROM conversations WHERE user = ? AND id = ?',
+  )
+    .bind(user, id)
+    .first();
+  if (!row) return json({ error: 'Sohbet bulunamadı.' }, 404, cors);
+  // `data` is stored exactly as the page sent it; splice it in as-is so the
+  // Worker never parses a large conversation.
+  const head = JSON.stringify({ id: row.id, title: row.title, updatedAt: row.updated_at });
+  return new Response(`${head.slice(0, -1)},"messages":${row.data}}`, {
+    status: 200,
+    headers: { ...cors, 'Content-Type': 'application/json; charset=utf-8' },
+  });
+}
+
+// The body is the messages array as JSON, stored verbatim (only its size
+// and outer shape are checked, to keep CPU time low). Title and timestamp
+// ride along as ?updatedAt= and an X-Title header (URL-encoded).
+async function saveConvo(request, user, id, url, env, cors) {
+  const declared = Number(request.headers.get('Content-Length') ?? 0);
+  if (declared > MAX_CONVO_BYTES) return json({ error: 'Sohbet kaydedilemeyecek kadar büyük.' }, 413, cors);
+  const data = await request.text();
+  if (data.length > MAX_CONVO_BYTES) return json({ error: 'Sohbet kaydedilemeyecek kadar büyük.' }, 413, cors);
+  if (!data.startsWith('[') || !data.endsWith(']')) return json({ error: 'Geçersiz sohbet.' }, 400, cors);
+
+  const updatedAt = Number(url.searchParams.get('updatedAt'));
+  if (!Number.isSafeInteger(updatedAt) || updatedAt <= 0) return json({ error: 'Geçersiz zaman.' }, 400, cors);
+  let title = '';
+  try {
+    title = decodeURIComponent(request.headers.get('X-Title') ?? '');
+  } catch {}
+  title = title.trim().slice(0, 120);
+
+  await env.DB.prepare(
+    `INSERT INTO conversations (user, id, title, updated_at, data) VALUES (?, ?, ?, ?, ?)
+     ON CONFLICT (user, id) DO UPDATE SET title = excluded.title, updated_at = excluded.updated_at, data = excluded.data`,
+  )
+    .bind(user, id, title, updatedAt, data)
+    .run();
+  return new Response(null, { status: 204, headers: cors });
+}
+
+async function loadInstructions(user, env) {
+  if (!env.DB) return '';
+  const row = await env.DB.prepare('SELECT instructions FROM settings WHERE user = ?').bind(user).first();
+  return row?.instructions ?? '';
+}
+
+async function saveSettings(request, user, env, cors) {
+  let instructions = '';
+  try {
+    const data = await request.json();
+    instructions = typeof data?.instructions === 'string' ? data.instructions.trim() : '';
+  } catch {
+    return json({ error: 'Geçersiz JSON.' }, 400, cors);
+  }
+  if (instructions.length > MAX_INSTRUCTIONS_CHARS) {
+    return json({ error: `Talimatlar en fazla ${MAX_INSTRUCTIONS_CHARS} karakter olabilir.` }, 413, cors);
+  }
+  await env.DB.prepare(
+    `INSERT INTO settings (user, instructions, updated_at) VALUES (?, ?, ?)
+     ON CONFLICT (user) DO UPDATE SET instructions = excluded.instructions, updated_at = excluded.updated_at`,
+  )
+    .bind(user, instructions, Date.now())
+    .run();
+  return json({ instructions }, 200, cors);
 }
 
 // ─── Files ─────────────────────────────────────────────────────────────────
@@ -476,8 +702,8 @@ function corsHeaders(origin, allowed) {
   if (!origin || !allowed.includes(origin)) return {};
   return {
     'Access-Control-Allow-Origin': origin,
-    'Access-Control-Allow-Methods': 'GET, POST, DELETE, OPTIONS',
-    'Access-Control-Allow-Headers': 'Authorization, Content-Type, X-File-Name',
+    'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
+    'Access-Control-Allow-Headers': 'Authorization, Content-Type, X-File-Name, X-Title',
     'Access-Control-Max-Age': '86400',
     Vary: 'Origin',
   };
