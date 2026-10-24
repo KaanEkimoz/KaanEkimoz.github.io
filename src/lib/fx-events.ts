@@ -2,8 +2,7 @@
  * Cross-component event names and localStorage keys for the FX layer.
  *
  * Centralized so a typo in one consumer can't silently break the other end
- * of the pub/sub chain. Import these constants instead of using bare strings
- * — the TypeScript type catches mismatches at compile time.
+ * of the pub/sub chain. Import these constants instead of using bare strings.
  *
  * Wiring:
  * - FxToggle writes FX_STORAGE.cursor and dispatches FX_EVENTS.cursorChanged
@@ -20,6 +19,3 @@ export const FX_STORAGE = {
   cursor: 'fx-cursor',
   heroBest: 'hero-best',
 } as const;
-
-export type FxEventName = (typeof FX_EVENTS)[keyof typeof FX_EVENTS];
-export type FxStorageKey = (typeof FX_STORAGE)[keyof typeof FX_STORAGE];
