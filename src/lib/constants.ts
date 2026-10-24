@@ -38,6 +38,21 @@ export const SOCIAL = {
 // secrets, never here.
 export const CHAT_WORKER_URL = 'https://kaanusta-chat.kaanekimoz.workers.dev';
 
+// Model and effort choices on /chat. The Worker has the matching allowlist
+// (MODELS / EFFORTS in worker/src/index.js) and rejects anything else, so
+// add a model in both places. First entry is the default.
+export const CHAT_MODELS = [
+  { id: 'claude-opus-5-5', label: 'Opus 5.5 · en güçlü' },
+  { id: 'claude-sonnet-5-5', label: 'Sonnet 5.5 · hızlı ve güçlü' },
+  { id: 'claude-haiku-5-5', label: 'Haiku 5.5 · en hızlı' },
+] as const;
+
+export const CHAT_EFFORTS = [
+  { id: 'low', label: 'Hızlı' },
+  { id: 'medium', label: 'Dengeli' },
+  { id: 'high', label: 'Derin' },
+] as const;
+
 // StatsCard rows. Labels render from i18n.ts (`stats.class`, etc.) so they
 // translate per locale; values are short proper-noun strings that stay
 // identical across languages ("Unity", "Mobile", "Türkiye", "6+ years").
