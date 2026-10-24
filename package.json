@@ -18,6 +18,8 @@
     "@fontsource/inter": "^5.1.1",
     "@fontsource/jetbrains-mono": "^5.1.2",
     "astro": "^5.0.0",
+    "dompurify": "^3.4.17",
+    "marked": "^15.0.12",
     "tailwindcss": "^3.4.17"
   },
   "devDependencies": {

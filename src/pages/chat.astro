@@ -1,0 +1,857 @@
+---
+/**
+ * /chat — private, password-protected Claude chat.
+ *
+ * Standalone page (no BaseLayout): no header/footer/custom cursor, no
+ * hreflang/canonical, noindex, and left out of the sitemap in
+ * astro.config.mjs. Not linked from anywhere on the site.
+ *
+ * Requests go to the Cloudflare Worker in worker/ (URL in
+ * CHAT_WORKER_URL), which holds the Anthropic key and checks the shared
+ * password. Nothing secret lives in this file.
+ */
+import '../styles/global.css';
+---
+
+<!doctype html>
+<html lang="tr-TR">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, interactive-widget=resizes-content" />
+    <meta name="robots" content="noindex, nofollow, noarchive" />
+    <meta name="referrer" content="no-referrer" />
+    <meta name="theme-color" content="#0a0a14" />
+    <title>Sohbet</title>
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+
+    {/* Same pre-paint theme setter as BaseLayout, so /chat follows the
+        visitor's saved dark/light choice without a flash. */}
+    <script is:inline>
+      (function () {
+        try {
+          var stored = null;
+          try { stored = localStorage.getItem('fx-theme'); } catch (e) {}
+          var theme =
+            stored === 'light' || stored === 'dark'
+              ? stored
+              : (window.matchMedia && window.matchMedia('(prefers-color-scheme: light)').matches
+                  ? 'light'
+                  : 'dark');
+          document.documentElement.dataset.theme = theme;
+          var meta = document.querySelector('meta[name="theme-color"]');
+          if (meta) meta.setAttribute('content', theme === 'light' ? '#f5f4ef' : '#0a0a14');
+        } catch (e) {}
+      })();
+    </script>
+  </head>
+
+  <body class="chat-body">
+    <div class="chat-shell">
+      <!-- Top bar -->
+      <header class="flex items-center gap-2 px-4 h-14 border-b border-border bg-bg-base/90 backdrop-blur shrink-0">
+        <button id="history-btn" type="button" class="icon-btn" aria-label="Geçmiş sohbetler" aria-expanded="false" aria-controls="drawer">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M3 6h18M3 12h18M3 18h18" /></svg>
+        </button>
+        <span class="font-mono text-xs uppercase tracking-widest text-text-100 truncate">
+          <span class="text-accent-1">◆</span> Sohbet
+        </span>
+        <div class="ml-auto flex items-center gap-2">
+          <button id="new-btn" type="button" class="pill-btn">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M12 5v14M5 12h14" /></svg>
+            <span>Yeni sohbet</span>
+          </button>
+        </div>
+      </header>
+
+      <!-- Messages -->
+      <main id="scroller" class="flex-1 overflow-y-auto overscroll-contain">
+        <div id="messages" class="max-w-3xl mx-auto px-4 py-6 space-y-6" aria-live="polite"></div>
+        <div id="empty" class="hidden h-full flex-col items-center justify-center text-center px-6">
+          <div class="font-mono uppercase tracking-widest text-xs text-text-300 mb-3">Yeni sohbet</div>
+          <p class="font-mono text-2xl sm:text-3xl text-text-100">Merhaba! Ne konuşalım?</p>
+        </div>
+      </main>
+
+      <!-- Composer -->
+      <footer class="shrink-0 border-t border-border bg-bg-base composer-safe">
+        <form id="composer" class="max-w-3xl mx-auto px-4 py-3 flex items-end gap-2">
+          <label for="input" class="sr-only">Mesaj</label>
+          <textarea
+            id="input"
+            rows="1"
+            placeholder="Mesaj yaz…"
+            autocomplete="off"
+            class="flex-1 resize-none bg-bg-elev border border-border focus:border-accent-1 outline-none px-3 py-2.5 text-text-100 placeholder:text-text-300 leading-relaxed max-h-48"
+          ></textarea>
+          <button id="send-btn" type="submit" class="action-btn" aria-label="Gönder">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6" /></svg>
+          </button>
+          <button id="stop-btn" type="button" class="action-btn action-btn--stop" aria-label="Durdur" hidden>
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><rect x="5" y="5" width="14" height="14" /></svg>
+          </button>
+        </form>
+        <p class="max-w-3xl mx-auto px-4 pb-2 -mt-1 text-[11px] font-mono text-text-300 hidden sm:block">
+          Enter gönderir · Shift+Enter yeni satır
+        </p>
+      </footer>
+    </div>
+
+    <!-- History drawer -->
+    <div id="drawer-backdrop" class="fixed inset-0 bg-bg-base/70 hidden z-30"></div>
+    <aside
+      id="drawer"
+      class="drawer fixed inset-y-0 left-0 z-40 w-[85vw] max-w-xs bg-bg-elev border-r border-border flex flex-col"
+      aria-label="Geçmiş sohbetler"
+      inert
+    >
+      <div class="flex items-center justify-between px-4 h-14 border-b border-border shrink-0">
+        <span class="font-mono text-xs uppercase tracking-widest text-text-100">Geçmiş</span>
+        <button id="drawer-close" type="button" class="icon-btn" aria-label="Kapat">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18" /></svg>
+        </button>
+      </div>
+      <ul id="convo-list" class="flex-1 overflow-y-auto py-2"></ul>
+      <div class="p-4 border-t border-border space-y-2 shrink-0">
+        <button id="clear-btn" type="button" class="w-full pill-btn justify-center">Tüm geçmişi sil</button>
+        <button id="logout-btn" type="button" class="w-full pill-btn justify-center">Çıkış yap</button>
+      </div>
+    </aside>
+
+    <!-- Password gate -->
+    <div id="gate" class="fixed inset-0 z-50 bg-bg-base flex items-center justify-center px-6 hidden">
+      <form id="gate-form" class="w-full max-w-sm border border-border bg-bg-elev p-6 space-y-4">
+        <div>
+          <div class="font-mono uppercase tracking-widest text-xs text-text-300 mb-2">Özel alan</div>
+          <h1 class="font-mono text-xl text-text-100">Parolayı gir</h1>
+        </div>
+        <label for="gate-input" class="sr-only">Parola</label>
+        <input
+          id="gate-input"
+          type="password"
+          autocomplete="current-password"
+          required
+          class="w-full bg-bg-base border border-border focus:border-accent-1 outline-none px-3 py-2.5 text-text-100"
+        />
+        <p id="gate-error" class="text-sm text-accent-2 hidden" role="alert"></p>
+        <button id="gate-submit" type="submit" class="w-full pill-btn pill-btn--primary justify-center">Giriş</button>
+      </form>
+    </div>
+
+    <script>
+      import { marked } from 'marked';
+      import DOMPurify from 'dompurify';
+      import { CHAT_WORKER_URL } from '@lib/constants';
+
+      type Role = 'user' | 'assistant';
+      interface Message { role: Role; content: string }
+      interface Convo { id: string; title: string; updatedAt: number; messages: Message[] }
+
+      const KEY_TOKEN = 'fx-chat-token';
+      const KEY_TOKEN_AT = 'fx-chat-token-at';
+      // Each device asks for the password again after this long. The Worker
+      // still accepts it afterwards; this only makes the browser forget it.
+      const TOKEN_MAX_AGE_MS = 30 * 24 * 60 * 60 * 1000;
+      const EXPIRED_MSG = 'Güvenlik için parola 30 günde bir soruluyor. Tekrar gir.';
+      const KEY_CONVOS = 'fx-chat-convos';
+      const KEY_ACTIVE = 'fx-chat-active';
+      const MAX_CONVOS = 50;
+      const NOT_CONFIGURED = CHAT_WORKER_URL.includes('YOUR-SUBDOMAIN');
+
+      const $ = <T extends HTMLElement>(id: string) => document.getElementById(id) as T;
+      const scroller = $<HTMLElement>('scroller');
+      const list = $<HTMLDivElement>('messages');
+      const empty = $<HTMLDivElement>('empty');
+      const form = $<HTMLFormElement>('composer');
+      const input = $<HTMLTextAreaElement>('input');
+      const sendBtn = $<HTMLButtonElement>('send-btn');
+      const stopBtn = $<HTMLButtonElement>('stop-btn');
+      const drawer = $<HTMLElement>('drawer');
+      const backdrop = $<HTMLDivElement>('drawer-backdrop');
+      const historyBtn = $<HTMLButtonElement>('history-btn');
+      const convoList = $<HTMLUListElement>('convo-list');
+      const gate = $<HTMLDivElement>('gate');
+      const gateForm = $<HTMLFormElement>('gate-form');
+      const gateInput = $<HTMLInputElement>('gate-input');
+      const gateError = $<HTMLParagraphElement>('gate-error');
+      const gateSubmit = $<HTMLButtonElement>('gate-submit');
+
+      // ─── Markdown (sanitized) ──────────────────────────────────────────
+      marked.setOptions({ gfm: true, breaks: true });
+      DOMPurify.addHook('afterSanitizeAttributes', (node) => {
+        if (node.tagName === 'A') {
+          node.setAttribute('target', '_blank');
+          node.setAttribute('rel', 'noopener noreferrer nofollow');
+        }
+      });
+      // Model output is untrusted: marked turns it into HTML (including any
+      // raw HTML the model wrote), DOMPurify strips anything executable.
+      function renderMarkdown(text: string): string {
+        const html = marked.parse(text, { async: false }) as string;
+        return DOMPurify.sanitize(html, {
+          FORBID_TAGS: ['style', 'form', 'input', 'button', 'textarea', 'select', 'img', 'iframe'],
+          FORBID_ATTR: ['style'],
+        });
+      }
+
+      // ─── Storage (every access guarded; private mode can throw) ────────
+      function load<T>(key: string, fallback: T): T {
+        try {
+          const raw = localStorage.getItem(key);
+          return raw ? (JSON.parse(raw) as T) : fallback;
+        } catch {
+          return fallback;
+        }
+      }
+      function save(key: string, value: unknown) {
+        try {
+          localStorage.setItem(key, typeof value === 'string' ? value : JSON.stringify(value));
+        } catch {}
+      }
+      function remove(key: string) {
+        try { localStorage.removeItem(key); } catch {}
+      }
+      let tokenExpired = false;
+      function getToken(): string {
+        try {
+          const token = localStorage.getItem(KEY_TOKEN) ?? '';
+          const savedAt = Number(localStorage.getItem(KEY_TOKEN_AT));
+          if (token && Date.now() - savedAt < TOKEN_MAX_AGE_MS) return token;
+          if (token) {
+            forgetToken();
+            tokenExpired = true;
+          }
+        } catch {}
+        return '';
+      }
+      function rememberToken(token: string) {
+        save(KEY_TOKEN, token);
+        save(KEY_TOKEN_AT, String(Date.now()));
+        tokenExpired = false;
+      }
+      function forgetToken() {
+        remove(KEY_TOKEN);
+        remove(KEY_TOKEN_AT);
+      }
+
+      let convos: Convo[] = load<Convo[]>(KEY_CONVOS, []).filter((c) => c && Array.isArray(c.messages));
+      let activeId: string | null = load<string | null>(KEY_ACTIVE, null);
+      let streaming: AbortController | null = null;
+
+      const active = () => convos.find((c) => c.id === activeId) ?? null;
+
+      function persist() {
+        convos.sort((a, b) => b.updatedAt - a.updatedAt);
+        convos = convos.slice(0, MAX_CONVOS);
+        save(KEY_CONVOS, convos);
+        if (activeId) save(KEY_ACTIVE, JSON.stringify(activeId));
+        else remove(KEY_ACTIVE);
+      }
+
+      // ─── Rendering ─────────────────────────────────────────────────────
+      function messageEl(m: Message): HTMLElement {
+        const wrap = document.createElement('div');
+        if (m.role === 'user') {
+          wrap.className = 'flex justify-end';
+          const bubble = document.createElement('div');
+          bubble.className = 'msg-user';
+          bubble.textContent = m.content; // plain text, never HTML
+          wrap.append(bubble);
+        } else {
+          wrap.className = 'msg-assistant prose-content chat-md';
+          wrap.innerHTML = renderMarkdown(m.content);
+          addCopyButtons(wrap);
+        }
+        return wrap;
+      }
+
+      function addCopyButtons(root: HTMLElement) {
+        root.querySelectorAll('pre').forEach((pre) => {
+          if (pre.querySelector('.copy-btn')) return;
+          const btn = document.createElement('button');
+          btn.type = 'button';
+          btn.className = 'copy-btn';
+          btn.textContent = 'Kopyala';
+          btn.addEventListener('click', async () => {
+            try {
+              await navigator.clipboard.writeText(pre.querySelector('code')?.textContent ?? '');
+              btn.textContent = 'Kopyalandı';
+            } catch {
+              btn.textContent = 'Kopyalanamadı';
+            }
+            setTimeout(() => (btn.textContent = 'Kopyala'), 1500);
+          });
+          pre.append(btn);
+        });
+      }
+
+      function noteEl(text: string, tone: 'muted' | 'error' = 'muted'): HTMLElement {
+        const el = document.createElement('p');
+        el.className = `chat-note ${tone === 'error' ? 'text-accent-2' : 'text-text-300'}`;
+        el.textContent = text;
+        return el;
+      }
+
+      function renderConversation() {
+        const c = active();
+        list.replaceChildren(...(c?.messages ?? []).map(messageEl));
+        const isEmpty = !c || c.messages.length === 0;
+        empty.classList.toggle('hidden', !isEmpty);
+        empty.classList.toggle('flex', isEmpty);
+        list.classList.toggle('hidden', isEmpty);
+        scrollToBottom(true);
+      }
+
+      function renderConvoList() {
+        convoList.replaceChildren();
+        if (convos.length === 0) {
+          const li = document.createElement('li');
+          li.className = 'px-4 py-3 text-sm text-text-300';
+          li.textContent = 'Henüz sohbet yok.';
+          convoList.append(li);
+          return;
+        }
+        for (const c of convos) {
+          const li = document.createElement('li');
+          li.className = 'group flex items-center';
+          const open = document.createElement('button');
+          open.type = 'button';
+          open.className = `convo-item ${c.id === activeId ? 'is-active' : ''}`;
+          open.textContent = c.title || 'Yeni sohbet';
+          open.addEventListener('click', () => {
+            if (streaming) return;
+            activeId = c.id;
+            persist();
+            renderConversation();
+            renderConvoList();
+            closeDrawer();
+          });
+          const del = document.createElement('button');
+          del.type = 'button';
+          del.className = 'convo-del';
+          del.setAttribute('aria-label', 'Sohbeti sil');
+          del.textContent = '×';
+          del.addEventListener('click', () => {
+            if (streaming && c.id === activeId) return;
+            if (!confirm('Bu sohbet silinsin mi?')) return;
+            convos = convos.filter((x) => x.id !== c.id);
+            if (activeId === c.id) activeId = null;
+            persist();
+            renderConversation();
+            renderConvoList();
+          });
+          li.append(open, del);
+          convoList.append(li);
+        }
+      }
+
+      function nearBottom() {
+        return scroller.scrollHeight - scroller.scrollTop - scroller.clientHeight < 80;
+      }
+      function scrollToBottom(force = false) {
+        if (force || nearBottom()) scroller.scrollTop = scroller.scrollHeight;
+      }
+
+      // ─── Drawer ────────────────────────────────────────────────────────
+      function openDrawer() {
+        renderConvoList();
+        drawer.classList.add('is-open');
+        drawer.inert = false;
+        backdrop.classList.remove('hidden');
+        historyBtn.setAttribute('aria-expanded', 'true');
+      }
+      function closeDrawer() {
+        drawer.classList.remove('is-open');
+        drawer.inert = true;
+        backdrop.classList.add('hidden');
+        historyBtn.setAttribute('aria-expanded', 'false');
+      }
+      historyBtn.addEventListener('click', openDrawer);
+      backdrop.addEventListener('click', closeDrawer);
+      $<HTMLButtonElement>('drawer-close').addEventListener('click', closeDrawer);
+      document.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape') closeDrawer();
+      });
+
+      $<HTMLButtonElement>('new-btn').addEventListener('click', () => {
+        if (streaming) return;
+        activeId = null;
+        persist();
+        renderConversation();
+        input.focus();
+      });
+
+      $<HTMLButtonElement>('clear-btn').addEventListener('click', () => {
+        if (streaming) return;
+        if (!confirm('Tüm sohbet geçmişi bu cihazdan silinsin mi?')) return;
+        convos = [];
+        activeId = null;
+        persist();
+        renderConversation();
+        renderConvoList();
+      });
+
+      $<HTMLButtonElement>('logout-btn').addEventListener('click', () => {
+        streaming?.abort();
+        forgetToken();
+        closeDrawer();
+        showGate();
+      });
+
+      // ─── Password gate ─────────────────────────────────────────────────
+      function showGate(message = '') {
+        gate.classList.remove('hidden');
+        gateError.textContent = message;
+        gateError.classList.toggle('hidden', !message);
+        gateInput.value = '';
+        gateInput.focus();
+      }
+
+      gateForm.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const token = gateInput.value.trim();
+        if (!token) return;
+        if (NOT_CONFIGURED) {
+          showGate('Sohbet servisi henüz yapılandırılmadı.');
+          return;
+        }
+        gateSubmit.disabled = true;
+        gateSubmit.textContent = 'Kontrol ediliyor…';
+        try {
+          const res = await fetch(`${CHAT_WORKER_URL}/auth`, {
+            headers: { Authorization: `Bearer ${token}` },
+          });
+          if (res.status === 204) {
+            rememberToken(token);
+            gate.classList.add('hidden');
+            input.focus();
+          } else {
+            showGate(await errorMessage(res));
+          }
+        } catch {
+          showGate('Sunucuya ulaşılamadı. Bağlantını kontrol et.');
+        } finally {
+          gateSubmit.disabled = false;
+          gateSubmit.textContent = 'Giriş';
+        }
+      });
+
+      async function errorMessage(res: Response): Promise<string> {
+        try {
+          const data = await res.json();
+          if (typeof data?.error === 'string') return data.error;
+        } catch {}
+        return `Bir hata oluştu (${res.status}).`;
+      }
+
+      // ─── Composer ──────────────────────────────────────────────────────
+      function autosize() {
+        input.style.height = 'auto';
+        input.style.height = `${Math.min(input.scrollHeight, 192)}px`;
+      }
+      input.addEventListener('input', autosize);
+      input.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter' && !e.shiftKey && !e.isComposing) {
+          e.preventDefault();
+          form.requestSubmit();
+        }
+      });
+      form.addEventListener('submit', (e) => {
+        e.preventDefault();
+        void send();
+      });
+      stopBtn.addEventListener('click', () => streaming?.abort());
+
+      function setStreaming(on: boolean) {
+        sendBtn.hidden = on;
+        stopBtn.hidden = !on;
+      }
+
+      async function send() {
+        const text = input.value.trim();
+        if (!text || streaming) return;
+        const token = getToken();
+        if (!token) return showGate(tokenExpired ? EXPIRED_MSG : '');
+
+        let convo = active();
+        if (!convo) {
+          convo = { id: crypto.randomUUID(), title: text.slice(0, 60), updatedAt: Date.now(), messages: [] };
+          convos.unshift(convo);
+          activeId = convo.id;
+        }
+        convo.messages.push({ role: 'user', content: text });
+        convo.updatedAt = Date.now();
+        persist();
+
+        input.value = '';
+        autosize();
+        renderConversation();
+
+        const reply = document.createElement('div');
+        reply.className = 'msg-assistant prose-content chat-md';
+        reply.innerHTML = '<span class="typing" aria-label="Yazıyor"><i></i><i></i><i></i></span>';
+        list.append(reply);
+        scrollToBottom(true);
+
+        const controller = new AbortController();
+        streaming = controller;
+        setStreaming(true);
+
+        let answer = '';
+        let stopReason: string | null = null;
+        let failure = '';
+        let frame = 0;
+        const paint = () => {
+          if (frame) return;
+          frame = requestAnimationFrame(() => {
+            frame = 0;
+            const stick = nearBottom();
+            reply.innerHTML = renderMarkdown(answer);
+            if (stick) scrollToBottom(true);
+          });
+        };
+
+        try {
+          const res = await fetch(CHAT_WORKER_URL, {
+            method: 'POST',
+            headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
+            body: JSON.stringify({ messages: convo.messages }),
+            signal: controller.signal,
+          });
+
+          if (res.status === 401) {
+            // Wrong/changed password: undo this turn and reopen the gate.
+            convo.messages.pop();
+            persist();
+            renderConversation();
+            input.value = text;
+            autosize();
+            forgetToken();
+            showGate('Parola hatalı. Tekrar dene.');
+            return;
+          }
+          if (!res.ok || !res.body) {
+            failure = await errorMessage(res);
+          } else {
+            for await (const event of readSSE(res.body)) {
+              if (event.type === 'content_block_delta' && event.delta?.type === 'text_delta') {
+                answer += event.delta.text;
+                paint();
+              } else if (event.type === 'message_delta' && event.delta?.stop_reason) {
+                stopReason = event.delta.stop_reason;
+              } else if (event.type === 'error') {
+                failure =
+                  event.error?.type === 'overloaded_error'
+                    ? 'Servis şu an çok yoğun. Birazdan tekrar dene.'
+                    : 'Yanıt alınırken bir hata oluştu.';
+              }
+            }
+          }
+        } catch (err) {
+          if ((err as Error).name !== 'AbortError') {
+            failure = 'Bağlantı koptu. Tekrar dene.';
+          }
+        } finally {
+          streaming = null;
+          setStreaming(false);
+          cancelAnimationFrame(frame);
+        }
+
+        if (answer.trim()) {
+          convo.messages.push({ role: 'assistant', content: answer });
+          convo.updatedAt = Date.now();
+          persist();
+          reply.innerHTML = renderMarkdown(answer);
+          addCopyButtons(reply);
+          if (controller.signal.aborted) reply.append(noteEl('Durduruldu.'));
+          else if (stopReason === 'max_tokens') reply.append(noteEl('Yanıt uzunluk sınırına ulaştı ve kesildi.'));
+          else if (stopReason === 'refusal') reply.append(noteEl('Yanıtın devamı engellendi.'));
+          if (failure) reply.append(noteEl(failure, 'error'));
+        } else {
+          // Nothing came back: drop the unanswered message and put it back
+          // in the box so it can be re-sent with one tap.
+          convo.messages.pop();
+          if (convo.messages.length === 0) {
+            convos = convos.filter((c) => c.id !== convo!.id);
+            activeId = null;
+          }
+          persist();
+          renderConversation();
+          input.value = text;
+          autosize();
+          if (!controller.signal.aborted) {
+            const msg =
+              failure ||
+              (stopReason === 'refusal' ? 'Bu isteğe yanıt verilemedi.' : 'Boş yanıt geldi. Tekrar dene.');
+            list.classList.remove('hidden');
+            list.append(noteEl(msg, 'error'));
+            scrollToBottom(true);
+          }
+        }
+        input.focus();
+      }
+
+      // Parse a text/event-stream body into JSON event objects.
+      async function* readSSE(body: ReadableStream<Uint8Array>) {
+        const reader = body.pipeThrough(new TextDecoderStream()).getReader();
+        let buffer = '';
+        while (true) {
+          const { value, done } = await reader.read();
+          if (done) break;
+          buffer += value;
+          let sep: number;
+          while ((sep = buffer.search(/\r?\n\r?\n/)) !== -1) {
+            const chunk = buffer.slice(0, sep);
+            buffer = buffer.slice(sep).replace(/^\r?\n\r?\n/, '');
+            const data = chunk
+              .split(/\r?\n/)
+              .filter((line) => line.startsWith('data:'))
+              .map((line) => line.slice(5).trimStart())
+              .join('\n');
+            if (!data) continue;
+            try {
+              yield JSON.parse(data);
+            } catch {}
+          }
+        }
+      }
+
+      // ─── Boot ──────────────────────────────────────────────────────────
+      if (activeId && !active()) activeId = null;
+      renderConversation();
+      if (NOT_CONFIGURED) showGate('Sohbet servisi henüz yapılandırılmadı.');
+      else if (!getToken()) showGate(tokenExpired ? EXPIRED_MSG : '');
+      else input.focus();
+    </script>
+  </body>
+</html>
+
+<style is:global>
+  .chat-body {
+    height: 100dvh;
+    overflow: hidden;
+  }
+  .chat-shell {
+    height: 100dvh;
+    display: flex;
+    flex-direction: column;
+  }
+  /* 16px+ stops iOS Safari from zooming into the field on focus. */
+  .chat-shell textarea,
+  #gate-input {
+    font-size: 16px;
+  }
+  .composer-safe {
+    padding-bottom: env(safe-area-inset-bottom);
+  }
+
+  .icon-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 2.25rem;
+    height: 2.25rem;
+    color: rgb(var(--text-200));
+    border: 1px solid transparent;
+  }
+  .icon-btn:hover {
+    color: rgb(var(--accent-1));
+    border-color: rgb(var(--border));
+  }
+  .pill-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.5rem 0.75rem;
+    font-family: 'JetBrains Mono', ui-monospace, monospace;
+    font-size: 0.7rem;
+    text-transform: uppercase;
+    letter-spacing: 0.2em;
+    border: 1px solid rgb(var(--border));
+    color: rgb(var(--text-200));
+    transition: all 0.2s;
+  }
+  .pill-btn:hover {
+    border-color: rgb(var(--text-100));
+    color: rgb(var(--text-100));
+  }
+  .pill-btn--primary {
+    border-color: rgb(var(--accent-1));
+    color: rgb(var(--accent-1));
+  }
+  .pill-btn--primary:hover {
+    background: rgb(var(--accent-1));
+    color: rgb(var(--bg-base));
+    border-color: rgb(var(--accent-1));
+  }
+  .pill-btn:disabled {
+    opacity: 0.6;
+  }
+
+  .action-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 2.875rem;
+    height: 2.875rem;
+    flex-shrink: 0;
+    border: 1px solid rgb(var(--accent-1));
+    color: rgb(var(--accent-1));
+    transition: all 0.2s;
+  }
+  .action-btn[hidden] {
+    display: none;
+  }
+  .action-btn:hover {
+    background: rgb(var(--accent-1));
+    color: rgb(var(--bg-base));
+  }
+  .action-btn--stop {
+    border-color: rgb(var(--accent-2));
+    color: rgb(var(--accent-2));
+  }
+  .action-btn--stop:hover {
+    background: rgb(var(--accent-2));
+    color: rgb(var(--bg-base));
+  }
+
+  .msg-user {
+    max-width: 85%;
+    white-space: pre-wrap;
+    overflow-wrap: anywhere;
+    padding: 0.625rem 0.875rem;
+    background: rgb(var(--bg-elev));
+    border: 1px solid rgb(var(--border));
+    border-right: 2px solid rgb(var(--accent-1));
+    color: rgb(var(--text-100));
+  }
+  .msg-assistant {
+    overflow-wrap: anywhere;
+    line-height: 1.7;
+  }
+
+  /* Chat-specific tweaks on top of .prose-content */
+  .chat-md > * + * {
+    margin-top: 0.85em;
+  }
+  .chat-md h1,
+  .chat-md h2,
+  .chat-md h3 {
+    font-size: 1.05rem;
+    text-transform: none;
+    letter-spacing: normal;
+    margin-top: 1.4em;
+    margin-bottom: 0;
+  }
+  .chat-md ul,
+  .chat-md ol {
+    list-style-position: outside;
+    padding-left: 1.4em;
+  }
+  .chat-md li > p {
+    display: inline;
+  }
+  .chat-md li + li {
+    margin-top: 0.3em;
+  }
+  .chat-md pre {
+    position: relative;
+    font-size: 0.85rem;
+    line-height: 1.55;
+  }
+  .chat-md table {
+    display: block;
+    overflow-x: auto;
+    border-collapse: collapse;
+    font-size: 0.9rem;
+  }
+  .chat-md th,
+  .chat-md td {
+    border: 1px solid rgb(var(--border));
+    padding: 0.35rem 0.6rem;
+    text-align: left;
+  }
+  .chat-md hr {
+    border-color: rgb(var(--border));
+  }
+  .copy-btn {
+    position: absolute;
+    top: 0.4rem;
+    right: 0.4rem;
+    padding: 0.15rem 0.5rem;
+    font-family: 'JetBrains Mono', ui-monospace, monospace;
+    font-size: 0.65rem;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    color: rgb(var(--text-300));
+    background: rgb(var(--bg-base));
+    border: 1px solid rgb(var(--border));
+  }
+  .copy-btn:hover {
+    color: rgb(var(--accent-1));
+  }
+  .chat-note {
+    font-family: 'JetBrains Mono', ui-monospace, monospace;
+    font-size: 0.75rem;
+    margin-top: 0.75rem;
+  }
+
+  .typing {
+    display: inline-flex;
+    gap: 0.3rem;
+    padding: 0.4rem 0;
+  }
+  .typing i {
+    width: 0.4rem;
+    height: 0.4rem;
+    background: rgb(var(--accent-1));
+    animation: typing 1s ease-in-out infinite;
+  }
+  .typing i:nth-child(2) { animation-delay: 0.15s; }
+  .typing i:nth-child(3) { animation-delay: 0.3s; }
+  @keyframes typing {
+    0%, 100% { opacity: 0.25; }
+    50% { opacity: 1; }
+  }
+
+  .drawer {
+    transform: translateX(-100%);
+    transition: transform 0.25s ease-out;
+  }
+  .drawer.is-open {
+    transform: translateX(0);
+  }
+  .convo-item {
+    flex: 1;
+    min-width: 0;
+    text-align: left;
+    padding: 0.65rem 1rem;
+    font-size: 0.9rem;
+    color: rgb(var(--text-200));
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    border-left: 2px solid transparent;
+  }
+  .convo-item:hover {
+    color: rgb(var(--text-100));
+    background: rgb(var(--bg-elev-2));
+  }
+  .convo-item.is-active {
+    color: rgb(var(--text-100));
+    border-left-color: rgb(var(--accent-1));
+    background: rgb(var(--bg-elev-2));
+  }
+  .convo-del {
+    padding: 0.5rem 0.9rem;
+    color: rgb(var(--text-300));
+    font-size: 1.1rem;
+  }
+  .convo-del:hover {
+    color: rgb(var(--accent-2));
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .drawer { transition: none; }
+    .typing i { animation: none; opacity: 0.7; }
+  }
+</style>

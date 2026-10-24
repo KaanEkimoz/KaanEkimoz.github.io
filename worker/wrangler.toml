@@ -1,0 +1,29 @@
+# Cloudflare Worker for the /chat page. See worker/README.md for deploy steps.
+# Secrets (ANTHROPIC_API_KEY, ACCESS_TOKEN) are NOT in this file — add them
+# with `npx wrangler secret put <NAME>`.
+
+name = "kaanusta-chat"
+main = "src/index.js"
+compatibility_date = "2026-10-01"
+
+# Serve on <name>.<your-subdomain>.workers.dev.
+workers_dev = true
+
+[vars]
+# Origins allowed by CORS. For local testing against `npm run dev`, add
+# http://localhost:4321 temporarily, then remove it and redeploy.
+ALLOWED_ORIGINS = "https://kaanusta.dev,https://www.kaanusta.dev,https://kaanekimoz.github.io"
+
+# Per-IP rate limit: 20 requests per 60 seconds. Also throttles password
+# guessing, since it runs before the token check. `namespace_id` is any
+# positive integer unique within your account.
+[[ratelimits]]
+name = "RATE_LIMITER"
+namespace_id = "4101"
+
+  [ratelimits.simple]
+  limit = 20
+  period = 60
+
+[observability]
+enabled = true
