@@ -1,26 +1,4 @@
-import rss from '@astrojs/rss';
-import { getCollection } from 'astro:content';
-import { SITE } from '@lib/constants';
 import type { APIContext } from 'astro';
-import { t } from '@lib/i18n';
+import { blogFeed } from '@lib/rss';
 
-export async function GET(context: APIContext) {
-  const posts = await getCollection(
-    'blog',
-    ({ data }) => !data.draft && data.lang === 'en'
-  );
-  return rss({
-    title: t('meta.siteTitle', 'en'),
-    description: t('meta.blogDescription', 'en'),
-    site: context.site ?? SITE.url,
-    items: posts
-      .sort((a, b) => b.data.pubDate.getTime() - a.data.pubDate.getTime())
-      .map((post) => ({
-        title: post.data.title,
-        pubDate: post.data.pubDate,
-        description: post.data.description,
-        link: `/blog/${post.id}/`,
-        categories: post.data.tags,
-      })),
-  });
-}
+export const GET = (context: APIContext) => blogFeed(context, 'en');

@@ -10,7 +10,6 @@
 
 export type Lang = 'en' | 'tr';
 
-export const LOCALES: Lang[] = ['en', 'tr'];
 export const DEFAULT_LOCALE: Lang = 'en';
 
 /** BCP-47 tags used in <html lang>, og:locale, and Date formatting. */
@@ -42,11 +41,12 @@ type Dict = {
     techStack: string;
     links: string;
     screenshots: string;
+    visitSite: string;
   };
   projectFilter: { all: string; published: string; aria: string };
   projectCard: { view: string };
   blogCard: { read: string };
-  notFound: { errorTag: string; gameOver: string; body: string; restart: string };
+  notFound: { errorTag: string; gameOver: string; body: string; restart: string; description: string };
   toggle: { theme: string; language: string };
   stats: { class: string; xp: string; focus: string; engine: string; location: string };
   social: { newTab: string };
@@ -99,6 +99,7 @@ const en: Dict = {
     techStack: 'Tech Stack',
     links: 'Links',
     screenshots: 'Screenshots',
+    visitSite: '[ Visit Site ]',
   },
   projectFilter: { all: 'All', published: 'Published', aria: 'Filter projects' },
   projectCard: { view: 'View →' },
@@ -108,6 +109,7 @@ const en: Dict = {
     gameOver: 'GAME OVER',
     body: "The page you're looking for doesn't exist — maybe a broken link, maybe a page that never shipped.",
     restart: '[ RESTART ]',
+    description: 'Page not found. Restart from the home screen.',
   },
   toggle: { theme: 'Toggle theme', language: 'Toggle language' },
   stats: {
@@ -175,6 +177,7 @@ const tr: Dict = {
     techStack: 'Teknoloji',
     links: 'Bağlantılar',
     screenshots: 'Ekran Görüntüleri',
+    visitSite: '[ Siteyi Ziyaret Et ]',
   },
   projectFilter: { all: 'Tümü', published: 'Yayında', aria: 'Projeleri filtrele' },
   projectCard: { view: 'Aç →' },
@@ -186,6 +189,7 @@ const tr: Dict = {
     gameOver: 'GAME OVER',
     body: 'Aradığın sayfa burada yok — kırık bir link ya da hiç yayımlanmamış bir sayfa olabilir.',
     restart: '[ YENİDEN BAŞLA ]',
+    description: 'Sayfa bulunamadı. Ana ekrandan baştan başla.',
   },
   toggle: { theme: 'Temayı değiştir', language: 'Dili değiştir' },
   stats: {
@@ -256,12 +260,4 @@ export function alternateUrl(currentPath: string, currentLang: Lang): string {
   }
   if (currentPath === '/') return '/tr/';
   return `/tr${currentPath}`;
-}
-
-/**
- * Read the locale from a pathname — used at page boundaries when a template
- * is shared across both locales and doesn't have the value as a prop.
- */
-export function langFromPath(pathname: string): Lang {
-  return pathname === '/tr' || pathname.startsWith('/tr/') ? 'tr' : 'en';
 }
