@@ -12,6 +12,8 @@
  *   ANTHROPIC_API_KEY  — Anthropic Console key
  *   ACCESS_TOKEN       — shared password the chat page sends as a Bearer token
  *                        (URL-encoded, so Turkish letters like ö/ş survive)
+ *   FILE_REF_SECRET    — random key that signs file references (uploads are
+ *                        disabled without it)
  *
  * Vars (wrangler.toml):
  *   ALLOWED_ORIGINS    — comma-separated list of origins allowed by CORS
@@ -20,8 +22,14 @@
  *   RATE_LIMITER       — Workers Rate Limiting binding, keyed per client IP
  *
  * Routes:
- *   POST /      → chat (streams Anthropic SSE back unchanged)
- *   GET  /auth  → 204 if the token is valid, 401 otherwise (password check)
+ *   POST   /             → chat (streams Anthropic SSE back unchanged)
+ *   GET    /auth         → 204 if the token is valid, 401 otherwise
+ *   POST   /files        → upload one attachment (raw body) to the Files API
+ *   DELETE /files/<ref>  → delete an attachment this Worker uploaded
+ *
+ * Uploaded files are visible to the whole Anthropic workspace, so the page
+ * never gets a bare file_id: it gets `<file_id>.<signature>`, and the Worker
+ * only accepts references it signed itself.
  */
 
 // ─── Request shape — change these, not the client ──────────────────────────
@@ -53,6 +61,20 @@ const DEFAULT_EFFORT = 'low';
 
 const FALLBACK_BETA = 'server-side-fallback-2026-07-01';
 
+// Attachments. Each type maps to the content block the API expects. Images
+// are downscaled in the browser before upload; the size cap is for PDFs.
+const UPLOAD_TYPES = {
+  'image/jpeg': 'image',
+  'image/png': 'image',
+  'image/gif': 'image',
+  'image/webp': 'image',
+  'application/pdf': 'document',
+  'text/plain': 'document',
+};
+const MAX_UPLOAD_BYTES = 15 * 1024 * 1024;
+const FILE_TTL_SECONDS = 90 * 24 * 60 * 60; // the Files API maximum
+const ANTHROPIC_FILES_URL = 'https://api.anthropic.com/v1/files';
+
 const SYSTEM_PROMPT = `You are a warm, helpful assistant chatting with one person through a small private chat page.
 Reply in the language the user writes in (usually Turkish). Write naturally, not like a word-for-word translation.
 Keep answers as long as the question needs: short for casual chat, thorough for real questions.
@@ -67,6 +89,8 @@ const MAX_BODY_BYTES = 256 * 1024; // raw request body
 const MAX_MESSAGES = 60; // turns in one conversation
 const MAX_MESSAGE_CHARS = 20_000; // one message
 const MAX_TOTAL_CHARS = 120_000; // whole conversation (~30-40k tokens)
+const MAX_ATTACHMENTS_PER_MESSAGE = 5;
+const MAX_ATTACHMENTS_TOTAL = 20; // attachments are re-sent every turn
 
 // ─── Worker ────────────────────────────────────────────────────────────────
 
@@ -89,7 +113,9 @@ export default {
 
     const url = new URL(request.url);
     const route = `${request.method} ${url.pathname}`;
-    if (route !== 'POST /' && route !== 'GET /auth') {
+    const deleteMatch =
+      request.method === 'DELETE' ? url.pathname.match(/^\/files\/([\w.-]{1,200})$/) : null;
+    if (route !== 'POST /' && route !== 'GET /auth' && route !== 'POST /files' && !deleteMatch) {
       return json({ error: 'Not found.' }, 404, cors);
     }
 
@@ -116,8 +142,14 @@ export default {
     if (route === 'GET /auth') {
       return new Response(null, { status: 204, headers: cors });
     }
+    if (route === 'POST /files') {
+      return uploadFile(request, env, cors);
+    }
+    if (deleteMatch) {
+      return deleteFile(deleteMatch[1], env, cors);
+    }
 
-    const parsed = await readMessages(request);
+    const parsed = await readMessages(request, env);
     if (parsed.error) {
       return json({ error: parsed.error }, parsed.status, cors);
     }
@@ -135,6 +167,9 @@ async function proxyToAnthropic({ messages, model, effort }, env, cors) {
     system: SYSTEM_PROMPT,
     messages,
     output_config: { effort },
+    // Cache the conversation prefix so a long chat (or an attached PDF)
+    // isn't billed at full price again on every turn.
+    cache_control: { type: 'ephemeral' },
     stream: true,
   };
   const headers = {
@@ -197,7 +232,7 @@ function upstreamError(status) {
 
 // ─── Input validation ──────────────────────────────────────────────────────
 
-async function readMessages(request) {
+async function readMessages(request, env) {
   const declared = Number(request.headers.get('Content-Length') ?? 0);
   if (declared > MAX_BODY_BYTES) {
     return { error: 'İstek çok büyük.', status: 413 };
@@ -228,26 +263,21 @@ async function readMessages(request) {
     return { error: 'Sohbet çok uzadı. Yeni bir sohbet başlat.', status: 413 };
   }
 
-  // Rebuild each message from scratch so nothing but role + text reaches
-  // the API (no images, tool blocks, system roles, or extra fields).
+  // Rebuild each message from scratch so only text and attachments this
+  // Worker signed reach the API (no tool blocks, system roles, raw
+  // file_ids, or extra fields).
   const messages = [];
-  let total = 0;
+  const counts = { chars: 0, attachments: 0 };
   for (const m of input) {
     const role = m?.role;
-    const content = typeof m?.content === 'string' ? m.content.trim() : '';
     if (role !== 'user' && role !== 'assistant') {
       return { error: 'Geçersiz mesaj rolü.', status: 400 };
     }
-    if (!content) {
-      return { error: 'Boş mesaj gönderilemez.', status: 400 };
-    }
-    if (content.length > MAX_MESSAGE_CHARS) {
-      return { error: 'Mesajlardan biri çok uzun.', status: 413 };
-    }
-    total += content.length;
-    messages.push({ role, content });
+    const content = await readContent(m?.content, role, env, counts);
+    if (content.error) return content;
+    messages.push({ role, content: content.value });
   }
-  if (total > MAX_TOTAL_CHARS) {
+  if (counts.chars > MAX_TOTAL_CHARS) {
     return { error: 'Sohbet çok uzadı. Yeni bir sohbet başlat.', status: 413 };
   }
   if (messages[0].role !== 'user' || messages.at(-1).role !== 'user') {
@@ -266,6 +296,173 @@ async function readMessages(request) {
   return { messages, model, effort };
 }
 
+// A message is either a string or a list of blocks:
+//   { type: 'text', text }  |  { type: 'image', ref }  |  { type: 'document', ref, title? }
+// Attachments are allowed only in user messages.
+async function readContent(content, role, env, counts) {
+  if (typeof content === 'string') {
+    const text = content.trim();
+    if (!text) return { error: 'Boş mesaj gönderilemez.', status: 400 };
+    if (text.length > MAX_MESSAGE_CHARS) return { error: 'Mesajlardan biri çok uzun.', status: 413 };
+    counts.chars += text.length;
+    return { value: text };
+  }
+  if (!Array.isArray(content) || content.length === 0 || content.length > MAX_ATTACHMENTS_PER_MESSAGE + 1) {
+    return { error: 'Geçersiz mesaj içeriği.', status: 400 };
+  }
+
+  const blocks = [];
+  let attachments = 0;
+  for (const block of content) {
+    if (block?.type === 'text') {
+      const text = typeof block.text === 'string' ? block.text.trim() : '';
+      if (!text) continue;
+      if (text.length > MAX_MESSAGE_CHARS) return { error: 'Mesajlardan biri çok uzun.', status: 413 };
+      counts.chars += text.length;
+      blocks.push({ type: 'text', text });
+    } else if ((block?.type === 'image' || block?.type === 'document') && role === 'user') {
+      const fileId = await verifyRef(block.ref, block.type, env);
+      if (!fileId) return { error: 'Eklerden biri artık kullanılamıyor.', status: 400 };
+      attachments += 1;
+      const out = { type: block.type, source: { type: 'file', file_id: fileId } };
+      if (block.type === 'document' && typeof block.title === 'string' && block.title.trim()) {
+        out.title = block.title.trim().slice(0, 200);
+      }
+      blocks.push(out);
+    } else {
+      return { error: 'Geçersiz mesaj içeriği.', status: 400 };
+    }
+  }
+  if (blocks.length === 0) return { error: 'Boş mesaj gönderilemez.', status: 400 };
+  if (attachments > MAX_ATTACHMENTS_PER_MESSAGE) {
+    return { error: `Bir mesaja en fazla ${MAX_ATTACHMENTS_PER_MESSAGE} dosya eklenebilir.`, status: 400 };
+  }
+  counts.attachments += attachments;
+  if (counts.attachments > MAX_ATTACHMENTS_TOTAL) {
+    return { error: 'Bu sohbette çok fazla dosya var. Yeni bir sohbet başlat.', status: 413 };
+  }
+  return { value: blocks };
+}
+
+// ─── Files ─────────────────────────────────────────────────────────────────
+
+// The page sends the file as the raw body, its type as Content-Type and its
+// name URL-encoded in X-File-Name. The Worker builds the multipart upload
+// itself so it controls the type allowlist and the expiry.
+async function uploadFile(request, env, cors) {
+  if (!env.FILE_REF_SECRET) {
+    return json({ error: 'Dosya yükleme henüz açılmadı.' }, 503, cors);
+  }
+  const type = (request.headers.get('Content-Type') ?? '').split(';')[0].trim().toLowerCase();
+  const kind = UPLOAD_TYPES[type];
+  if (!kind) {
+    return json({ error: 'Bu dosya türü desteklenmiyor.' }, 415, cors);
+  }
+  const declared = Number(request.headers.get('Content-Length') ?? 0);
+  if (declared > MAX_UPLOAD_BYTES) {
+    return json({ error: 'Dosya çok büyük (en fazla 15 MB).' }, 413, cors);
+  }
+
+  const blob = await request.blob();
+  if (blob.size === 0) return json({ error: 'Dosya boş.' }, 400, cors);
+  if (blob.size > MAX_UPLOAD_BYTES) {
+    return json({ error: 'Dosya çok büyük (en fazla 15 MB).' }, 413, cors);
+  }
+
+  const form = new FormData();
+  form.append('file', new File([blob], safeFileName(request.headers.get('X-File-Name'), type), { type }));
+  form.append('expires_in_seconds', String(FILE_TTL_SECONDS));
+
+  let upstream;
+  try {
+    upstream = await fetch(ANTHROPIC_FILES_URL, {
+      method: 'POST',
+      headers: { 'x-api-key': env.ANTHROPIC_API_KEY, 'anthropic-version': ANTHROPIC_VERSION },
+      body: form,
+    });
+  } catch (err) {
+    console.error('Files upload failed:', err);
+    return json({ error: 'Dosya yüklenemedi.' }, 502, cors);
+  }
+  if (!upstream.ok) {
+    const detail = await upstream.text().catch(() => '');
+    console.error(`Files ${upstream.status}: ${detail.slice(0, 500)}`);
+    return json(...upstreamError(upstream.status), cors);
+  }
+
+  const file = await upstream.json();
+  return json(
+    { ref: await signRef(file.id, kind, env), kind, expiresAt: file.expires_at ?? null },
+    200,
+    cors,
+  );
+}
+
+async function deleteFile(ref, env, cors) {
+  const fileId =
+    (await verifyRef(ref, 'image', env)) ?? (await verifyRef(ref, 'document', env));
+  if (!fileId) return json({ error: 'Geçersiz dosya.' }, 400, cors);
+  try {
+    const res = await fetch(`${ANTHROPIC_FILES_URL}/${fileId}`, {
+      method: 'DELETE',
+      headers: { 'x-api-key': env.ANTHROPIC_API_KEY, 'anthropic-version': ANTHROPIC_VERSION },
+    });
+    // Already gone (deleted or expired) counts as done.
+    if (!res.ok && res.status !== 404) {
+      console.error(`Files delete ${res.status}`);
+      return json({ error: 'Dosya silinemedi.' }, 502, cors);
+    }
+  } catch (err) {
+    console.error('Files delete failed:', err);
+    return json({ error: 'Dosya silinemedi.' }, 502, cors);
+  }
+  return new Response(null, { status: 204, headers: cors });
+}
+
+function safeFileName(header, type) {
+  let name = '';
+  try {
+    name = decodeURIComponent(header ?? '');
+  } catch {}
+  // The Files API rejects < > : " | ? * \ / and control characters.
+  name = name.replace(/[<>:"|?*\\/\u0000-\u001f]/g, '_').trim().slice(0, 120);
+  if (name) return name;
+  return type === 'application/pdf' ? 'belge.pdf' : type === 'text/plain' ? 'metin.txt' : 'gorsel';
+}
+
+// ref = <file_id>.<HMAC(file_id:kind)>, so a ref can't be forged or reused
+// as the other block type.
+async function signRef(fileId, kind, env) {
+  return `${fileId}.${await refSignature(fileId, kind, env)}`;
+}
+
+async function verifyRef(ref, kind, env) {
+  if (!env.FILE_REF_SECRET || typeof ref !== 'string') return null;
+  const dot = ref.lastIndexOf('.');
+  if (dot <= 0) return null;
+  const fileId = ref.slice(0, dot);
+  if (!/^file_[A-Za-z0-9]{1,100}$/.test(fileId)) return null;
+  const enc = new TextEncoder();
+  const given = enc.encode(ref.slice(dot + 1));
+  const expected = enc.encode(await refSignature(fileId, kind, env));
+  if (given.byteLength !== expected.byteLength) return null;
+  return crypto.subtle.timingSafeEqual(given, expected) ? fileId : null;
+}
+
+async function refSignature(fileId, kind, env) {
+  const key = await crypto.subtle.importKey(
+    'raw',
+    new TextEncoder().encode(env.FILE_REF_SECRET),
+    { name: 'HMAC', hash: 'SHA-256' },
+    false,
+    ['sign'],
+  );
+  const mac = await crypto.subtle.sign('HMAC', key, new TextEncoder().encode(`${fileId}:${kind}`));
+  return btoa(String.fromCharCode(...new Uint8Array(mac).slice(0, 18)))
+    .replace(/\+/g, '-')
+    .replace(/\//g, '_');
+}
+
 // ─── Helpers ───────────────────────────────────────────────────────────────
 
 function parseOrigins(value) {
@@ -279,8 +476,8 @@ function corsHeaders(origin, allowed) {
   if (!origin || !allowed.includes(origin)) return {};
   return {
     'Access-Control-Allow-Origin': origin,
-    'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
-    'Access-Control-Allow-Headers': 'Authorization, Content-Type',
+    'Access-Control-Allow-Methods': 'GET, POST, DELETE, OPTIONS',
+    'Access-Control-Allow-Headers': 'Authorization, Content-Type, X-File-Name',
     'Access-Control-Max-Age': '86400',
     Vary: 'Origin',
   };

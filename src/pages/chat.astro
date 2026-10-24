@@ -89,7 +89,18 @@ import { CHAT_EFFORTS, CHAT_MODELS } from '@lib/constants';
             </select>
           </label>
         </div>
+        <div id="attach-tray" class="max-w-3xl mx-auto px-4 pt-2 flex flex-wrap gap-2" hidden></div>
         <form id="composer" class="max-w-3xl mx-auto px-4 pt-2 pb-3 flex items-end gap-2">
+          <button id="attach-btn" type="button" class="action-btn action-btn--ghost" aria-label="Dosya ekle" title="Görsel, PDF ya da metin dosyası ekle">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M21 11.5l-8.6 8.6a5 5 0 0 1-7.1-7.1l8.6-8.6a3.3 3.3 0 0 1 4.7 4.7l-8.6 8.6a1.7 1.7 0 0 1-2.4-2.4l7.9-7.9" /></svg>
+          </button>
+          <input
+            id="file-input"
+            type="file"
+            multiple
+            accept="image/png,image/jpeg,image/gif,image/webp,application/pdf,text/plain,.txt,.md,.csv,.json"
+            hidden
+          />
           <label for="input" class="sr-only">Mesaj</label>
           <textarea
             id="input"
@@ -106,7 +117,7 @@ import { CHAT_EFFORTS, CHAT_MODELS } from '@lib/constants';
           </button>
         </form>
         <p class="max-w-3xl mx-auto px-4 pb-2 -mt-1 text-[11px] font-mono text-text-300 hidden sm:block">
-          Enter gönderir · Shift+Enter yeni satır
+          Enter gönderir · Shift+Enter yeni satır · Dosyayı sürükleyip bırakabilir ya da yapıştırabilirsin
         </p>
       </footer>
     </div>
@@ -158,7 +169,22 @@ import { CHAT_EFFORTS, CHAT_MODELS } from '@lib/constants';
       import { CHAT_EFFORTS, CHAT_MODELS, CHAT_WORKER_URL } from '@lib/constants';
 
       type Role = 'user' | 'assistant';
-      interface Message { role: Role; content: string }
+      interface Attachment {
+        ref: string; // signed by the Worker; never a bare file_id
+        kind: 'image' | 'document';
+        name: string;
+        expiresAt: string | null;
+        thumb?: string; // small JPEG data URL, images only
+      }
+      interface Message { role: Role; content: string; attachments?: Attachment[] }
+      interface Pending {
+        id: string;
+        name: string;
+        status: 'uploading' | 'ready' | 'error';
+        error?: string;
+        att?: Attachment;
+        thumb?: string;
+      }
       interface Convo { id: string; title: string; updatedAt: number; messages: Message[] }
 
       const KEY_TOKEN = 'fx-chat-token';
@@ -172,6 +198,12 @@ import { CHAT_EFFORTS, CHAT_MODELS } from '@lib/constants';
       const KEY_MODEL = 'fx-chat-model';
       const KEY_EFFORT = 'fx-chat-effort';
       const MAX_CONVOS = 50;
+      const MAX_ATTACHMENTS = 5; // per message; the Worker enforces the same
+      const MAX_FILE_BYTES = 15 * 1024 * 1024;
+      const MAX_TEXT_BYTES = 512 * 1024; // ~130k tokens, re-sent every turn
+      const IMAGE_MAX_SIDE = 2048; // the API downsizes larger images anyway
+      const IMAGE_TYPES = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];
+      const TEXT_EXT = /\.(txt|md|markdown|csv|tsv|json|xml|html?|css|js|ts|py|cs|java|c|cpp|h|sql|ya?ml|log)$/i;
       const NOT_CONFIGURED = CHAT_WORKER_URL.includes('YOUR-SUBDOMAIN');
       const TYPING_HTML = '<span class="typing" aria-label="Yazıyor"><i></i><i></i><i></i></span>';
       const THINKING_HTML = `${TYPING_HTML}<span class="thinking-label">Düşünüyor…</span>`;
@@ -186,6 +218,9 @@ import { CHAT_EFFORTS, CHAT_MODELS } from '@lib/constants';
       const stopBtn = $<HTMLButtonElement>('stop-btn');
       const modelSelect = $<HTMLSelectElement>('model-select');
       const effortSelect = $<HTMLSelectElement>('effort-select');
+      const attachBtn = $<HTMLButtonElement>('attach-btn');
+      const fileInput = $<HTMLInputElement>('file-input');
+      const tray = $<HTMLDivElement>('attach-tray');
       const drawer = $<HTMLElement>('drawer');
       const backdrop = $<HTMLDivElement>('drawer-backdrop');
       const historyBtn = $<HTMLButtonElement>('history-btn');
@@ -223,10 +258,13 @@ import { CHAT_EFFORTS, CHAT_MODELS } from '@lib/constants';
           return fallback;
         }
       }
-      function save(key: string, value: unknown) {
+      function save(key: string, value: unknown): boolean {
         try {
           localStorage.setItem(key, typeof value === 'string' ? value : JSON.stringify(value));
-        } catch {}
+          return true;
+        } catch {
+          return false;
+        }
       }
       function remove(key: string) {
         try { localStorage.removeItem(key); } catch {}
@@ -266,7 +304,15 @@ import { CHAT_EFFORTS, CHAT_MODELS } from '@lib/constants';
       function persist() {
         convos.sort((a, b) => b.updatedAt - a.updatedAt);
         convos = convos.slice(0, MAX_CONVOS);
-        save(KEY_CONVOS, convos);
+        if (!save(KEY_CONVOS, convos)) {
+          // Storage full: image thumbnails are the bulk, so drop them from
+          // every conversation except the open one and try again.
+          for (const c of convos) {
+            if (c.id === activeId) continue;
+            for (const m of c.messages) m.attachments?.forEach((a) => delete a.thumb);
+          }
+          save(KEY_CONVOS, convos);
+        }
         if (activeId) save(KEY_ACTIVE, JSON.stringify(activeId));
         else remove(KEY_ACTIVE);
       }
@@ -278,7 +324,12 @@ import { CHAT_EFFORTS, CHAT_MODELS } from '@lib/constants';
           wrap.className = 'flex justify-end';
           const bubble = document.createElement('div');
           bubble.className = 'msg-user';
-          bubble.textContent = m.content; // plain text, never HTML
+          if (m.attachments?.length) bubble.append(attachmentsEl(m.attachments));
+          if (m.content) {
+            const text = document.createElement('div');
+            text.textContent = m.content; // plain text, never HTML
+            bubble.append(text);
+          }
           wrap.append(bubble);
         } else {
           wrap.className = 'msg-assistant prose-content chat-md';
@@ -286,6 +337,28 @@ import { CHAT_EFFORTS, CHAT_MODELS } from '@lib/constants';
           addCopyButtons(wrap);
         }
         return wrap;
+      }
+
+      function attachmentsEl(atts: Attachment[]): HTMLElement {
+        const row = document.createElement('div');
+        row.className = 'msg-atts';
+        for (const a of atts) {
+          const expired = isExpired(a);
+          if (a.kind === 'image' && a.thumb) {
+            const img = document.createElement('img');
+            img.className = `msg-thumb${expired ? ' is-expired' : ''}`;
+            img.src = a.thumb; // data: URL we generated in this browser
+            img.alt = a.name;
+            img.title = expired ? `${a.name} (süresi doldu)` : a.name;
+            row.append(img);
+          } else {
+            const chip = document.createElement('span');
+            chip.className = `att-chip${expired ? ' is-expired' : ''}`;
+            chip.textContent = `${a.kind === 'image' ? '🖼' : '📄'} ${a.name}${expired ? ' · süresi doldu' : ''}`;
+            row.append(chip);
+          }
+        }
+        return row;
       }
 
       function addCopyButtons(root: HTMLElement) {
@@ -357,6 +430,7 @@ import { CHAT_EFFORTS, CHAT_MODELS } from '@lib/constants';
           del.addEventListener('click', () => {
             if (streaming && c.id === activeId) return;
             if (!confirm('Bu sohbet silinsin mi?')) return;
+            deleteFiles(refsOf([c]));
             convos = convos.filter((x) => x.id !== c.id);
             if (activeId === c.id) activeId = null;
             persist();
@@ -407,6 +481,7 @@ import { CHAT_EFFORTS, CHAT_MODELS } from '@lib/constants';
       $<HTMLButtonElement>('clear-btn').addEventListener('click', () => {
         if (streaming) return;
         if (!confirm('Tüm sohbet geçmişi bu cihazdan silinsin mi?')) return;
+        deleteFiles(refsOf(convos));
         convos = [];
         activeId = null;
         persist();
@@ -492,22 +567,33 @@ import { CHAT_EFFORTS, CHAT_MODELS } from '@lib/constants';
 
       async function send() {
         const text = input.value.trim();
-        if (!text || streaming) return;
+        if (streaming) return;
+        if (pending.some((p) => p.status === 'uploading')) {
+          flashTray('Dosyalar yükleniyor, birazdan gönderebilirsin.');
+          return;
+        }
+        const attachments = pending.flatMap((p) => (p.status === 'ready' && p.att ? [p.att] : []));
+        if (!text && attachments.length === 0) return;
         const token = getToken();
         if (!token) return showGate(tokenExpired ? EXPIRED_MSG : '');
 
         let convo = active();
         if (!convo) {
-          convo = { id: crypto.randomUUID(), title: text.slice(0, 60), updatedAt: Date.now(), messages: [] };
+          const title = text || attachments.map((a) => a.name).join(', ');
+          convo = { id: crypto.randomUUID(), title: title.slice(0, 60), updatedAt: Date.now(), messages: [] };
           convos.unshift(convo);
           activeId = convo.id;
         }
-        convo.messages.push({ role: 'user', content: text });
+        const userMsg: Message = { role: 'user', content: text };
+        if (attachments.length) userMsg.attachments = attachments;
+        convo.messages.push(userMsg);
         convo.updatedAt = Date.now();
         persist();
 
         input.value = '';
         autosize();
+        pending = [];
+        renderTray();
         renderConversation();
 
         const reply = document.createElement('div');
@@ -539,7 +625,7 @@ import { CHAT_EFFORTS, CHAT_MODELS } from '@lib/constants';
             method: 'POST',
             headers: { Authorization: authHeader(token), 'Content-Type': 'application/json' },
             body: JSON.stringify({
-              messages: convo.messages,
+              messages: convo.messages.map(toApiMessage),
               model: modelSelect.value,
               effort: effortSelect.value,
             }),
@@ -551,8 +637,7 @@ import { CHAT_EFFORTS, CHAT_MODELS } from '@lib/constants';
             convo.messages.pop();
             persist();
             renderConversation();
-            input.value = text;
-            autosize();
+            restoreDraft(text, attachments);
             forgetToken();
             showGate('Parola hatalı. Tekrar dene.');
             return;
@@ -606,8 +691,7 @@ import { CHAT_EFFORTS, CHAT_MODELS } from '@lib/constants';
           }
           persist();
           renderConversation();
-          input.value = text;
-          autosize();
+          restoreDraft(text, attachments);
           if (!controller.signal.aborted) {
             const msg =
               failure ||
@@ -619,6 +703,231 @@ import { CHAT_EFFORTS, CHAT_MODELS } from '@lib/constants';
         }
         input.focus();
       }
+
+      // ─── Attachments ───────────────────────────────────────────────────
+      let pending: Pending[] = [];
+
+      const isExpired = (a: Attachment) => !!a.expiresAt && Date.parse(a.expiresAt) <= Date.now();
+
+      // The Worker wants text or blocks referencing its signed refs.
+      // Expired files are swapped for a note so old chats keep working.
+      function toApiMessage(m: Message) {
+        if (!m.attachments?.length) return { role: m.role, content: m.content };
+        const blocks: Record<string, string>[] = m.attachments.map((a) =>
+          isExpired(a)
+            ? { type: 'text', text: `[Ek: ${a.name} — süresi dolduğu için artık kullanılamıyor]` }
+            : a.kind === 'image'
+              ? { type: 'image', ref: a.ref }
+              : { type: 'document', ref: a.ref, title: a.name },
+        );
+        if (m.content) blocks.push({ type: 'text', text: m.content });
+        return { role: m.role, content: blocks };
+      }
+
+      function refsOf(list: Convo[]): string[] {
+        return list.flatMap((c) => c.messages.flatMap((m) => m.attachments?.map((a) => a.ref) ?? []));
+      }
+
+      // Best effort: files also expire on their own after 90 days.
+      function deleteFiles(refs: string[]) {
+        const token = getToken();
+        if (!token) return;
+        for (const ref of refs) {
+          void fetch(`${CHAT_WORKER_URL}/files/${encodeURIComponent(ref)}`, {
+            method: 'DELETE',
+            headers: { Authorization: authHeader(token) },
+          }).catch(() => {});
+        }
+      }
+
+      function restoreDraft(text: string, attachments: Attachment[]) {
+        input.value = text;
+        autosize();
+        pending = attachments.map((a) => ({ id: crypto.randomUUID(), name: a.name, status: 'ready', att: a, thumb: a.thumb }));
+        renderTray();
+      }
+
+      function classify(file: File): { kind: Attachment['kind']; type: string } | null {
+        if (IMAGE_TYPES.includes(file.type)) return { kind: 'image', type: file.type };
+        if (file.type === 'application/pdf' || /\.pdf$/i.test(file.name)) return { kind: 'document', type: 'application/pdf' };
+        if (file.type.startsWith('text/') || file.type === 'application/json' || TEXT_EXT.test(file.name)) {
+          return { kind: 'document', type: 'text/plain' };
+        }
+        return null;
+      }
+
+      async function drawScaled(file: Blob, maxSide: number, quality: number): Promise<Blob> {
+        const bitmap = await createImageBitmap(file);
+        const scale = Math.min(1, maxSide / Math.max(bitmap.width, bitmap.height));
+        const canvas = document.createElement('canvas');
+        canvas.width = Math.max(1, Math.round(bitmap.width * scale));
+        canvas.height = Math.max(1, Math.round(bitmap.height * scale));
+        const ctx = canvas.getContext('2d')!;
+        ctx.fillStyle = '#fff'; // JPEG has no alpha; flatten onto white
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+        ctx.drawImage(bitmap, 0, 0, canvas.width, canvas.height);
+        bitmap.close();
+        return new Promise((resolve, reject) =>
+          canvas.toBlob((b) => (b ? resolve(b) : reject(new Error('encode'))), 'image/jpeg', quality),
+        );
+      }
+
+      const toDataUrl = (blob: Blob) =>
+        new Promise<string>((resolve, reject) => {
+          const r = new FileReader();
+          r.onload = () => resolve(r.result as string);
+          r.onerror = () => reject(r.error);
+          r.readAsDataURL(blob);
+        });
+
+      function addFiles(files: Iterable<File>) {
+        for (const file of files) {
+          if (pending.length >= MAX_ATTACHMENTS) {
+            flashTray(`Bir mesaja en fazla ${MAX_ATTACHMENTS} dosya eklenebilir.`);
+            break;
+          }
+          const info = classify(file);
+          const p: Pending = { id: crypto.randomUUID(), name: file.name || 'dosya', status: 'uploading' };
+          pending.push(p);
+          if (!info) {
+            Object.assign(p, { status: 'error', error: 'Desteklenmeyen tür' });
+          } else if (info.type === 'text/plain' && file.size > MAX_TEXT_BYTES) {
+            Object.assign(p, { status: 'error', error: 'En fazla 512 KB' });
+          } else if (file.size > MAX_FILE_BYTES && info.kind !== 'image') {
+            Object.assign(p, { status: 'error', error: 'En fazla 15 MB' });
+          } else {
+            void uploadPending(p, file, info);
+          }
+        }
+        renderTray();
+      }
+
+      async function uploadPending(p: Pending, file: File, info: { kind: Attachment['kind']; type: string }) {
+        try {
+          let body: Blob = file;
+          let type = info.type;
+          if (info.kind === 'image') {
+            p.thumb = await toDataUrl(await drawScaled(file, 160, 0.7));
+            renderTray();
+            // GIFs keep their bytes (scaling would drop animation); others
+            // are shrunk when big so phone photos upload quickly.
+            if (type !== 'image/gif' && (file.size > 3 * 1024 * 1024 || (await isLarge(file)))) {
+              body = await drawScaled(file, IMAGE_MAX_SIDE, 0.85);
+              type = 'image/jpeg';
+            }
+            if (body.size > MAX_FILE_BYTES) throw new Error('En fazla 15 MB');
+          }
+          const token = getToken();
+          if (!token) throw new Error('Önce parolayı gir');
+          const res = await fetch(`${CHAT_WORKER_URL}/files`, {
+            method: 'POST',
+            headers: {
+              Authorization: authHeader(token),
+              'Content-Type': type,
+              'X-File-Name': encodeURIComponent(p.name),
+            },
+            body,
+          });
+          if (res.status === 401) {
+            forgetToken();
+            showGate('Parola hatalı. Tekrar dene.');
+            throw new Error('Parola gerekli');
+          }
+          if (!res.ok) throw new Error(await errorMessage(res));
+          const data = await res.json();
+          p.att = { ref: data.ref, kind: data.kind, name: p.name, expiresAt: data.expiresAt ?? null };
+          if (p.thumb) p.att.thumb = p.thumb;
+          p.status = 'ready';
+        } catch (err) {
+          p.status = 'error';
+          p.error = (err as Error).message === 'encode' ? 'Görsel okunamadı' : (err as Error).message || 'Yüklenemedi';
+        }
+        renderTray();
+      }
+
+      async function isLarge(file: Blob): Promise<boolean> {
+        try {
+          const b = await createImageBitmap(file);
+          const big = Math.max(b.width, b.height) > IMAGE_MAX_SIDE;
+          b.close();
+          return big;
+        } catch {
+          return false;
+        }
+      }
+
+      function renderTray() {
+        tray.replaceChildren();
+        tray.hidden = pending.length === 0;
+        for (const p of pending) {
+          const chip = document.createElement('div');
+          chip.className = `tray-chip is-${p.status}`;
+          if (p.thumb) {
+            const img = document.createElement('img');
+            img.src = p.thumb;
+            img.alt = '';
+            chip.append(img);
+          }
+          const label = document.createElement('span');
+          label.className = 'tray-name';
+          label.textContent = p.name;
+          chip.append(label);
+          if (p.status !== 'ready') {
+            const state = document.createElement('span');
+            state.className = 'tray-state';
+            state.textContent = p.status === 'uploading' ? 'yükleniyor…' : p.error ?? 'hata';
+            chip.append(state);
+          }
+          const del = document.createElement('button');
+          del.type = 'button';
+          del.className = 'tray-del';
+          del.setAttribute('aria-label', `${p.name} ekini kaldır`);
+          del.textContent = '×';
+          del.addEventListener('click', () => {
+            if (p.att) deleteFiles([p.att.ref]);
+            pending = pending.filter((x) => x !== p);
+            renderTray();
+          });
+          chip.append(del);
+          tray.append(chip);
+        }
+      }
+
+      function flashTray(message: string) {
+        tray.hidden = false;
+        const note = noteEl(message, 'error');
+        note.classList.add('w-full');
+        tray.append(note);
+        setTimeout(() => note.remove(), 3000);
+      }
+
+      attachBtn.addEventListener('click', () => fileInput.click());
+      fileInput.addEventListener('change', () => {
+        if (fileInput.files) addFiles(Array.from(fileInput.files));
+        fileInput.value = '';
+      });
+      input.addEventListener('paste', (e) => {
+        const files = Array.from(e.clipboardData?.files ?? []);
+        if (files.length) {
+          e.preventDefault();
+          addFiles(files);
+        }
+      });
+      document.addEventListener('dragover', (e) => {
+        if (e.dataTransfer?.types.includes('Files')) {
+          e.preventDefault();
+          document.body.classList.add('is-dragging');
+        }
+      });
+      document.addEventListener('dragleave', (e) => {
+        if (!e.relatedTarget) document.body.classList.remove('is-dragging');
+      });
+      document.addEventListener('drop', (e) => {
+        document.body.classList.remove('is-dragging');
+        if (!e.dataTransfer?.files.length) return;
+        e.preventDefault();
+        addFiles(Array.from(e.dataTransfer.files));
+      });
 
       // Parse a text/event-stream body into JSON event objects.
       async function* readSSE(body: ReadableStream<Uint8Array>) {
@@ -791,6 +1100,15 @@ import { CHAT_EFFORTS, CHAT_MODELS } from '@lib/constants';
     background: rgb(var(--accent-1));
     color: rgb(var(--bg-base));
   }
+  .action-btn--ghost {
+    border-color: rgb(var(--border));
+    color: rgb(var(--text-200));
+  }
+  .action-btn--ghost:hover {
+    background: transparent;
+    border-color: rgb(var(--accent-1));
+    color: rgb(var(--accent-1));
+  }
   .action-btn--stop {
     border-color: rgb(var(--accent-2));
     color: rgb(var(--accent-2));
@@ -809,6 +1127,82 @@ import { CHAT_EFFORTS, CHAT_MODELS } from '@lib/constants';
     border: 1px solid rgb(var(--border));
     border-right: 2px solid rgb(var(--accent-1));
     color: rgb(var(--text-100));
+  }
+  .msg-atts {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: flex-start;
+    gap: 0.4rem;
+    margin-bottom: 0.4rem;
+  }
+  .msg-atts:last-child {
+    margin-bottom: 0;
+  }
+  .msg-thumb {
+    width: 7rem;
+    height: 7rem;
+    object-fit: cover;
+    border: 1px solid rgb(var(--border));
+  }
+  .att-chip {
+    display: inline-flex;
+    align-items: center;
+    max-width: 100%;
+    padding: 0.25rem 0.5rem;
+    font-family: 'JetBrains Mono', ui-monospace, monospace;
+    font-size: 0.72rem;
+    border: 1px solid rgb(var(--border));
+    background: rgb(var(--bg-base));
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+  .is-expired {
+    opacity: 0.45;
+  }
+  .tray-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    max-width: 100%;
+    padding: 0.25rem 0.25rem 0.25rem 0.4rem;
+    font-family: 'JetBrains Mono', ui-monospace, monospace;
+    font-size: 0.72rem;
+    color: rgb(var(--text-200));
+    background: rgb(var(--bg-elev));
+    border: 1px solid rgb(var(--border));
+  }
+  .tray-chip.is-error {
+    border-color: rgb(var(--accent-2));
+  }
+  .tray-chip img {
+    width: 1.75rem;
+    height: 1.75rem;
+    object-fit: cover;
+  }
+  .tray-name {
+    max-width: 10rem;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+  .tray-state {
+    color: rgb(var(--text-300));
+  }
+  .tray-chip.is-error .tray-state {
+    color: rgb(var(--accent-2));
+  }
+  .tray-del {
+    padding: 0 0.4rem;
+    font-size: 1rem;
+    color: rgb(var(--text-300));
+  }
+  .tray-del:hover {
+    color: rgb(var(--accent-2));
+  }
+  body.is-dragging .chat-shell {
+    outline: 2px dashed rgb(var(--accent-1));
+    outline-offset: -6px;
   }
   .msg-assistant {
     overflow-wrap: anywhere;
