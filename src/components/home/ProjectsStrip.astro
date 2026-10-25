@@ -6,6 +6,8 @@
  * project appears in both shapes and the alternation never breaks at the
  * seam. The lap is rendered twice and the track slides by exactly one lap.
  * Hover or focus pauses it; with reduced motion it becomes a scroll row.
+ * On touch screens the strip can also be dragged and flung (it drifts on
+ * again after a pause), with a progress bar and a "Swipe" hint below it.
  */
 import { Image } from 'astro:assets';
 import { copy, pick } from '@lib/home';
@@ -61,6 +63,10 @@ const lap = Array.from({ length: passes }, (_, k) => projects.map((p, i) => ({ p
         </ul>
       ))}
     </div>
+  </div>
+  <div class="wrap swipe" data-swipe hidden>
+    <span class="bar"><i></i></span>
+    <span class="hint">{pick(c.swipe, lang)} <b aria-hidden="true">→</b></span>
   </div>
 </section>
 
@@ -175,6 +181,61 @@ const lap = Array.from({ length: passes }, (_, k) => projects.map((p, i) => ({ p
       mask-image: linear-gradient(to right, transparent, #000 16px, #000 calc(100% - 16px), transparent);
     }
   }
+  /* Touch screens: the script moves the track and the strip takes horizontal drags. */
+  .strip.touch {
+    touch-action: pan-y;
+  }
+  .strip.touch .track {
+    animation: none;
+    will-change: transform;
+  }
+  .strip.touch :global(img) {
+    -webkit-user-drag: none;
+    user-select: none;
+  }
+  .swipe {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    margin-top: 14px;
+  }
+  .swipe[hidden] {
+    display: none;
+  }
+  .bar {
+    flex: 1;
+    height: 3px;
+    border-radius: 2px;
+    background: rgb(var(--border));
+    overflow: hidden;
+  }
+  .bar i {
+    display: block;
+    width: 28%;
+    height: 100%;
+    border-radius: inherit;
+    background: linear-gradient(90deg, rgb(var(--accent-1)), rgb(var(--accent-2)));
+    transform: translateX(calc(var(--p, 0) * 257%));
+  }
+  .hint {
+    font: 500 0.78rem 'JetBrains Mono', ui-monospace, monospace;
+    color: rgb(var(--text-200));
+    white-space: nowrap;
+    transition: opacity 0.4s;
+  }
+  .hint b {
+    display: inline-block;
+    color: rgb(var(--accent-1));
+    animation: nudge 1.4s ease-in-out infinite;
+  }
+  .swipe.used .hint {
+    opacity: 0;
+  }
+  @keyframes nudge {
+    50% {
+      transform: translateX(5px);
+    }
+  }
   @media (prefers-reduced-motion: reduce) {
     .strip {
       overflow-x: auto;
@@ -197,11 +258,84 @@ const lap = Array.from({ length: passes }, (_, k) => projects.map((p, i) => ({ p
 <script>
   // Same drift speed on every screen: the duration follows the lap width.
   const SPEED = 42; // px per second
+  let cleanup: (() => void) | null = null;
+
   function init() {
-    document.querySelectorAll<HTMLElement>('[data-strip]').forEach((strip) => {
-      const lap = strip.querySelector<HTMLElement>('.lap');
-      if (lap) strip.style.setProperty('--dur', `${(lap.offsetWidth / SPEED).toFixed(1)}s`);
-    });
+    cleanup?.();
+    const strip = document.querySelector<HTMLElement>('[data-strip]');
+    const track = strip?.querySelector<HTMLElement>('.track');
+    const lap = strip?.querySelector<HTMLElement>('.lap');
+    const swipe = document.querySelector<HTMLElement>('[data-swipe]');
+    if (!strip || !track || !lap || !swipe) return;
+    strip.style.setProperty('--dur', `${(lap.offsetWidth / SPEED).toFixed(1)}s`);
+    if (!matchMedia('(hover: none)').matches) return;
+
+    // Touch: show the hint; with reduced motion the row scrolls natively.
+    swipe.hidden = false;
+    const thumb = swipe.querySelector<HTMLElement>('.bar i')!;
+    if (matchMedia('(prefers-reduced-motion: reduce)').matches) {
+      const onNative = () => thumb.style.setProperty('--p', String(strip.scrollLeft / Math.max(1, strip.scrollWidth - strip.clientWidth)));
+      strip.addEventListener('scroll', onNative, { passive: true });
+      cleanup = () => { strip.removeEventListener('scroll', onNative); cleanup = null; };
+      return;
+    }
+
+    strip.classList.add('touch');
+    let off = 0, vel = SPEED, raf = 0, last = 0, visible = false;
+    let dragging = false, lastX = 0, lastT = 0, moved = 0, resumeAt = 0;
+    const lapW = () => lap.offsetWidth;
+    const tick = (t: number) => {
+      const dt = last ? Math.min(0.05, (t - last) / 1000) : 0; last = t;
+      if (!dragging) {
+        // A fling slows with friction; after a pause the drift eases back in.
+        if (t < resumeAt) vel *= Math.pow(0.04, dt);
+        else vel += (SPEED - vel) * Math.min(1, dt * 1.5);
+        off += vel * dt;
+      }
+      const w = lapW();
+      off = ((off % w) + w) % w;
+      track.style.transform = `translate3d(${-off}px,0,0)`;
+      thumb.style.setProperty('--p', (off / w).toFixed(4));
+      raf = visible ? requestAnimationFrame(tick) : 0;
+    };
+    const start = () => { if (!raf && visible) { last = 0; raf = requestAnimationFrame(tick); } };
+    const io = new IntersectionObserver(([e]) => { visible = e.isIntersecting; start(); });
+    io.observe(strip);
+
+    const down = (e: PointerEvent) => {
+      dragging = true; moved = 0; vel = 0; lastX = e.clientX; lastT = e.timeStamp;
+    };
+    const move = (e: PointerEvent) => {
+      if (!dragging) return;
+      const dx = e.clientX - lastX, dt = Math.max(1, e.timeStamp - lastT) / 1000;
+      off -= dx; moved += Math.abs(dx);
+      vel = vel * 0.6 + (-dx / dt) * 0.4;
+      lastX = e.clientX; lastT = e.timeStamp;
+      if (moved > 8) swipe.classList.add('used');
+    };
+    const up = () => {
+      if (!dragging) return;
+      dragging = false; resumeAt = performance.now() + 2600;
+    };
+    // A drag is not a tap: keep it from opening the project.
+    const click = (e: MouseEvent) => { if (moved > 8) { e.preventDefault(); e.stopPropagation(); } };
+    strip.addEventListener('pointerdown', down);
+    addEventListener('pointermove', move, { passive: true });
+    addEventListener('pointerup', up);
+    addEventListener('pointercancel', up);
+    strip.addEventListener('click', click, true);
+
+    cleanup = () => {
+      io.disconnect(); cancelAnimationFrame(raf);
+      strip.removeEventListener('pointerdown', down);
+      removeEventListener('pointermove', move);
+      removeEventListener('pointerup', up);
+      removeEventListener('pointercancel', up);
+      strip.removeEventListener('click', click, true);
+      strip.classList.remove('touch'); track.style.transform = '';
+      cleanup = null;
+    };
   }
   document.addEventListener('astro:page-load', init);
+  document.addEventListener('astro:before-swap', () => cleanup?.());
 </script>

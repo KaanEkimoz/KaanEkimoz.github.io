@@ -84,6 +84,7 @@ export const copy = {
   projects: {
     title: { en: 'My Projects', tr: 'Projelerim' },
     all: { en: 'All projects', tr: 'Tüm projeler' },
+    swipe: { en: 'Swipe', tr: 'Kaydır' },
   },
   writing: {
     title: { en: 'Blog Posts', tr: 'Blog Yazıları' },
