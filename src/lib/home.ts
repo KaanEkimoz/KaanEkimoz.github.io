@@ -72,11 +72,9 @@ export const copy = {
   },
   career: {
     title: { en: 'My Journey', tr: 'Yolculuğum' },
-    lede: { en: 'From game design to full-stack products. Hover or tap a step to see the tools I used there.', tr: 'Oyun tasarımından full-stack ürünlere. Bir adımın üstüne gel ya da dokun, orada kullandığım araçları gör.' },
-    lanes: { en: ['software', 'games', 'education'], tr: ['yazılım', 'oyun', 'eğitim'] },
     now: { en: 'NOW', tr: 'ŞU AN' },
-    prev: { en: '← prev', tr: '← önceki' },
-    next: { en: 'next →', tr: 'sonraki →' },
+    prev: { en: 'Previous step', tr: 'Önceki adım' },
+    next: { en: 'Next step', tr: 'Sonraki adım' },
     step: { en: 'Step', tr: 'Adım' },
   },
   skills: {
