@@ -41,11 +41,21 @@ export const copy = {
         en: "I've been building with AI coding agents for two years. Every day I use Claude Code with MCP, split bigger changes across several agents, and run local models with Ollama when they're enough. I write my own agent skills for the parts of my work I keep repeating, and I've shipped LLM features to real users.",
         tr: "İki yıldır yapay zekâ kodlama ajanlarıyla çalışıyorum. Her gün MCP ile Claude Code kullanıyorum; büyük değişiklikleri birkaç ajana bölüyorum, yeterli olduğunda Ollama ile yerel modeller çalıştırıyorum. Sık tekrarladığım işler için kendi agent skill'lerimi yazıyorum, gerçek kullanıcılara LLM özellikleri de sundum.",
       },
-      {
-        en: "Patimania's code was written with Claude Code from start to finish. That's how one person shipped an API, a website, a mobile app and an admin panel in four months. The harder part was checking it: AI writes wrong code just as fast and just as confidently as right code. So the decisions stay with me, written down with their reasons (102 decision records so far), and the checks run on every change: 76 end-to-end test suites with 3,900 assertions, and 7 CI guard scripts that fail the build on mistakes that would otherwise slip through quietly.",
-        tr: "Patimania'nın kodu baştan sona Claude Code ile yazıldı. Tek kişinin dört ayda API, web sitesi, mobil uygulama ve yönetim paneli çıkarabilmesinin sebebi bu. Asıl zor kısım denetimdi: yapay zekâ yanlış kodu da doğru kod kadar hızlı ve emin yazıyor. Bu yüzden kararlar bende kalıyor ve gerekçesiyle yazıya geçiyor (şu ana kadar 102 karar kaydı); kontroller de her değişiklikte çalışıyor: 3.900 doğrulamalı 76 uçtan uca test paketi ve gözden kaçabilecek hataları derleme anında yakalayan 7 CI nöbetçisi.",
-      },
     ],
+    flow: {
+      me: { en: 'Me', tr: 'Ben' },
+      meSub: { en: 'plan · review', tr: 'plan · inceleme' },
+      agent: { en: 'Agent', tr: 'Ajan' },
+      log: [
+        { en: 'me → plan the change', tr: 'ben → değişikliği planla' },
+        { en: 'claude code → load my skills', tr: "claude code → skill'lerimi yükle" },
+        { en: 'mcp → read the repo, run tools', tr: 'mcp → repoyu oku, araçları çalıştır' },
+        { en: 'split the work across 3 agents', tr: 'işi 3 ajana böl' },
+        { en: 'ollama → small task on a local model', tr: 'ollama → küçük iş yerel modelde' },
+        { en: 'agents → diffs back for review', tr: "ajanlar → diff'ler incelemeye" },
+        { en: 'me → review, test, merge ✓', tr: 'ben → incele, test et, birleştir ✓' },
+      ],
+    },
   },
   career: {
     title: { en: 'How I got here', tr: 'Buraya nasıl geldim' },
