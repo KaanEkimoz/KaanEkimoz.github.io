@@ -26,6 +26,7 @@ const labels = {
 
 <div class="studio" data-studio data-labels={JSON.stringify(labels)}>
   <canvas role="img" aria-label={pick(s.aria, lang)}></canvas>
+  <canvas class="fx" aria-hidden="true"></canvas>
 </div>
 
 <style>
@@ -104,9 +105,22 @@ const labels = {
     height: auto;
     aspect-ratio: 1318 / 803;
   }
+  /* Phones draw the moving signals on this overlay so the map below can stay still. */
+  canvas.fx {
+    display: none;
+    position: absolute;
+    inset: 0;
+    height: 100%;
+    aspect-ratio: auto;
+    pointer-events: none;
+  }
   @media (max-width: 899px) {
     canvas {
       height: 1180px;
+    }
+    canvas.fx {
+      display: block;
+      height: 100%;
     }
   }
 </style>
@@ -128,9 +142,14 @@ const labels = {
   function init() {
     stop?.();
     const root = document.querySelector<HTMLElement>('[data-studio]');
-    const cv = root?.querySelector('canvas');
+    const cv = root?.querySelector<HTMLCanvasElement>('canvas:not(.fx)');
     const ctx = cv?.getContext('2d');
-    if (!root || !cv || !ctx) return;
+    const fx = root?.querySelector<HTMLCanvasElement>('canvas.fx');
+    const fxCtx = fx?.getContext('2d');
+    if (!root || !cv || !ctx || !fx || !fxCtx) return;
+    // Phones: the map is redrawn only when something on it changes.
+    let staticDirty = true, staticKey = '', wasMoving = false;
+    const dirty: number[] = [];
     const L: Labels = JSON.parse(root.dataset.labels || '{"hint":"","stages":[],"names":{}}');
     const name = (k: string, fallback: string) => L.names[k] ?? fallback;
 
@@ -267,6 +286,11 @@ const labels = {
       W = r.width; H = r.height;
       cv!.width = W * DPR; cv!.height = H * DPR;
       ctx!.setTransform(DPR, 0, 0, DPR, 0, 0);
+      // The signal overlay is soft dots only, so it runs at 1x to keep phones light.
+      fx!.width = W; fx!.height = H;
+      fxCtx!.setTransform(1, 0, 0, 1, 0, 0);
+      labelCache.clear();
+      staticDirty = true;
       // Same breakpoint as the canvas height in the CSS above.
       view = matchMedia('(min-width: 900px)').matches ? 'flow' : 'layers';
       (view === 'flow' ? layoutFlow : layoutLayers)();
@@ -341,10 +365,26 @@ const labels = {
       if (touring) { selected = null; touring = false; return; }
       tourIdx = (tourIdx + 1) % agents.length; selected = agents[tourIdx]; touring = true;
     };
-    // Labels on phones get a halo in the ground colour so wires never cut through them.
+    // Labels on phones get a halo in the ground colour so wires never cut through
+    // them. Text is the slowest thing to draw, so each label is drawn once into a
+    // small sprite (per font, colour and theme) and then just copied.
+    const labelCache = new Map<string, HTMLCanvasElement>();
     const label = (t: string, x: number, y: number) => {
-      if (view === 'layers') { ctx!.lineJoin = 'round'; ctx!.lineWidth = 4; ctx!.strokeStyle = css('--ground'); ctx!.strokeText(t, x, y); }
-      ctx!.fillText(t, x, y);
+      if (view !== 'layers') { ctx!.fillText(t, x, y); return; }
+      const font = ctx!.font, fill = String(ctx!.fillStyle), k = `${t}|${font}|${fill}|${css('--ground')}`;
+      let sp = labelCache.get(k);
+      if (!sp) {
+        sp = document.createElement('canvas');
+        const sc = sp.getContext('2d')!;
+        sc.font = font;
+        const w = Math.ceil(sc.measureText(t).width) + 8, h = 24;
+        sp.width = w * DPR; sp.height = h * DPR;
+        sc.scale(DPR, DPR); sc.font = font; sc.textBaseline = 'middle'; sc.textAlign = 'left';
+        sc.lineJoin = 'round'; sc.lineWidth = 4; sc.strokeStyle = css('--ground'); sc.strokeText(t, 4, h / 2);
+        sc.fillStyle = fill; sc.fillText(t, 4, h / 2);
+        labelCache.set(k, sp);
+      }
+      ctx!.drawImage(sp, x - 4, y - 12, sp.width / DPR, sp.height / DPR);
     };
     function frame(now: number) {
       raf = 0;
@@ -355,12 +395,28 @@ const labels = {
       const ease = 1 - Math.pow(0.0015, dt);
       const f = selected || hover, fo = f && (ARM_OF[f.id] || (Object.values(ARM_OF).includes(f.id) ? f.id : null));
       if (fo) { openAgent = fo; openLinger = 0.5; } else if ((openLinger -= dt) <= 0) openAgent = null;
+      let moving = false;
       for (const n of nodes) {
         const home = armOpen(n) ? n : byId[ARM_OF[n.id]];
-        n.x += (home.tx - n.x) * ease; n.y += (home.ty - n.y) * ease; n.a += ((armOpen(n) ? 1 : 0) - n.a) * ease;
+        const dx = (home.tx - n.x) * ease, dy = (home.ty - n.y) * ease, da = ((armOpen(n) ? 1 : 0) - n.a) * ease;
+        n.x += dx; n.y += dy; n.a += da;
+        if (Math.abs(dx) + Math.abs(dy) > 0.05 || Math.abs(da) > 0.002) moving = true;
       }
       const c = ctx!;
-      c.clearRect(0, 0, W, H);
+      // Phones: skip the still map unless something on it changed; the overlay carries the motion.
+      const key = `${(selected || hover)?.id}|${openAgent}`;
+      // A new focus repaints the whole map once. While arms slide, only the strip
+      // from the agents down to the arms band is repainted; one full repaint
+      // follows when they settle.
+      const full = !phone || staticDirty || key !== staticKey || (wasMoving && !moving);
+      const strip = phone && !full && moving;
+      const redraw = full || strip;
+      wasMoving = moving;
+      if (full) { staticKey = key; staticDirty = false; c.clearRect(0, 0, W, H); }
+      else if (strip) {
+        const y0 = byId.kaan.ty + 26, y1 = bandY + 100;
+        c.save(); c.beginPath(); c.rect(0, y0, W, y1 - y0); c.clip(); c.clearRect(0, y0, W, y1 - y0);
+      }
       if (view === 'flow') {
         c.textBaseline = 'middle'; c.textAlign = 'center'; c.font = `500 11px ${FONT.mono}`;
         STAGE_X.forEach((x, i) => {
@@ -373,7 +429,7 @@ const labels = {
       // Off the lit road things fade; less on phones, where the tour keeps something lit most of the time.
       const dimOf = (n: Node) => (fs ? (fs.has(n) || (ARM_OF[n.id] && ARM_OF[n.id] === openAgent) ? 1 : phone ? 0.4 : 0.18) : 1);
 
-      for (const e of edges) {
+      if (redraw) for (const e of edges) {
         const al = Math.min(e.a.a, e.b.a) * Math.min(dimOf(e.a), dimOf(e.b)); if (al < 0.02) continue;
         const [qx, qy] = ctrl(e);
         c.strokeStyle = e.kind === 'member' ? css('--line-2') : colorOf(e.b);
@@ -384,30 +440,35 @@ const labels = {
       c.setLineDash([]);
 
       spawn(dt);
+      const pc = phone ? fxCtx! : c;
+      // The overlay only wipes the spots it painted last frame, not the whole tall canvas.
+      if (phone) { for (let i = 0; i < dirty.length; i += 4) pc.clearRect(dirty[i], dirty[i + 1], dirty[i + 2], dirty[i + 3]); dirty.length = 0; }
       for (let i = packets.length - 1; i >= 0; i--) {
         const p = packets[i]; p.t += dt * p.v;
         if (p.t >= 1) { packets.splice(i, 1); continue; }
         const al = Math.min(p.e.a.a, p.e.b.a) * Math.min(dimOf(p.e.a), dimOf(p.e.b)); if (al < 0.05) continue;
         const [x, y] = qpt(p.e, p.back ? 1 - p.t : p.t), col = colorOf(p.back ? p.e.a : p.e.b);
         const pr = p.e.kind === 'agent' ? 2.8 : 2.1, pa = al * Math.sin(p.t * Math.PI);
-        c.fillStyle = col;
         if (phone) {
           // A soft halo instead of shadowBlur, which is slow on phones.
-          c.globalAlpha = pa * 0.28; c.beginPath(); c.arc(x, y, pr * 2.6, 0, 7); c.fill();
-          c.globalAlpha = pa; c.beginPath(); c.arc(x, y, pr, 0, 7); c.fill();
+          pc.fillStyle = col;
+          pc.globalAlpha = pa * 0.28; pc.beginPath(); pc.arc(x, y, pr * 2.6, 0, 7); pc.fill();
+          pc.globalAlpha = pa; pc.beginPath(); pc.arc(x, y, pr, 0, 7); pc.fill();
+          const hr = pr * 2.6 + 2; dirty.push(x - hr, y - hr, hr * 2, hr * 2);
         } else {
+          c.fillStyle = col;
           c.globalAlpha = pa; c.shadowColor = col; c.shadowBlur = 10;
           c.beginPath(); c.arc(x, y, pr, 0, 7); c.fill(); c.shadowBlur = 0;
         }
       }
 
       c.textBaseline = 'middle';
-      for (const n of nodes) {
+      if (redraw) for (const n of nodes) {
         const al = n.a * dimOf(n); if (al < 0.02) continue; c.globalAlpha = al;
         const col = colorOf(n), isF = n === hover || n === selected;
         if (n.id === 'kaan') {
           const w = kaanW(), h = 66, x = n.x - w / 2, y = n.y - h / 2;
-          c.shadowColor = col; c.shadowBlur = 30 + Math.sin(clock * 2) * 10;
+          c.shadowColor = col; c.shadowBlur = phone ? 22 : 30 + Math.sin(clock * 2) * 10;
           roundRect(x, y, w, h, 20); c.fillStyle = css('--panel-2'); c.fill(); c.shadowBlur = 0;
           c.strokeStyle = col; c.lineWidth = isF ? 2.4 : 1.8; c.stroke();
           const ir = 17, ix = x + ir + 10;
@@ -432,7 +493,7 @@ const labels = {
         if (n.id === 'hub-users') {
           c.font = `700 14px ${FONT.display}`;
           const w = c.measureText(n.label).width + 54, h = 42, x = n.x - w / 2, y = n.y - h / 2;
-          c.shadowColor = col; c.shadowBlur = 22 + Math.sin(clock * 2) * 6;
+          c.shadowColor = col; c.shadowBlur = phone ? 16 : 22 + Math.sin(clock * 2) * 6;
           roundRect(x, y, w, h, h / 2); c.fillStyle = css('--panel-2'); c.fill(); c.shadowBlur = 0;
           c.strokeStyle = col; c.lineWidth = isF ? 2.4 : 1.8; c.stroke();
           const px = x + 22, py = n.y; c.fillStyle = col;
@@ -449,7 +510,7 @@ const labels = {
           c.fillStyle = col; c.textAlign = 'center'; c.fillText(n.label, n.x, n.y);
           continue;
         }
-        const r = isF ? 6.5 : 4.4 + Math.sin(clock * 1.7 + n.x * 0.01) * 0.5;
+        const r = isF ? 6.5 : phone ? 4.4 : 4.4 + Math.sin(clock * 1.7 + n.x * 0.01) * 0.5;
         const mic = iconFor(n);
         if (mic) {
           const s = isF ? 18 : 15;
@@ -459,15 +520,17 @@ const labels = {
           c.fillStyle = col; c.globalAlpha = al * 0.25; c.beginPath(); c.arc(n.x, n.y, r * 2.1, 0, 7); c.fill();
           c.globalAlpha = al; c.beginPath(); c.arc(n.x, n.y, r, 0, 7); c.fill();
         } else { c.fillStyle = col; c.shadowColor = col; c.shadowBlur = isF ? 18 : 8; c.beginPath(); c.arc(n.x, n.y, r, 0, 7); c.fill(); c.shadowBlur = 0; }
-        if (isF) { c.strokeStyle = col; c.globalAlpha = al * 0.6; c.beginPath(); c.arc(n.x, n.y, r + 5 + Math.sin(clock * 4) * 1.5, 0, 7); c.stroke(); c.globalAlpha = al; }
+        if (isF) { c.strokeStyle = col; c.globalAlpha = al * 0.6; c.beginPath(); c.arc(n.x, n.y, r + 5 + (phone ? 0 : Math.sin(clock * 4) * 1.5), 0, 7); c.stroke(); c.globalAlpha = al; }
         c.font = `${isF ? 600 : 500} ${narrow() ? 11 : 12}px ${FONT.body}`; c.fillStyle = isF ? css('--fg') : css('--muted');
         c.textAlign = 'left'; label(n.label, n.x + (mic ? 17 : 10), n.y + (phone ? 1 : 0));
       }
+      if (strip) c.restore();
       if (phone && !openAgent && L.hint) {
-        c.globalAlpha = 0.55 + Math.sin(clock * 2.2) * 0.25; c.fillStyle = css('--muted'); c.textAlign = 'center';
-        c.font = `500 11.5px ${FONT.mono}`; c.fillText(L.hint, W / 2, bandY + 38);
+        pc.globalAlpha = 0.55 + Math.sin(clock * 2.2) * 0.25; pc.fillStyle = css('--muted'); pc.textAlign = 'center'; pc.textBaseline = 'middle';
+        pc.font = `500 11.5px ${FONT.mono}`; pc.fillText(L.hint, W / 2, bandY + 38);
+        dirty.push(0, bandY + 26, W, 24);
       }
-      c.globalAlpha = 1;
+      c.globalAlpha = 1; pc.globalAlpha = 1;
       raf = requestAnimationFrame(frame);
     }
     const kick = () => { if (!raf && visible) { last = performance.now(); raf = requestAnimationFrame(frame); } };
@@ -496,9 +559,11 @@ const labels = {
     ro.observe(cv);
     const io = new IntersectionObserver(([e]) => { visible = e.isIntersecting; kick(); });
     io.observe(cv);
-    const mo = new MutationObserver(() => { readPalette(); kick(); });
+    const mo = new MutationObserver(() => { readPalette(); labelCache.clear(); staticDirty = true; kick(); });
     mo.observe(document.documentElement, { attributes: true, attributeFilter: ['data-theme'] });
-    for (const k in icons) icons[k].addEventListener('load', kick);
+    const onIcon = () => { staticDirty = true; kick(); };
+    for (const k in icons) icons[k].addEventListener('load', onIcon);
+    for (const k in iconsLight) iconsLight[k].addEventListener('load', onIcon);
 
     stop = () => {
       ro.disconnect(); io.disconnect(); mo.disconnect();
