@@ -85,7 +85,7 @@ worker/           # Cloudflare Worker behind /chat (deployed separately)
 
 ## Regenerating the OG image
 
-Edit `scripts/og-image.svg` (Sora, Geist and JetBrains Mono need to be installed as system fonts), then:
+Edit `scripts/og-image.svg`, install its fonts as system fonts with `node scripts/install-og-fonts.mjs`, then:
 
 ```sh
 node -e "require('sharp')(require('fs').readFileSync('scripts/og-image.svg')).flatten({background:'#050912'}).jpeg({quality:88,mozjpeg:true}).toFile('public/og-image.jpg')"

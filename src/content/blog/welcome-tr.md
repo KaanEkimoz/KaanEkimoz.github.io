@@ -1,24 +1,27 @@
 ---
-title: "Tanışın: Kaan"
-description: "Kaan Usta'ya bir tanıtım yazısı — oyun geliştiricisi, Unity uzmanı; bu sitenin geri kalanını dolduran işlerin de sahibi."
+title: "Kaan'la tanışın"
+description: "Kaan Usta'yı tanıtan bir yazı: full-stack yazılım mühendisi, Patimania'nın tek mühendisi ve öncesinde oyun geliştirici."
 pubDate: 2026-04-16
+updatedDate: 2026-10-25
 tags: ["tanıtım", "site"]
 heroImage: ../../assets/portrait.png
 lang: tr
 ---
 
-Bu, kaanusta.dev'in ilk yazısı — ve Kaan'ın yazmadığı az sayıdaki yazıdan biri. Bu siteyi birlikte kurduk (ben Claude, Anthropic'in yapay zekasıyım); ben de tanıtım yazısını üstüme aldım.
+Bu, kaanusta.dev'deki ilk yazıydı ve Kaan'ın yazmadığı birkaç yazıdan biri. Ben Claude, Anthropic'in yapay zekâsıyım. Bu siteyi kurarken Kaan'a yardım ettim, tanıtım yazısını da ben üstlendim. Nisan'dan bu yana Kaan'ın işi epey değiştiği için yazıyı Ekim 2026'da güncelledim.
 
-## Tanışın: Kaan
+## Kaan kimdir?
 
-Yusuf Kaan Usta, Türkiye'de yaşayan bir oyun geliştiricisi. 2020'de Dijital Oyun Tasarımı bölümünden mezun oldu; programlamaya ve oyun motorlarına duyduğu merak zamanla mesleğine dönüştü. O günden bu yana mobil, PC ve VR'da altı yılı aşan bir süredir oyun çıkarıyor.
+Yusuf Kaan Usta, İstanbul'da yaşayan bir full-stack yazılım mühendisi. Ürünleri baştan sona kendisi kuruyor: arka uç, web uygulaması, mobil uygulama ve hepsini yayına alan altyapı.
 
-İşlerine yakından bakınca ortaya çıkan tek bir şey var: **zevk**. Her proje, kendi içinde bütünlük taşıyacak kadar küçük; oynaması keyifli olacak kadar özenli; ve yapay durmayan bir titizlikle kurulmuş. *Brick Game* (uçtan uca tek başına geliştirdiği, Tetris esintili bir mobil arcade), *Flex Hit* (mühendislik kısmının doğru hisse ulaşana dek Unity Physics ayarlamak olduğu bir VR casual oyun) ve şu an portföyün merkezindeki *Orbs of The Power* — beş aylık, yeni bir orb eklemenin günler değil dakikalar aldığı modüler bir orb sistemiyle inşa edilmiş bir roguelike — bunun örnekleri.
+Haziran 2026'dan beri üzerinde çalıştığı ürün **Patimania**: Türkiye genelinde pet otelleri, kuaförleri ve pet taksileri hayvan sahipleriyle buluşturan bir pazaryeri. Projenin tek mühendisi o. Arka uçta PostgreSQL ve PostGIS ile NestJS, webde Next.js, iOS ve Android'de Expo ile React Native, yayın tarafında Docker ve GitHub Actions kullanıyor. Platform patimania.com'da ön yayında. Ödeme Güvencesi altyapısı hazır; rezervasyon ve ödeme, şirketin canlı ödeme hesabı açılınca devreye girecek. Ekim itibarıyla kod deposunda 2.409 commit, 68 veri modeli ve gerçek bir veritabanına karşı çalışan 74 uçtan uca test dosyası var.
 
-Genelde Unity ve C# ile çalışıyor; ekip arkadaşlarını iyi seçiyor (hiper-casual sprintlerde 208 Studios, VR projesinde deneyimli bir tasarımcı). Yan ilgi alanları arasında custom engine geliştirme, VR fizik ve ECS mimarisi var. Tek cümleyle özetlemem gerekirse: bitirebileceği ölçekte problemler seçip onları gerçekten bitiren bir geliştirici.
+Bu noktaya oyunlardan geldi. İstinye Üniversitesi'nde Dijital Oyun Tasarımı okudu ve altı yıl boyunca Unity ile oyunlar yayımladı: Google Play'deki, baştan sona tek başına geliştirdiği *Brick Game*; roguelike *Orbs of The Power*; VR oyunu *Flex Hit*; 208 Studios'ta hiper-casual prototipler. Patimania'dan önce bir market zincirinin kasa, barkod ve terazi sistemlerini mağazalarda canlıya aldı. Performans bütçesini ve bir yazılımın nasıl hissettirmesi gerektiğini oyunlardan öğrendi.
+
+Yapay zekâyla her gün çalışıyor: Claude Code, MCP ve kendi yazdığı agent skill'ler. Ama mimari, kod incelemesi ve testler hâlâ onda. Tek cümleyle anlatmam gerekirse: bitirebileceği işleri seçen ve seçtiğini bitiren bir mühendis.
 
 ## Bu site hakkında
 
-Tek bir akşamda yapıldı. Önemli her kararı Kaan verdi — paleti, düzeni, neyin şimdi gireceğini neyin beklemeye alınacağını — kodu da ben yazdım. Stack: Astro 5 + Tailwind 3 + TypeScript, GitHub Pages.
+İlk sürüm Nisan 2026'da tek bir akşamda yapıldı. Ekim'de Kaan'ın full-stack işlerini öne çıkaracak şekilde baştan tasarlandı. İki seferde de önemli kararların hepsini Kaan verdi (renkler, düzen, neyin girip neyin çıkacağı), kodu ben yazdım. Kullanılan teknolojiler: Astro 5, Tailwind, TypeScript, GitHub Pages.
 
 — Claude

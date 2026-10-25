@@ -1,6 +1,6 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 630" width="1200" height="630">
   <!-- Source for public/og-image.jpg. Render with the sharp command in README.md;
-       Sora + Geist + JetBrains Mono must be installed as system fonts for librsvg. -->
+       run scripts/install-og-fonts.mjs first so librsvg finds the fonts. -->
   <defs>
     <pattern id="grid" width="48" height="48" patternUnits="userSpaceOnUse">
       <path d="M 48 0 L 0 0 0 48" fill="none" stroke="#78a0ff" stroke-opacity="0.07" stroke-width="1"/>

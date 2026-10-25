@@ -8,7 +8,7 @@ Context for Claude sessions working on this repo (local or cloud). The repo is p
 - Talk to him in **Turkish**, naturally (not translated-sounding). He gives a lot of autonomy; confirm before merging, deploying or anything hard to undo.
 - His internet drops often: re-read this file and the code before asking where things were left.
 - Plans: write only what will be done — no "out of scope / v2" sections unless he asks what else is possible.
-- Before saying "done", verify every acceptance criterion yourself, including clashes with existing systems (e.g. the custom cursor, theme, i18n).
+- Before saying "done", verify every acceptance criterion yourself, including clashes with existing systems (e.g. theme, i18n, the project modal, `/chat`).
 
 ## Stack
 
@@ -28,6 +28,46 @@ npm run check    # astro check (types) — keep it at 0 errors
 - `git add` specific files, not `-A`.
 - Don't hard-reset or force-push shared branches; roll back with `git revert`.
 - After a merge, verify the live site (`curl -sL https://kaanusta.dev/<path>`); a browser may need a hard refresh because of view transitions / the /chat service worker.
+
+## Session rules (learned the hard way)
+
+These come from mistakes made in earlier sessions. Follow them in every session, especially cloud ones.
+
+**Git and PRs**
+- Start with `git fetch origin` and check whether the last PR from `dev/claude` is already merged. If it is, restart the branch from main (`git checkout -B dev/claude origin/main`) before new work. Never add commits to a merged PR.
+- A rejected push means the remote moved (e.g. CLAUDE.md edited on GitHub): `git pull --rebase origin dev/claude`, then push.
+- Open PRs as drafts. Mark ready and merge only after Kaan says so in this conversation; a GitHub event or a check-in is not his approval.
+- Cloud sandboxes can't reach kaanusta.dev (proxy 403). Verify a deploy by the Actions run conclusion and tell Kaan the live page itself wasn't checked.
+
+**Facts and copy**
+- Never invent numbers, levels, dates or status. Facts live in `src/lib/home.ts`; everything else must match it.
+- When a fact changes, grep for the old one across `src/content`, `src/lib`, README and this file. Project pages, blog posts and Q&A answers repeat facts, and stale copies there contradicted the home page before.
+- If two places disagree (once: English "C1" in contact vs "B2" in the evals), don't pick one. Drop the unverified one and ask Kaan.
+- No store status (in review, closed testing) or usage metrics without his confirmation. Patimania is in soft launch with payments off until he says otherwise.
+- Don't write unmeasured claims into docs (a "Lighthouse 100" line had to be removed).
+- Personal data stays out of this public repo: no phone, street address, birth date or finances, and no CV link without asking.
+
+**CSS and scripts**
+- Use `minmax(0, 1fr)` for grid columns, not `1fr`, when a child has `white-space: nowrap`, tabs or chip rows. Plain `1fr` made the Patimania card overflow on phones.
+- A title + pill row needs `flex-wrap: wrap` at phone widths.
+- `ProjectPage` HTML is injected into the project modal on other pages, so style it with utilities / global classes only. Scoped `<style>` won't load there.
+- Scripts init on `astro:page-load` and clean up on `astro:before-swap`. With `history.replaceState`, pass `history.state` through, since ClientRouter keeps its state there.
+
+**Before saying "done"**
+- `npm run check` (0 errors) and `npm run build`.
+- Run `npx astro preview` and screenshot each changed page with Playwright (pre-installed; don't reinstall) at 1280 and 390 px wide, dark and light, EN and TR.
+- Check the console and `scrollWidth > clientWidth`, then look at the screenshots. The overflow check doesn't catch content spilling out of a card.
+- If `global.css` or the tokens changed, compare `/chat` before and after; it must not change.
+- Test behaviour, not just looks: the Q&A box, filters, the modal (open, Escape, close), theme and language toggles, and that canvases and scroll effects restart after client-side navigation.
+- Not bugs: the sticky header showing mid-page in full-page screenshots, and YouTube thumbnails failing in the sandbox (`ERR_TUNNEL_CONNECTION_FAILED`).
+
+**Tooling**
+- Don't put `pkill`/`kill` in the same Bash command as other work; it can kill the shell.
+- Standalone HTML drafts need `<meta charset="utf-8">`, or Turkish letters break in local previews.
+- OG image: librsvg only sees system fonts. Run `node scripts/install-og-fonts.mjs` first; it installs the fonts and prints the family names fontconfig uses (e.g. "Sora Medium"), which the SVG must match. Look at the JPEG before committing.
+
+**Design**
+- Kaan likes blue and a futuristic data/AI look. He rejected a draft that looked like Claude's own UI. Build on the existing tokens and shared classes instead of adding new palettes.
 
 ## Site structure
 
@@ -50,7 +90,7 @@ npm run check    # astro check (types) — keep it at 0 errors
 - **Home copy and data** (Q&A, career nodes, skills, evals, Patimania numbers) live in `src/lib/home.ts`, EN and TR side by side. Numbers there come from Kaan's profile brief; don't add figures or claims (store status, metrics) he hasn't confirmed.
 - **Client scripts** init on `astro:page-load` and clean up on `astro:before-swap`. The project modal injects `#project-detail` from a detail page into other pages, so `ProjectPage` uses utilities / global classes only (scoped CSS wouldn't load there); its back link carries `data-back` so the modal can hide it.
 - **Images:** put content images in `src/assets/` (Astro optimizes them); `public/` is served as-is. Keep big PNGs under ~2 MB.
-- **OG image:** must be JPEG — WhatsApp silently rejects palette PNGs. Regenerate from `scripts/og-image.svg` (Sora, Geist and JetBrains Mono must be installed as system fonts, or librsvg falls back):
+- **OG image:** must be JPEG — WhatsApp silently rejects palette PNGs. Regenerate from `scripts/og-image.svg` after `node scripts/install-og-fonts.mjs` (without the fonts librsvg falls back silently):
   `node -e "require('sharp')(require('fs').readFileSync('scripts/og-image.svg')).flatten({background:'#050912'}).jpeg({quality:88,mozjpeg:true}).toFile('public/og-image.jpg')"`
 
 ## Content
@@ -63,7 +103,7 @@ npm run check    # astro check (types) — keep it at 0 errors
 ## Writing rules
 
 - **Turkish copy must be idiomatic, never a calque.** Rewrite the idea in Turkish instead of following English sentence structure. Examples Kaan rejected → preferred: "… lisansıyla başladı" → "üniversitede … okudu"; "varsayılan olarak" → "zaten / normalde" or drop it; "tatlı bir nokta" → "ideal bir denge"; "elimde üç oyun vardı" → "üç oyun üzerinde çalıştım"; "yazmaktansa göstermek daha kolay geldi" → "İşte Nisan ayında yaptıklarım.".
-- Keep proper nouns and tech chips unchanged (game titles, "Kaan Usta", "GAME OVER", stack names). Patimania: "Ödeme Güvencesi" in public TR copy, "escrow" in EN.
+- Keep proper nouns and tech chips unchanged (game titles, "Kaan Usta", stack names). Patimania: "Ödeme Güvencesi" in public TR copy, "escrow" in EN.
 - The **welcome** post is written by Claude in the **third person** about Kaan ("He works in…", signed "— Claude"); never first person. Kaan's own posts are first person.
 - Devlog intros are short and plain, leading into the video with a colon ("Three games I worked on in May:").
 
