@@ -8,7 +8,8 @@ role: "Tek geliştirici (deneyimli bir tasarımcıyla günlük iş birliği)"
 description: "Oynanış hissinin tamamen Unity Physics ustalığına bağlı olduğu bir VR casual oyun. Erişilebilirlik ve kısa oturumlar düşünülerek tasarlandı."
 techStack: ["Unity", "Unity XR", "C#", "Unity Physics"]
 links: {}
-coverImage: "../../assets/projects/flex-hit/cover.png"
+coverImage: "../../assets/projects/flex-hit/cover-wide.webp"
+coverSquare: "../../assets/projects/flex-hit/cover-square.webp"
 gallery:
   - "../../assets/projects/flex-hit/cover.png"
   - "../../assets/projects/flex-hit/gallery/01.png"

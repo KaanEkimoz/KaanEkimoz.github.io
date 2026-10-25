@@ -23,7 +23,8 @@ links:
 featured: true
 category: product
 published: false
-coverImage: "../../assets/projects/patimania/cover.jpg"
+coverImage: "../../assets/projects/patimania/cover-wide.webp"
+coverSquare: "../../assets/projects/patimania/cover-square.webp"
 gallery:
   - "../../assets/projects/patimania/gallery/01-home.png"
   - "../../assets/projects/patimania/gallery/02-search.png"
