@@ -80,13 +80,9 @@ export const copy = {
   skills: {
     title: { en: 'Tech Stack', tr: 'Tech Stack' },
   },
-  games: {
-    title: { en: 'Where I started', tr: 'Başladığım yer' },
+  projects: {
+    title: { en: 'My Projects', tr: 'Projelerim' },
     all: { en: 'All projects', tr: 'Tüm projeler' },
-    lede: {
-      en: "I studied Digital Game Design at İstinye University (2020–2024) and made games for six years. That's where I learned to watch performance closely and to care how an app feels in the hand.",
-      tr: "İstinye Üniversitesi'nde Dijital Oyun Tasarımı okudum (2020–2024) ve altı yıl oyun geliştirdim. Performansı yakından takip etmeyi ve bir uygulamanın elde nasıl hissettirdiğini önemsemeyi orada öğrendim.",
-    },
   },
   writing: {
     title: { en: 'Blog Posts', tr: 'Blog Yazıları' },

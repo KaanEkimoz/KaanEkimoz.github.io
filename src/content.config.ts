@@ -29,8 +29,7 @@ const projects = defineCollection({
         })
         .default({}),
       featured: z.boolean().default(false),
-      // Products & Web vs Games: drives the filter on /projects and which
-      // entries the home page shows in the games strip.
+      // Products & Web vs Games: drives the filter on /projects.
       category: z.enum(['product', 'game']).default('game'),
       // Optional crop hint for the cover in tight tiles (CSS object-position).
       coverPosition: z.string().optional(),
@@ -38,6 +37,9 @@ const projects = defineCollection({
       published: z.boolean().default(false),
       // Cover image — used as hero on detail page + thumbnail on cards.
       coverImage: image().optional(),
+      // Square cover for the square cards of the home projects strip; without
+      // one the wide cover is shown whole over a blurred copy of itself.
+      coverSquare: image().optional(),
       // Optional gallery — additional screenshots shown on detail page.
       gallery: z.array(image()).default([]),
       // YouTube video id (just the id, e.g. "0KpRHhH52hQ"). Lazy-embedded.

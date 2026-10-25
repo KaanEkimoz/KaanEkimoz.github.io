@@ -4,7 +4,7 @@ import HeroSection from '@components/home/HeroSection.astro';
 import MethodSection from '@components/home/MethodSection.astro';
 import CareerSection from '@components/home/CareerSection.astro';
 import SkillsSection from '@components/home/SkillsSection.astro';
-import GamesSection from '@components/home/GamesSection.astro';
+import ProjectsStrip from '@components/home/ProjectsStrip.astro';
 import ContactSection from '@components/home/ContactSection.astro';
 import BlogCard from '@components/BlogCard.astro';
 import { getPosts } from '@lib/content';
@@ -25,7 +25,7 @@ const w = copy.writing;
   <MethodSection lang={lang} />
   <CareerSection lang={lang} />
   <SkillsSection lang={lang} />
-  <GamesSection lang={lang} />
+  <ProjectsStrip lang={lang} />
 
   {
     latestPosts.length > 0 && (

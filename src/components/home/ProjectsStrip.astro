@@ -1,0 +1,207 @@
+---
+/**
+ * My Projects: every project on an endless strip that drifts sideways,
+ * wide and square cards taking turns (Patimania opens as a wide one).
+ * With an odd number of projects one lap covers the list twice, so each
+ * project appears in both shapes and the alternation never breaks at the
+ * seam. The lap is rendered twice and the track slides by exactly one lap.
+ * Hover or focus pauses it; with reduced motion it becomes a scroll row.
+ */
+import { Image } from 'astro:assets';
+import { copy, pick } from '@lib/home';
+import { getProjects, slugOf } from '@lib/content';
+import { localizedPath, type Lang } from '@lib/i18n';
+
+interface Props {
+  lang: Lang;
+}
+const { lang } = Astro.props;
+const c = copy.projects;
+const projects = (await getProjects(lang)).filter((p) => p.data.coverImage);
+const passes = projects.length % 2 ? 2 : 1;
+const lap = Array.from({ length: passes }, (_, k) => projects.map((p, i) => ({ p, wide: (i + k) % 2 === 0 }))).flat();
+---
+
+<section class="sec" id="projects">
+  <div class="wrap head" data-fade-in>
+    <h2>{pick(c.title, lang)}</h2>
+    <a class="btn btn-ghost" href={localizedPath('/projects', lang)}>{pick(c.all, lang)} →</a>
+  </div>
+  <div class="strip" data-strip>
+    <div class="track">
+      {[0, 1].map((copyIdx) => (
+        <ul class="lap" aria-hidden={copyIdx ? 'true' : undefined}>
+          {lap.map(({ p, wide }) => {
+            const cover = p.data.coverImage!;
+            const square = !wide && p.data.coverSquare;
+            const pos = p.data.coverPosition ? `object-position:${p.data.coverPosition}` : undefined;
+            return (
+              <li class:list={['card', wide ? 'wide' : 'sq']}>
+                <a href={localizedPath(`/projects/${slugOf(p.id)}`, lang)} data-project-modal tabindex={copyIdx ? -1 : undefined}>
+                  <div class="img">
+                    {wide ? (
+                      <Image src={cover} alt="" widths={[560, 1120]} sizes="560px" style={pos} />
+                    ) : square ? (
+                      <Image src={square} alt="" widths={[320, 640]} sizes="320px" />
+                    ) : (
+                      <>
+                        <Image class="blur" src={cover} alt="" widths={[320]} sizes="320px" />
+                        <Image class="whole" src={cover} alt="" widths={[320, 640]} sizes="320px" />
+                      </>
+                    )}
+                  </div>
+                  <div class="cap">
+                    <b>{p.data.title}</b>
+                    <span>{p.data.platform} · {p.data.year}</span>
+                  </div>
+                </a>
+              </li>
+            );
+          })}
+        </ul>
+      ))}
+    </div>
+  </div>
+</section>
+
+<style>
+  .head {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: end;
+    justify-content: space-between;
+    gap: 16px;
+    margin-bottom: 28px;
+  }
+  h2 {
+    font-size: clamp(1.9rem, 3.4vw, 2.6rem);
+    line-height: 1.08;
+    letter-spacing: -0.04em;
+    font-weight: 500;
+  }
+  .strip {
+    --h: 300px;
+    --gap: 18px;
+    overflow: hidden;
+    padding: 6px 0 4px;
+    -webkit-mask-image: linear-gradient(to right, transparent, #000 6%, #000 94%, transparent);
+    mask-image: linear-gradient(to right, transparent, #000 6%, #000 94%, transparent);
+  }
+  /* The first card lines up with the heading; the loop slides by one lap
+     of the track's own width, so this margin doesn't touch the seam. */
+  .track {
+    display: flex;
+    width: max-content;
+    margin-left: max(20px, calc((100vw - 72rem) / 2 + 20px));
+    animation: drift var(--dur, 140s) linear infinite;
+  }
+  .strip:hover .track,
+  .strip:focus-within .track {
+    animation-play-state: paused;
+  }
+  @keyframes drift {
+    to {
+      transform: translateX(-50%);
+    }
+  }
+  .lap {
+    display: flex;
+    gap: var(--gap);
+    padding-right: var(--gap);
+  }
+  .card a {
+    display: grid;
+    gap: 10px;
+  }
+  .img {
+    position: relative;
+    height: var(--h);
+    overflow: hidden;
+    border-radius: 16px;
+    border: 1px solid rgb(var(--border));
+    background: rgb(var(--bg-elev-2));
+    transition: border-color 0.2s, transform 0.3s cubic-bezier(0.2, 0.8, 0.2, 1);
+  }
+  .wide .img {
+    width: calc(var(--h) * 16 / 9);
+  }
+  .sq .img {
+    width: var(--h);
+  }
+  .img :global(img) {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+  .img :global(.blur) {
+    filter: blur(18px) brightness(0.7) saturate(1.2);
+    transform: scale(1.2);
+  }
+  .img :global(.whole) {
+    object-fit: contain;
+  }
+  .card a:hover .img,
+  .card a:focus-visible .img {
+    border-color: rgb(var(--accent-1) / 0.6);
+    transform: translateY(-3px);
+  }
+  .cap {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 10px;
+    padding: 0 4px;
+  }
+  .cap b {
+    font: 500 0.98rem Sora, ui-sans-serif, sans-serif;
+    letter-spacing: -0.02em;
+    color: rgb(var(--text-100));
+  }
+  .cap span {
+    font: 0.74rem 'JetBrains Mono', ui-monospace, monospace;
+    color: rgb(var(--text-300));
+    white-space: nowrap;
+  }
+  .card a:hover .cap b {
+    color: rgb(var(--accent-2));
+  }
+  @media (max-width: 860px) {
+    .strip {
+      --h: 196px;
+      --gap: 12px;
+      -webkit-mask-image: linear-gradient(to right, transparent, #000 16px, #000 calc(100% - 16px), transparent);
+      mask-image: linear-gradient(to right, transparent, #000 16px, #000 calc(100% - 16px), transparent);
+    }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .strip {
+      overflow-x: auto;
+      -webkit-mask-image: none;
+      mask-image: none;
+    }
+    .track {
+      animation: none;
+      padding-right: 20px;
+    }
+    .lap[aria-hidden] {
+      display: none;
+    }
+    .img {
+      transition: none;
+    }
+  }
+</style>
+
+<script>
+  // Same drift speed on every screen: the duration follows the lap width.
+  const SPEED = 42; // px per second
+  function init() {
+    document.querySelectorAll<HTMLElement>('[data-strip]').forEach((strip) => {
+      const lap = strip.querySelector<HTMLElement>('.lap');
+      if (lap) strip.style.setProperty('--dur', `${(lap.offsetWidth / SPEED).toFixed(1)}s`);
+    });
+  }
+  document.addEventListener('astro:page-load', init);
+</script>

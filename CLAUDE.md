@@ -75,7 +75,7 @@ These come from mistakes made in earlier sessions. Follow them in every session,
 ## Site structure
 
 ```
-/                    hero (greeting, title, stats, 'currently working on' + tech stack over the data canvas, bars on the bottom edge), photo + Q&A box (question chips only, no text input), how I use AI (animated AI studio map, `AIStudio` + `src/lib/ai-studio.ts`), My Journey (career as hexagon steps with tool fans, `CareerSection`), Tech Stack, games row, latest posts, contact
+/                    hero (greeting, title, stats, 'currently working on' + tech stack over the data canvas, bars on the bottom edge), photo + Q&A box (question chips only, no text input), how I use AI (animated AI studio map, `AIStudio` + `src/lib/ai-studio.ts`), My Journey (career as hexagon steps with tool fans, `CareerSection`), Tech Stack, My Projects (endless strip of all projects, wide and square cards taking turns, `ProjectsStrip`), latest posts, contact
 /projects[/<slug>]   grid with filter pills (All | Products & Web | Games) and detail pages
 /blog[/<slug>]       posts (md / mdx)
 /resume              Özgeçmiş / Resume, built from home.ts facts (CAREER, SKILL_GROUPS, EVALS, copy.resume); prints to A4
@@ -91,7 +91,7 @@ These come from mistakes made in earlier sessions. Follow them in every session,
 - **Theme:** dark-first navy with blue (`--accent-1`), cyan (`--accent-2`) and indigo (`--accent-3`) accents. Design tokens in `src/styles/global.css` are **space-separated RGB triplets** (`--accent-1: 61 123 255`) so Tailwind's `rgb(var(--x) / <alpha-value>)` works. Dark in `:root`, light in `html[data-theme='light']`. Don't put hex values back into `tailwind.config.mjs`. In canvas/inline styles wrap tokens with `rgb(...)`.
 - **Shared classes** (`@layer components` in `global.css`): `.wrap`, `.sec`, `.sec-head`, `.eyebrow`, `.grad-em`, `.panel`, `.btn`, `.btn-ghost`, `.link`, `.mono-chip`, `.hand` (Caveat handwritten notes).
 - **Logos:** `BrandIcon` renders simple-icons by export name (`siNextdotjs`…); LinkedIn is drawn in the component because simple-icons dropped it.
-- **Key components:** `BaseLayout` (head, pre-paint theme + language scripts, hreflang), `Header` / `Footer` / `Mark`, the home sections in `src/components/home/` (`HeroField` canvas, `HeroSection` with the pre-written Q&A box, `MethodSection`, `CareerSection`, `SkillsSection`, `GamesSection`, `ContactSection`), `ProjectFilter`, `ProjectCard`, `ProjectModal`, `BlogCard`, `PageHeader`, `LiteYouTube`, `ThemeToggle`, `LanguageToggle`.
+- **Key components:** `BaseLayout` (head, pre-paint theme + language scripts, hreflang), `Header` / `Footer` / `Mark`, the home sections in `src/components/home/` (`HeroField` canvas, `HeroSection` with the pre-written Q&A box, `MethodSection`, `CareerSection`, `SkillsSection`, `ProjectsStrip`, `ContactSection`), `ProjectFilter`, `ProjectCard`, `ProjectModal`, `BlogCard`, `PageHeader`, `LiteYouTube`, `ThemeToggle`, `LanguageToggle`.
 - **Home copy and data** (Q&A, career nodes, skills, evals for the resume and Q&A) live in `src/lib/home.ts`, EN and TR side by side. Numbers there come from Kaan's profile brief; don't add figures or claims (store status, metrics) he hasn't confirmed.
 - **Client scripts** init on `astro:page-load` and clean up on `astro:before-swap`. The project modal injects `#project-detail` from a detail page into other pages, so `ProjectPage` uses utilities / global classes only (scoped CSS wouldn't load there); its back link carries `data-back` so the modal can hide it.
 - **Images:** put content images in `src/assets/` (Astro optimizes them); `public/` is served as-is. Keep big PNGs under ~2 MB.
@@ -102,7 +102,7 @@ These come from mistakes made in earlier sessions. Follow them in every session,
 
 - **Projects** (`src/content/projects/`, all with `-tr` mirrors): brick-game (Mobile, `published: true`, on Google Play; per-locale Play Store screenshots with `-tr` suffix), draw-rush, flex-hit, orbs-of-the-power, patimania (Web/SaaS, pre-launch, `featured`, no trailer), stack-runner, still.
 - **Blog** (`src/content/blog/`): welcome, april-2026-developer-update (mdx), may-2026-developer-update (mdx), each with `-tr`.
-- Adding a project: `<slug>.md` + `<slug>-tr.md`, `src/assets/projects/<slug>/cover.*` + `gallery/`. Set `category: product` for products (wide card on /projects) or leave the default `game` (also shown in the home games strip); `coverPosition` crops the cover in tight tiles.
+- Adding a project: `<slug>.md` + `<slug>-tr.md`, `src/assets/projects/<slug>/cover.*` + `gallery/`. Set `category: product` for products (wide card on /projects) or leave the default `game`; `coverPosition` crops the cover in tight tiles. Covers are 16:9; an optional `coverSquare` (1:1) is used by the square cards of the home strip, otherwise the wide cover is shown whole over a blurred copy.
 - Adding a post: `<slug>.{md,mdx}` + `-tr`, hero image in `src/assets/blog/`; in MDX use `import LiteYouTube from '@components/LiteYouTube.astro'`.
 
 ## Writing rules
