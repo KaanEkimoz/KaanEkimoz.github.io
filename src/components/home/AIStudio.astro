@@ -92,11 +92,13 @@ const labels = {
     --outputs: #e0711f;
     --users: #e0384a;
   }
+  /* Same shape as the canvas the layout was arranged on (1318×803). */
   canvas {
     position: relative;
     display: block;
     width: 100%;
-    height: 600px;
+    height: auto;
+    aspect-ratio: 1318 / 803;
   }
   @media (max-width: 899px) {
     canvas {
@@ -106,7 +108,7 @@ const labels = {
 </style>
 
 <script>
-  import { EXTRA, GROUPS, HUB_FROM, ICON_LIGHT, ICON_SRC, NODES, NODE_ICON } from '@lib/ai-studio';
+  import { EXTRA, FLOW_LAYOUT, GROUPS, HUB_FROM, ICON_LIGHT, ICON_SRC, NODES, NODE_ICON } from '@lib/ai-studio';
 
   type Node = { id: string; g: string; label: string; c?: string; hub?: boolean; x: number; y: number; tx: number; ty: number; a: number; placed?: boolean };
   type Edge = { a: Node; b: Node; kind: 'agent' | 'hub' | 'member' | 'extra'; bend: number };
@@ -234,11 +236,15 @@ const labels = {
       at('teams', mx - 30, cy + 56); at('sub', mx - 30, cy + 82);
       at('codex', mx, gy - 22); at('gptwork', mx, gy + 22);
       ['ollama', 'qwen', 'llama', 'deepseek'].forEach((id, i) => at(id, mx - 30, ly - 51 + i * 34));
-      ctx!.font = `700 17px ${FONT.display}`;
-      const uw = ctx!.measureText(hubs.users.label).width + 64;
+      ctx!.font = `700 14px ${FONT.display}`;
+      const uw = ctx!.measureText(hubs.users.label).width + 54;
       hubs.users.tx = W - uw / 2 - 16; hubs.users.ty = H / 2;
       members('users').forEach((m, i) => at(m.id, hubs.users.tx - uw / 2 + 22, H / 2 + 46 + i * 24));
       byId.kaan.tx = Math.max(byId.kaan.tx, kaanW() / 2 + 14);
+      // Kaan's own arrangement from the artifact editor wins over the computed one.
+      for (const id in FLOW_LAYOUT) if (byId[id]) at(id, FLOW_LAYOUT[id][0] * W, FLOW_LAYOUT[id][1] * H);
+      // Keep the End User pill inside the frame at any width or label length.
+      hubs.users.tx = Math.min(hubs.users.tx, W - uw / 2 - 12);
     }
 
     let DPR = 1;
@@ -248,7 +254,8 @@ const labels = {
       W = r.width; H = r.height;
       cv!.width = W * DPR; cv!.height = H * DPR;
       ctx!.setTransform(DPR, 0, 0, DPR, 0, 0);
-      view = W >= 860 ? 'flow' : 'layers';
+      // Same breakpoint as the canvas height in the CSS above.
+      view = matchMedia('(min-width: 900px)').matches ? 'flow' : 'layers';
       (view === 'flow' ? layoutFlow : layoutLayers)();
       for (const n of nodes) if (!n.placed) { n.x = n.tx; n.y = n.ty; n.placed = true; }
     }
@@ -375,15 +382,15 @@ const labels = {
           continue;
         }
         if (n.id === 'hub-users') {
-          c.font = `700 ${narrow() ? 15 : 17}px ${FONT.display}`;
-          const w = c.measureText(n.label).width + 64, h = 52, x = n.x - w / 2, y = n.y - h / 2;
+          c.font = `700 14px ${FONT.display}`;
+          const w = c.measureText(n.label).width + 54, h = 42, x = n.x - w / 2, y = n.y - h / 2;
           c.shadowColor = col; c.shadowBlur = 22 + Math.sin(clock * 2) * 6;
           roundRect(x, y, w, h, h / 2); c.fillStyle = css('--panel-2'); c.fill(); c.shadowBlur = 0;
           c.strokeStyle = col; c.lineWidth = isF ? 2.4 : 1.8; c.stroke();
-          const px = x + 26, py = n.y; c.fillStyle = col;
-          c.beginPath(); c.arc(px, py - 7, 5.5, 0, 7); c.fill();
-          c.beginPath(); c.arc(px, py + 12, 10, Math.PI, 0); c.closePath(); c.fill();
-          c.fillStyle = css('--fg'); c.textAlign = 'left'; c.fillText(n.label, x + 46, n.y + 1);
+          const px = x + 22, py = n.y; c.fillStyle = col;
+          c.beginPath(); c.arc(px, py - 5.5, 4.4, 0, 7); c.fill();
+          c.beginPath(); c.arc(px, py + 9.5, 8, Math.PI, 0); c.closePath(); c.fill();
+          c.fillStyle = css('--fg'); c.textAlign = 'left'; c.fillText(n.label, x + 38, n.y + 1);
           continue;
         }
         if (n.hub) {

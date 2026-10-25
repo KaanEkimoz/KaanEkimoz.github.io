@@ -177,8 +177,8 @@ export const QA: { id: string; q: L10n; a: L10n; stats?: Record<Lang, string[]>;
     id: 'skills',
     q: { en: 'What are my skills?', tr: 'Yeteneklerim neler?' },
     a: {
-      en: 'Taking a product from idea to release: data modelling and backend APIs, web and mobile interfaces, CI and deployment, and working with AI agents under checks I set up. In TestGorilla assessments in September 2026 I scored in the 99th percentile for .NET, React and artificial intelligence, the 98th for Microsoft Azure and the 97th for English.',
-      tr: 'Bir ürünü fikirden yayına taşımak: veri modeli ve arka uç API’leri, web ve mobil arayüzler, CI ve yayın süreci, yapay zekâ ajanlarıyla kendi kurduğum denetimler altında çalışmak. Eylül 2026’daki TestGorilla değerlendirmelerinde .NET, React ve yapay zekâda 99., Microsoft Azure’da 98., İngilizcede 97. yüzdelik dilimde yer aldım.',
+      en: "Turning an idea into something people can use, and keeping it working once they do. I design the data so the database itself refuses bad states, like two bookings for the same room. I build web and mobile interfaces, ship to Google Play and TestFlight, and add CI checks that catch mistakes before they go live. Six years of games taught me to care about performance and how an app feels in the hand. I'm used to working with designers and artists, and the whole of my degree was taught in English.",
+      tr: "Bir fikri insanların kullanabileceği bir ürüne çevirmek ve kullanılmaya başladıktan sonra da ayakta tutmak. Veriyi, hatalı durumları veritabanının kendisi reddedecek şekilde tasarlıyorum; aynı odaya iki rezervasyon düşmesi gibi. Web ve mobil arayüzler geliştiriyor, Google Play ve TestFlight'a yayın çıkarıyor, hataları canlıya çıkmadan yakalayan CI kontrolleri ekliyorum. Altı yıllık oyun geçmişim bana performansı ve bir uygulamanın elde nasıl hissettirdiğini önemsemeyi öğretti. Tasarımcılar ve sanatçılarla birlikte çalışmaya alışkınım; üniversiteyi de tamamen İngilizce okudum.",
     },
     src: ['skills'],
   },
