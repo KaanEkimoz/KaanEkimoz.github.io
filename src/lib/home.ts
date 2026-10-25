@@ -115,7 +115,7 @@ export const copy = {
     },
     experience: { en: 'Experience', tr: 'Deneyim' },
     education: { en: 'Education', tr: 'Eğitim' },
-    skills: { en: 'Tech stack', tr: 'Tech stack' },
+    skills: { en: 'Tech Stack', tr: 'Tech Stack' },
     tests: { en: 'Assessments', tr: 'Testler' },
     tests_note: { en: 'TestGorilla, September 2026 · percentile among all test takers', tr: 'TestGorilla, Eylül 2026 · tüm katılımcılar arasındaki yüzdelik dilim' },
     languages: { en: 'Languages', tr: 'Diller' },
