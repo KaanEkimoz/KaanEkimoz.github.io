@@ -9,6 +9,7 @@
     "build": "astro build",
     "preview": "astro preview",
     "check": "astro check",
+    "resume:pdf": "node scripts/resume-pdf.mjs",
     "astro": "astro"
   },
   "dependencies": {

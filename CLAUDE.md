@@ -53,6 +53,9 @@ These come from mistakes made in earlier sessions. Follow them in every session,
 - `ProjectPage` HTML is injected into the project modal on other pages, so style it with utilities / global classes only. Scoped `<style>` won't load there.
 - Scripts init on `astro:page-load` and clean up on `astro:before-swap`. With `history.replaceState`, pass `history.state` through, since ClientRouter keeps its state there.
 
+**Resume PDFs**
+- The resume's "Download PDF" button serves pre-rendered files in `public/cv/` (EN + TR), made from the page's print styles (navy header band, sidebar + main column, 2 A4 pages). After changing any resume fact (CAREER, SKILL_GROUPS, EVALS, copy.resume) or the print CSS, regenerate them: `npm run build && npm run resume:pdf && npm run build`, and look at both PDFs before committing.
+
 **Before saying "done"**
 - `npm run check` (0 errors) and `npm run build`.
 - Run `npx astro preview` and screenshot each changed page with Playwright (pre-installed; don't reinstall) at 1280 and 390 px wide, dark and light, EN and TR.
@@ -78,7 +81,7 @@ These come from mistakes made in earlier sessions. Follow them in every session,
 /                    hero (greeting, title, stats, 'currently working on' + tech stack over the data canvas, bars on the bottom edge), photo + Q&A box (question chips only, no text input), how I use AI (animated AI studio map, `AIStudio` + `src/lib/ai-studio.ts`), My Journey (career as hexagon steps with tool fans, `CareerSection`), Tech Stack, My Projects (endless strip of all projects, wide and square cards taking turns, `ProjectsStrip`), latest posts, contact
 /projects[/<slug>]   grid with filter pills (All | Products & Web | Games) and detail pages
 /blog[/<slug>]       posts (md / mdx)
-/resume              Özgeçmiş / Resume, built from home.ts facts (CAREER, SKILL_GROUPS, EVALS, copy.resume); prints to A4
+/resume              Özgeçmiş / Resume, built from home.ts facts (CAREER, SKILL_GROUPS, EVALS, copy.resume); its button downloads public/cv/*.pdf
 /brickcrack-privacy  hidden, for App Store Connect (iOS build name "BrickCrack" = Brick Game)
 /drawrush-privacy    hidden, raw HTML in public/drawrush-privacy/ (bypasses Astro)
 /chat                hidden, private Claude chat (see below)

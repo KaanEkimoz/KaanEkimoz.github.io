@@ -104,7 +104,7 @@ export const copy = {
   resume: {
     title: { en: 'Resume', tr: 'Özgeçmiş' },
     metaDescription: { en: 'Resume of Kaan Usta, full-stack AI developer in Istanbul.', tr: "Kaan Usta'nın özgeçmişi; İstanbul'da full-stack AI developer." },
-    print: { en: 'Print / save as PDF', tr: 'Yazdır / PDF olarak kaydet' },
+    print: { en: 'Download PDF', tr: 'PDF indir' },
     summary: {
       en: "Full-stack developer in Istanbul. Since June 2026 I've been building Patimania, a pet-services marketplace with a website, an iOS and Android app, and business and admin panels. I build with AI coding agents and check the work with tests and CI guards I wrote myself. Before that I spent six years making games in Unity.",
       tr: "İstanbul'da full-stack geliştiriciyim. Haziran 2026'dan beri web sitesi, iOS ve Android uygulaması, işletme ve yönetim panelinden oluşan bir evcil hayvan hizmetleri pazaryeri olan Patimania'yı geliştiriyorum. Yapay zekâ kodlama ajanlarıyla geliştiriyor, işi kendi yazdığım testler ve CI nöbetçileriyle denetliyorum. Öncesinde altı yıl Unity ile oyun geliştirdim.",
