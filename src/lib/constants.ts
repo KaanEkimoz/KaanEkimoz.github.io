@@ -23,6 +23,7 @@ export const SITE = {
 export const NAV = [
   { key: 'projects', href: '/projects' },
   { key: 'blog', href: '/blog' },
+  { key: 'resume', href: '/resume' },
 ] as const;
 
 export const SOCIAL = {
