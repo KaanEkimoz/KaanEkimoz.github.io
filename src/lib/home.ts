@@ -22,9 +22,9 @@ export const copy = {
     projects: { en: 'See my projects', tr: 'Projelerime bak' },
     email: { en: 'Email me', tr: 'E-posta gönder' },
     stats: [
-      { n: { en: '2,441', tr: '2.441' }, l: { en: 'commits on Patimania', tr: "Patimania commit'i" } },
-      { n: { en: '315k', tr: '315 bin' }, l: { en: 'lines of TypeScript', tr: 'satır TypeScript' } },
-      { n: { en: '6 yrs', tr: '6 yıl' }, l: { en: 'experience', tr: 'deneyim' } },
+      { n: { en: '30+', tr: '30+' }, l: { en: 'projects', tr: 'proje' } },
+      { n: { en: '5,000+', tr: '5.000+' }, l: { en: 'commits', tr: 'commit' } },
+      { n: { en: '6+ yrs', tr: '6+ yıl' }, l: { en: 'experience', tr: 'deneyim' } },
     ],
     note: { en: 'better code, better tomorrow :)', tr: 'daha iyi kod, daha iyi yarın :)' },
     now: { en: 'Currently working on', tr: 'Şu an üzerinde çalıştığım' },
