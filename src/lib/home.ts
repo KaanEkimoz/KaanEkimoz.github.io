@@ -24,7 +24,7 @@ export const copy = {
     stats: [
       { n: { en: '2,441', tr: '2.441' }, l: { en: 'commits on Patimania', tr: "Patimania commit'i" } },
       { n: { en: '315k', tr: '315 bin' }, l: { en: 'lines of TypeScript', tr: 'satır TypeScript' } },
-      { n: { en: '6 yrs', tr: '6 yıl' }, l: { en: 'making games in Unity', tr: 'Unity ile oyun' } },
+      { n: { en: '6 yrs', tr: '6 yıl' }, l: { en: 'experience', tr: 'deneyim' } },
     ],
     note: { en: 'better code, better tomorrow :)', tr: 'daha iyi kod, daha iyi yarın :)' },
     now: { en: 'Currently working on', tr: 'Şu an üzerinde çalıştığım' },
