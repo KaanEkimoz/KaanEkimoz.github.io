@@ -13,7 +13,7 @@ export const pick = (v: L10n | string, lang: Lang): string => (typeof v === 'str
 
 export const copy = {
   hero: {
-    title: { en: 'I build web and mobile products.', tr: 'Web ve mobil ürünler geliştiriyorum.' },
+    title: { en: 'Full-Stack AI Developer', tr: 'Full-Stack AI Developer' },
     lede: {
       en: "Hi, I'm Kaan, a full-stack engineer in Istanbul. Since June 2026 I've been building Patimania on my own: the NestJS backend, the Next.js site, the React Native app and the servers they run on. Before that I spent six years making games in Unity.",
       tr: "Merhaba, ben Kaan; İstanbul'da full-stack yazılım mühendisiyim. Haziran 2026'dan beri Patimania'yı tek başıma geliştiriyorum: NestJS arka ucu, Next.js sitesi, React Native uygulaması ve hepsinin çalıştığı sunucular. Öncesinde altı yıl Unity ile oyun yaptım.",
@@ -108,7 +108,7 @@ export const copy = {
     lanes: { en: ['Software', 'Games', 'Education'], tr: ['Yazılım', 'Oyun', 'Eğitim'] },
   },
   skills: {
-    title: { en: 'What I work with', tr: 'Neyle çalışıyorum' },
+    title: { en: 'Tech Stack', tr: 'Tech Stack' },
     lede: { en: 'Grouped by where each tool sits in a product.', tr: 'Her araç, üründe durduğu yere göre gruplandı.' },
   },
   evals: {
@@ -148,7 +148,7 @@ export const copy = {
     work: { en: 'Patimania', tr: 'Patimania' },
     method: { en: 'How I use AI', tr: 'Yapay zekâ' },
     career: { en: 'Career', tr: 'Kariyer' },
-    skills: { en: 'Skills', tr: 'Yetenekler' },
+    skills: { en: 'Tech Stack', tr: 'Tech Stack' },
     evals: { en: 'Evals', tr: 'Değerlendirme' },
     games: { en: 'Games', tr: 'Oyunlar' },
     contact: { en: 'Contact', tr: 'İletişim' },
