@@ -25,7 +25,7 @@ const ANCHORS: Record<string, [number, number]> = {
       <h2>{pick(c.title, lang)}</h2>
     </div>
 
-    <div class="map panel" data-map>
+    <div class="map panel" data-skill-map>
       {SKILL_GROUPS.map((g) => (
         <div class="group" style={`--c:${g.color};left:${ANCHORS[g.id][0]}%;top:${ANCHORS[g.id][1]}px`} data-group={g.id}>
           <h3>{pick(g.label, lang)}</h3>
@@ -172,7 +172,7 @@ const ANCHORS: Record<string, [number, number]> = {
 
   function init() {
     cleanup?.();
-    const map = document.querySelector<HTMLElement>('[data-map]');
+    const map = document.querySelector<HTMLElement>('[data-skill-map]');
     if (!map || matchMedia('(prefers-reduced-motion: reduce)').matches || !map.offsetWidth) return;
     const items = [...map.querySelectorAll<HTMLElement>('li')];
     // Each item gets a fixed random start offset; scroll progress pulls it home.
