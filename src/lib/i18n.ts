@@ -20,7 +20,7 @@ export const BCP47: Record<Lang, string> = {
 
 type Dict = {
   nav: { projects: string; blog: string; resume: string; home: string; contact: string; skip: string; main: string };
-  footer: { links: string; location: string };
+  footer: { links: string };
   blogIndex: { eyebrow: string; title: string; subtitle: string; empty: string; back: string; updated: string };
   projectsIndex: { eyebrow: string; title: string; subtitle: string };
   projectDetail: {
@@ -50,7 +50,7 @@ type Dict = {
 
 const en: Dict = {
   nav: { projects: 'Projects', blog: 'Blog', resume: 'Resume', home: 'home', contact: 'Contact', skip: 'Skip to content', main: 'Main' },
-  footer: { links: 'Elsewhere', location: 'Sarıyer, İstanbul · GMT+3' },
+  footer: { links: 'Elsewhere' },
   blogIndex: {
     eyebrow: 'Writing',
     title: 'Blog',
@@ -98,7 +98,7 @@ const en: Dict = {
 
 const tr: Dict = {
   nav: { projects: 'Projeler', blog: 'Blog', resume: 'Özgeçmiş', home: 'ana sayfa', contact: 'İletişim', skip: 'İçeriğe geç', main: 'Ana menü' },
-  footer: { links: 'Diğer hesaplar', location: 'Sarıyer, İstanbul · GMT+3' },
+  footer: { links: 'Diğer hesaplar' },
   blogIndex: {
     eyebrow: 'Yazılar',
     title: 'Blog',
