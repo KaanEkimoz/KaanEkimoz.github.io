@@ -606,14 +606,17 @@ const stack = [
 </script>
 
 <script>
-  // Pointer parallax for the portrait layers. Eased toward the target each
-  // frame; idle when the pointer is still. Off for reduced motion and touch.
+  // Parallax for the portrait layers, eased toward the target each frame and
+  // idle when nothing moves. The pointer drives it on mouse devices; on touch
+  // screens scrolling does (the layers drift as the photo passes the middle
+  // of the screen). Off for reduced motion.
   let stopParallax: (() => void) | null = null;
 
   function initParallax() {
     stopParallax?.();
     const fig = document.querySelector<HTMLElement>('[data-parallax]');
-    if (!fig || matchMedia('(prefers-reduced-motion: reduce)').matches || !matchMedia('(hover: hover)').matches) return;
+    if (!fig || matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+    const touch = !matchMedia('(hover: hover)').matches;
     let tx = 0, ty = 0, x = 0, y = 0, raf = 0;
     const tick = () => {
       x += (tx - x) * 0.08;
@@ -628,8 +631,19 @@ const stack = [
       ty = Math.max(-1, Math.min(1, (e.clientY - (r.top + r.height / 2)) / (innerHeight / 2)));
       if (!raf) raf = requestAnimationFrame(tick);
     };
-    addEventListener('pointermove', onMove, { passive: true });
+    const onScroll = () => {
+      const r = fig.getBoundingClientRect();
+      const d = Math.max(-1, Math.min(1, (r.top + r.height / 2 - innerHeight / 2) / (innerHeight / 2)));
+      ty = d;
+      tx = d * 0.45;
+      if (!raf) raf = requestAnimationFrame(tick);
+    };
+    if (touch) {
+      addEventListener('scroll', onScroll, { passive: true });
+      onScroll();
+    } else addEventListener('pointermove', onMove, { passive: true });
     stopParallax = () => {
+      removeEventListener('scroll', onScroll);
       removeEventListener('pointermove', onMove);
       cancelAnimationFrame(raf);
       stopParallax = null;
