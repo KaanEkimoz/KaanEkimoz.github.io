@@ -36,7 +36,7 @@ const ANCHORS: Record<string, [number, number]> = {
       ))}
     </div>
 
-    <div class="rows panel">
+    <div class="rows panel" data-skill-rows>
       {SKILL_GROUPS.map((g) => (
         <div style={`--c:${g.color}`}>
           <h3>{pick(g.label, lang)}</h3>
@@ -140,6 +140,7 @@ const ANCHORS: Record<string, [number, number]> = {
       display: grid;
       gap: 14px;
       padding: 16px;
+      overflow: hidden;
     }
     .rows div {
       display: grid;
@@ -172,9 +173,11 @@ const ANCHORS: Record<string, [number, number]> = {
 
   function init() {
     cleanup?.();
-    const map = document.querySelector<HTMLElement>('[data-skill-map]');
+    // The wide map on desktop; on phones the same effect runs on the chip rows.
+    const wide = document.querySelector<HTMLElement>('[data-skill-map]');
+    const map = wide?.offsetWidth ? wide : document.querySelector<HTMLElement>('[data-skill-rows]');
     if (!map || matchMedia('(prefers-reduced-motion: reduce)').matches || !map.offsetWidth) return;
-    const items = [...map.querySelectorAll<HTMLElement>('li')];
+    const items = [...map.querySelectorAll<HTMLElement>(map === wide ? 'li' : 'span')];
     // Each item gets a fixed random start offset; scroll progress pulls it home.
     let seed = 42;
     const rnd = () => ((seed = (seed * 16807) % 2147483647) / 2147483647);
@@ -190,7 +193,10 @@ const ANCHORS: Record<string, [number, number]> = {
       const r = map.getBoundingClientRect();
       const p = Math.min(1, Math.max(0, (innerHeight - r.top) / (innerHeight * 0.65)));
       const k = 1 - ease(p);
-      items.forEach((li, i) => (li.style.transform = k < 0.001 ? '' : `translate(${(offsets[i][0] * k).toFixed(1)}px, ${(offsets[i][1] * k).toFixed(1)}px)`));
+      items.forEach((li, i) => {
+        li.style.transform = k < 0.001 ? '' : `translate(${(offsets[i][0] * k).toFixed(1)}px, ${(offsets[i][1] * k).toFixed(1)}px)`;
+        if (map !== wide) li.style.opacity = k < 0.001 ? '' : (1 - k * 0.7).toFixed(2);
+      });
       map.classList.toggle('scattered', p < 0.85);
     };
     const onScroll = () => { if (!queued) { queued = true; requestAnimationFrame(paint); } };
@@ -198,7 +204,10 @@ const ANCHORS: Record<string, [number, number]> = {
     addEventListener('scroll', onScroll, { passive: true });
     cleanup = () => {
       removeEventListener('scroll', onScroll);
-      items.forEach((li) => (li.style.transform = ''));
+      items.forEach((li) => {
+        li.style.transform = '';
+        li.style.opacity = '';
+      });
       map.classList.remove('scattered');
       cleanup = null;
     };
