@@ -1,4 +1,5 @@
 ---
+import BrandIcon from '@components/BrandIcon.astro';
 import { SITE, SOCIAL } from '@lib/constants';
 import { DEFAULT_LOCALE, t, type Lang } from '@lib/i18n';
 
@@ -8,15 +9,26 @@ interface Props {
 
 const { lang = DEFAULT_LOCALE } = Astro.props;
 const year = new Date().getFullYear();
+const links = [
+  { name: 'LinkedIn', icon: 'linkedin', href: SOCIAL.linkedin },
+  { name: 'GitHub', icon: 'siGithub', href: SOCIAL.github },
+  { name: 'YouTube', icon: 'siYoutube', href: SOCIAL.youtube },
+  { name: 'itch.io', icon: 'siItchdotio', href: SOCIAL.itchio },
+  { name: lang === 'tr' ? 'E-posta' : 'Email', icon: 'siGmail', href: `mailto:${SOCIAL.email}`, local: true },
+  { name: 'RSS', icon: 'siRss', href: lang === 'tr' ? '/tr/rss.xml' : '/rss.xml', local: true },
+];
 ---
 
 <footer class="site-footer">
   <div class="inner">
     <span>© {year} {SITE.author}</span>
     <nav aria-label={t('footer.links', lang)}>
-      <a href={SOCIAL.linkedin} target="_blank" rel="noopener">LinkedIn</a>
-      <a href={SOCIAL.github} target="_blank" rel="noopener">GitHub</a>
-      <a href={lang === 'tr' ? '/tr/rss.xml' : '/rss.xml'}>RSS</a>
+      {links.map((l) => (
+        <a href={l.href} target={l.local ? undefined : '_blank'} rel={l.local ? undefined : 'noopener'}>
+          <BrandIcon name={l.icon} size={15} color={false} />
+          {l.name}
+        </a>
+      ))}
     </nav>
   </div>
 </footer>
@@ -39,12 +51,22 @@ const year = new Date().getFullYear();
   }
   nav {
     display: flex;
-    gap: 18px;
+    flex-wrap: wrap;
+    gap: 4px 18px;
   }
   a {
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
     padding-block: 6px;
+  }
+  a :global(svg) {
+    opacity: 0.75;
   }
   a:hover {
     color: rgb(var(--text-100));
+  }
+  a:hover :global(svg) {
+    opacity: 1;
   }
 </style>
