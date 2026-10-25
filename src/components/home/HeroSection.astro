@@ -6,9 +6,8 @@ import BrandIcon from '@components/BrandIcon.astro';
 import portraitBg from '@/assets/portrait-bg.jpg';
 import portraitMe from '@/assets/portrait-me.webp';
 import pmIcon from '@/assets/projects/patimania/icon.png';
-import { SOCIAL } from '@lib/constants';
 import { copy, pick, QA } from '@lib/home';
-import { localizedPath, type Lang } from '@lib/i18n';
+import type { Lang } from '@lib/i18n';
 
 interface Props {
   lang: Lang;
@@ -48,10 +47,6 @@ const stack = [
       <p class="hi"><Mark size={18} /><span>{pick(c.hi, lang)}</span> <span aria-hidden="true">👋</span></p>
       <h1>{pick(c.title, lang)}</h1>
       <p class="lede">{pick(c.lede, lang)}</p>
-      <div class="cta">
-        <a class="btn" href={localizedPath('/projects', lang)}>{pick(c.projects, lang)} →</a>
-        <a class="btn btn-ghost" href={`mailto:${SOCIAL.email}`}>{pick(c.email, lang)}</a>
-      </div>
       <dl class="stats">
         {c.stats.map((x) => <div><dt>{pick(x.n, lang)}</dt><dd>{pick(x.l, lang)}</dd></div>)}
       </dl>
@@ -160,11 +155,6 @@ const stack = [
     font-size: clamp(1.05rem, 1.4vw, 1.2rem);
     line-height: 1.6;
     max-width: 34rem;
-  }
-  .cta {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 10px;
   }
   .stats {
     display: flex;
@@ -571,9 +561,6 @@ const stack = [
     .grid {
       grid-template-columns: minmax(0, 1fr);
       gap: 28px;
-    }
-    .cta .btn {
-      flex: 1 1 auto;
     }
     .stats {
       display: grid;
