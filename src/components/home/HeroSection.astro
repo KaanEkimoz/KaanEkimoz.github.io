@@ -50,7 +50,6 @@ const first = data.qa[0];
       <div class="ask" data-ask>
         <div class="ask-head">
           <b><Mark size={16} /><span>{pick(a.title, lang)}</span></b>
-          <span class="mode">{pick(a.mode, lang)}</span>
         </div>
         <div class="convo" aria-live="polite" aria-busy="false" data-convo>
           <div class="q" data-q>{first.q}</div>
@@ -69,7 +68,6 @@ const first = data.qa[0];
           </button>
         </form>
       </div>
-      <p class="disclaim">{pick(a.disclaimer, lang)}</p>
     </div>
   </div>
   <script type="application/json" data-ask-data set:html={JSON.stringify(data)} />
@@ -161,10 +159,6 @@ const first = data.qa[0];
     font-weight: 600;
     font-size: 0.92rem;
     color: rgb(var(--text-100));
-  }
-  .mode {
-    font: 500 0.72rem 'JetBrains Mono', ui-monospace, monospace;
-    color: rgb(var(--text-300));
   }
   .convo {
     padding: 20px 20px 8px;
@@ -345,11 +339,6 @@ const first = data.qa[0];
     color: rgb(var(--accent-1));
     border-color: rgb(var(--accent-1));
     background: rgb(var(--accent-1) / 0.12);
-  }
-  .disclaim {
-    margin-top: 10px;
-    font-size: 0.8rem;
-    color: rgb(var(--text-300));
   }
 
   @media (max-width: 860px) {

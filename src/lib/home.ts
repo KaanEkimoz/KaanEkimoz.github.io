@@ -28,15 +28,10 @@ export const copy = {
     seeWork: { en: 'See Patimania', tr: "Patimania'ya bak" },
   },
   ask: {
-    title: { en: 'Ask about Kaan', tr: 'Kaan hakkında sor' },
-    mode: { en: 'About Kaan', tr: 'Kaan Hakkında' },
+    title: { en: 'About me', tr: 'Hakkımda' },
     placeholder: { en: 'Ask about his work…', tr: 'İşleri hakkında bir şey sor…' },
     inputLabel: { en: 'Ask a question about Kaan', tr: 'Kaan hakkında bir soru sor' },
     send: { en: 'Send', tr: 'Gönder' },
-    disclaimer: {
-      en: "Answers are written in advance from Kaan's CV. No model runs on this page.",
-      tr: 'Cevaplar Kaan’ın özgeçmişinden önceden yazıldı. Bu sayfada çalışan bir model yok.',
-    },
     fallback: {
       en: "That one isn't covered here. Try a question below, or email Kaan at kaanekimoz@gmail.com.",
       tr: 'Bu soru burada yok. Aşağıdaki sorulardan birini dene ya da Kaan’a yaz: kaanekimoz@gmail.com.',
