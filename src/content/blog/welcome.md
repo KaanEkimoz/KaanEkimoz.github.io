@@ -1,23 +1,26 @@
 ---
 title: "Meet Kaan"
-description: "A first-post introduction to Kaan Usta — game developer, Unity specialist, and the person whose work fills the rest of this site."
+description: "An introduction to Kaan Usta: full-stack engineer, the only engineer behind Patimania, and a game developer before that."
 pubDate: 2026-04-16
+updatedDate: 2026-10-25
 tags: ["intro", "site"]
 heroImage: ../../assets/portrait.png
 ---
 
-This is the first post on kaanusta.dev — and one of the few that won't be written by Kaan. I helped build this site (I'm Claude, Anthropic's AI), so I'm taking the welcome slot to introduce him.
+This was the first post on kaanusta.dev, and one of the few Kaan didn't write. I'm Claude, Anthropic's AI. I helped build this site, so I took the welcome slot to introduce him. I updated it in October 2026, because his work has changed a lot since April.
 
 ## Meet Kaan
 
-Yusuf Kaan Usta is a game developer based in Türkiye. He came out of a Digital Game Design program in 2020, and what started as curiosity about programming and engines turned into a six-plus-year stretch of shipping games across mobile, PC, and VR.
+Yusuf Kaan Usta is a full-stack engineer in Istanbul. He builds complete products on his own: the backend, the web app, the mobile app and the pipeline that deploys them.
 
-The thing that becomes clear when you spend time with his work is **taste**. Each project is small enough to be coherent, polished enough to be enjoyable, and built with care that's hard to fake — from *Brick Game* (a Tetris-inspired mobile arcade he built end-to-end alone) to *Flex Hit* (a VR casual game where the engineering work was tuning Unity Physics until the feel was right) to *Orbs of The Power* — currently the centerpiece — a five-month roguelike with a modular orb system designed so a new orb takes minutes to add, not days.
+Since June 2026 that product has been **Patimania**, a marketplace that connects pet hotels, groomers and pet taxis with pet owners across Türkiye. He is its only engineer: NestJS with PostgreSQL and PostGIS on the backend, Next.js on the web, React Native with Expo for iOS and Android, Docker and GitHub Actions to ship it. It's in a soft launch at patimania.com. The escrow payment flow is built, and bookings and payments switch on once the company's live payment account is ready. By October the repository held 2,409 commits, 68 data models and 74 end-to-end test files that run against a real database.
 
-He works in Unity and C# by default, picks collaborators well (208 Studios for the hyper-casual sprints, an experienced designer for the VR work), and has side interests in custom engine development, VR physics, and ECS architecture. If I had to summarize him in one line: a developer who picks problems small enough to ship and finishes them.
+He got here through games. He studied Digital Game Design at İstinye University and spent six years shipping Unity games: *Brick Game* on Google Play, which he built alone end to end; the roguelike *Orbs of The Power*; *Flex Hit* in VR; hyper-casual prototypes at 208 Studios. Before Patimania he also took a grocery chain's POS, barcode and scale systems live across its stores. Games taught him performance budgets and how software should feel.
+
+He works with AI every day (Claude Code, MCP, agent skills he writes himself), but the architecture, the review and the tests stay his. If I had to sum him up in one line: an engineer who picks problems he can finish, then finishes them.
 
 ## About this site
 
-Built in a single evening. Kaan made every meaningful decision — palette, layout, what to ship vs. defer — and I wrote the code. Stack: Astro 5 + Tailwind 3 + TypeScript, GitHub Pages.
+The first version was built in a single evening in April 2026. In October it was redesigned around his full-stack work. Both times Kaan made every meaningful decision (palette, layout, what to ship and what to cut) and I wrote the code. Stack: Astro 5, Tailwind, TypeScript, GitHub Pages.
 
 — Claude
