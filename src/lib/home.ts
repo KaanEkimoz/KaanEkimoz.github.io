@@ -16,8 +16,8 @@ export const copy = {
     hi: { en: "Hi, I'm Kaan", tr: 'Merhaba, ben Kaan' },
     title: { en: 'Full-Stack AI Developer', tr: 'Full-Stack AI Developer' },
     lede: {
-      en: "I'm a full-stack developer in Istanbul. I build web and mobile products on my own, from the database to the app screens, with AI coding agents. The design, the review and the tests stay with me. Right now that's Patimania.",
-      tr: "İstanbul'da full-stack geliştiriciyim. Web ve mobil ürünleri yapay zekâ kodlama ajanlarıyla baştan sona geliştiriyorum; tasarım, kod incelemesi ve testler bende kalıyor. Şu an üzerinde çalıştığım ürün Patimania.",
+      en: "Based in Istanbul, I build end-to-end products. By collaborating with AI coding agents, I manage everything from database architecture to UI design, code review, and testing.",
+      tr: "İstanbul'da ürünleri baştan sona geliştiriyorum. Yapay zekâ kodlama ajanlarıyla birlikte çalışıyorum; veritabanı mimarisinden arayüz tasarımına, kod incelemesinden testlere kadar her şeyi ben yönetiyorum.",
     },
     projects: { en: 'See my projects', tr: 'Projelerime bak' },
     email: { en: 'Email me', tr: 'E-posta gönder' },
