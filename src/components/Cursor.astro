@@ -1,0 +1,227 @@
+---
+/**
+ * Futuristic cursor for mouse users: a crystal arrow drawn as the real
+ * cursor image (so it never lags), plus a ring that trails it, turns into a
+ * rotating reticle over anything clickable and bursts on click. Touch
+ * devices keep the native cursor; reduced motion keeps the arrow only.
+ */
+
+// Upright crystal arrow in three tints: idle (blue), over a link (cyan),
+// pressed (indigo). A darker copy offset down-right gives it depth, two
+// bevel faces and an edge highlight give it the 3D look.
+const BODY = 'M4 2 L4 24.5 L9.6 19.4 L13.3 28 L17 26.4 L13.4 18 L21 18 Z';
+const arrow = (light: string, mid: string, dark: string, deep: string) =>
+  `<svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 32 32">` +
+  `<defs><linearGradient id="g" x1="0" y1="0" x2=".9" y2="1">` +
+  `<stop offset="0" stop-color="${light}"/><stop offset=".55" stop-color="${mid}"/><stop offset="1" stop-color="${dark}"/>` +
+  `</linearGradient></defs>` +
+  `<path d="${BODY}" transform="translate(1.8 1.8)" fill="${deep}" stroke="${deep}" stroke-width="1.4" stroke-linejoin="round"/>` +
+  `<path d="${BODY}" fill="url(#g)" stroke="#06103a" stroke-width="1.1" stroke-linejoin="round"/>` +
+  `<path d="M4 2 L13.4 18 L21 18 Z" fill="#000" fill-opacity=".16"/>` +
+  `<path d="M4 2 L4 24.5 L9.6 19.4 L13.4 18 Z" fill="#fff" fill-opacity=".22"/>` +
+  `<path d="M5.3 5.2 L5.3 20.6" stroke="#fff" stroke-opacity=".75" stroke-width="1.1" stroke-linecap="round"/>` +
+  `<path d="M10.6 20.6 L13.6 27.2" stroke="#fff" stroke-opacity=".35" stroke-width=".9" stroke-linecap="round"/>` +
+  `</svg>`;
+const url = (svg: string) => `url("data:image/svg+xml,${encodeURIComponent(svg)}") 4 2`;
+const idle = url(arrow('#eef6ff', '#5b9dff', '#2f43c9', '#0b1d63'));
+const hover = url(arrow('#ecfeff', '#38d3ee', '#1f74f0', '#0a3a6e'));
+const down = url(arrow('#f3efff', '#8f7dff', '#4a2bd0', '#22105e'));
+const HOT = ':is(a, button, summary, label, select, [role="button"], [data-qa], [tabindex]:not([tabindex="-1"]))';
+const cursorCss =
+  `html.fx-cursor-on, html.fx-cursor-on * { cursor: ${idle}, auto !important; }` +
+  `html.fx-cursor-on ${HOT}, html.fx-cursor-on ${HOT} * { cursor: ${hover}, pointer !important; }` +
+  `html.fx-cursor-on.fx-down, html.fx-cursor-on.fx-down * { cursor: ${down}, auto !important; }`;
+---
+
+<Fragment set:html={`<style>${cursorCss}</style>`} />
+<div class="fx-cursor" aria-hidden="true" transition:persist="fx-cursor">
+  <div class="fx-ring"><i></i><i></i><i></i><i></i></div>
+</div>
+
+<style is:global>
+  .fx-cursor {
+    position: fixed;
+    inset: 0 auto auto 0;
+    z-index: 2147483000;
+    pointer-events: none;
+    display: none;
+  }
+  html.fx-cursor-on .fx-cursor {
+    display: block;
+  }
+  .fx-ring {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 28px;
+    height: 28px;
+    margin: -14px 0 0 -14px;
+    border-radius: 50%;
+    border: 1.5px solid rgb(var(--accent-1) / 0.55);
+    transform: translate3d(var(--rx, -100px), var(--ry, -100px), 0) scale(var(--rs, 1)) rotate(var(--rr, 0deg));
+    transition: width 0.25s, height 0.25s, margin 0.25s, border-color 0.25s, opacity 0.25s;
+    opacity: 0;
+  }
+  html.fx-cursor-on.fx-seen .fx-ring {
+    opacity: 1;
+  }
+  /* Reticle ticks, shown over clickable things. */
+  .fx-ring i {
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    width: 2px;
+    height: 8px;
+    margin: -4px 0 0 -1px;
+    border-radius: 1px;
+    background: rgb(var(--accent-2));
+    opacity: 0;
+    transition: opacity 0.2s, transform 0.25s;
+  }
+  .fx-ring i:nth-child(1) { transform: rotate(0deg) translateY(-14px); }
+  .fx-ring i:nth-child(2) { transform: rotate(90deg) translateY(-14px); }
+  .fx-ring i:nth-child(3) { transform: rotate(180deg) translateY(-14px); }
+  .fx-ring i:nth-child(4) { transform: rotate(270deg) translateY(-14px); }
+  html.fx-hot .fx-ring {
+    width: 40px;
+    height: 40px;
+    margin: -20px 0 0 -20px;
+    border-color: rgb(var(--accent-2) / 0.85);
+  }
+  html.fx-hot .fx-ring i {
+    opacity: 1;
+  }
+  html.fx-hot .fx-ring i:nth-child(1) { transform: rotate(0deg) translateY(-22px); }
+  html.fx-hot .fx-ring i:nth-child(2) { transform: rotate(90deg) translateY(-22px); }
+  html.fx-hot .fx-ring i:nth-child(3) { transform: rotate(180deg) translateY(-22px); }
+  html.fx-hot .fx-ring i:nth-child(4) { transform: rotate(270deg) translateY(-22px); }
+  html.fx-down .fx-ring {
+    border-color: rgb(var(--accent-3));
+  }
+  html.fx-down .fx-ring i {
+    background: rgb(var(--accent-3));
+  }
+
+  /* Click burst: an expanding ring and a few sparks. */
+  .fx-burst,
+  .fx-spark {
+    position: fixed;
+    z-index: 2147483000;
+    pointer-events: none;
+    border-radius: 50%;
+  }
+  .fx-burst {
+    width: 12px;
+    height: 12px;
+    margin: -6px 0 0 -6px;
+    border: 2px solid rgb(var(--accent-2));
+    animation: fx-burst 0.55s cubic-bezier(0.2, 0.8, 0.2, 1) forwards;
+  }
+  @keyframes fx-burst {
+    to {
+      transform: scale(5.5);
+      opacity: 0;
+      border-width: 0.5px;
+    }
+  }
+  .fx-spark {
+    width: 4px;
+    height: 4px;
+    margin: -2px 0 0 -2px;
+    background: rgb(var(--accent-2));
+    animation: fx-spark 0.5s ease-out forwards;
+  }
+  .fx-spark:nth-child(even) {
+    background: rgb(var(--accent-1));
+  }
+  @keyframes fx-spark {
+    to {
+      transform: translate(var(--sx), var(--sy)) scale(0.2);
+      opacity: 0;
+    }
+  }
+</style>
+
+<script>
+  const FINE = matchMedia('(hover: hover) and (pointer: fine)');
+  const REDUCED = matchMedia('(prefers-reduced-motion: reduce)');
+  const HOT = 'a, button, summary, label, select, [role="button"], [data-qa], [tabindex]:not([tabindex="-1"])';
+  const root = document.documentElement;
+  let started = false;
+
+  function start() {
+    if (started || !FINE.matches) return;
+    started = true;
+    root.classList.add('fx-cursor-on');
+    if (REDUCED.matches) return; // the arrow alone, no trailing ring or bursts
+
+    let x = -100, y = -100, rx = -100, ry = -100, rot = 0, raf = 0;
+    const ring = () => document.querySelector<HTMLElement>('.fx-ring');
+
+    const tick = () => {
+      rx += (x - rx) * 0.22;
+      ry += (y - ry) * 0.22;
+      const el = ring();
+      if (el) {
+        if (root.classList.contains('fx-hot')) rot = (rot + 1.6) % 360;
+        el.style.setProperty('--rx', `${rx.toFixed(1)}px`);
+        el.style.setProperty('--ry', `${ry.toFixed(1)}px`);
+        el.style.setProperty('--rr', `${rot.toFixed(1)}deg`);
+      }
+      const still = Math.abs(x - rx) + Math.abs(y - ry) < 0.3 && !root.classList.contains('fx-hot');
+      raf = still ? 0 : requestAnimationFrame(tick);
+    };
+    const wake = () => { if (!raf) raf = requestAnimationFrame(tick); };
+
+    addEventListener('pointermove', (e) => {
+      if (e.pointerType !== 'mouse') return;
+      x = e.clientX;
+      y = e.clientY;
+      if (!root.classList.contains('fx-seen')) { rx = x; ry = y; root.classList.add('fx-seen'); }
+      root.classList.toggle('fx-hot', !!(e.target as Element | null)?.closest?.(HOT));
+      wake();
+    }, { passive: true });
+
+    document.addEventListener('pointerleave', () => root.classList.remove('fx-seen', 'fx-hot'));
+    addEventListener('blur', () => root.classList.remove('fx-down'));
+
+    addEventListener('pointerdown', (e) => {
+      if (e.pointerType !== 'mouse' || e.button !== 0) return;
+      root.classList.add('fx-down');
+      ring()?.style.setProperty('--rs', '0.7');
+      const frag = document.createDocumentFragment();
+      const burst = document.createElement('span');
+      burst.className = 'fx-burst';
+      burst.style.left = `${e.clientX}px`;
+      burst.style.top = `${e.clientY}px`;
+      frag.appendChild(burst);
+      const sparks: HTMLElement[] = [burst];
+      for (let i = 0; i < 6; i++) {
+        const a = (i / 6) * Math.PI * 2 + Math.random() * 0.5;
+        const d = 18 + Math.random() * 14;
+        const s = document.createElement('span');
+        s.className = 'fx-spark';
+        s.style.left = `${e.clientX}px`;
+        s.style.top = `${e.clientY}px`;
+        s.style.setProperty('--sx', `${(Math.cos(a) * d).toFixed(1)}px`);
+        s.style.setProperty('--sy', `${(Math.sin(a) * d).toFixed(1)}px`);
+        frag.appendChild(s);
+        sparks.push(s);
+      }
+      document.body.appendChild(frag);
+      setTimeout(() => sparks.forEach((s) => s.remove()), 650);
+    });
+    addEventListener('pointerup', () => {
+      root.classList.remove('fx-down');
+      ring()?.style.setProperty('--rs', '1');
+    });
+  }
+
+  start();
+  FINE.addEventListener?.('change', start);
+  // ClientRouter copies the new page's <html> attributes, which drops our classes.
+  document.addEventListener('astro:after-swap', () => {
+    if (started) root.classList.add('fx-cursor-on');
+  });
+  document.addEventListener('astro:page-load', start);
+</script>

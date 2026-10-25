@@ -20,93 +20,19 @@ export const copy = {
       tr: "İstanbul'da ürünleri baştan sona geliştiriyorum. Yapay zekâ kodlama ajanlarıyla birlikte çalışıyorum; veritabanı mimarisinden arayüz tasarımına, kod incelemesinden testlere kadar her şeyi ben yönetiyorum.",
     },
     stats: [
-      { n: { en: '30+', tr: '30+' }, l: { en: 'projects', tr: 'proje' } },
-      { n: { en: '5,000+', tr: '5.000+' }, l: { en: 'commits', tr: 'commit' } },
-      { n: { en: '6+ yrs', tr: '6+ yıl' }, l: { en: 'experience', tr: 'deneyim' } },
+      { n: { en: '30+', tr: '30+' }, l: { en: 'Projects', tr: 'Proje' } },
+      { n: { en: '5,000+', tr: '5.000+' }, l: { en: 'Commits', tr: 'Commit' } },
+      { n: { en: '6+ yrs', tr: '6+ yıl' }, l: { en: 'Experience', tr: 'Deneyim' } },
     ],
     note: { en: 'better code, better tomorrow :)', tr: 'daha iyi kod, daha iyi yarın :)' },
-    now: { en: 'Currently working on', tr: 'Şu an üzerinde çalıştığım' },
-    nowDesc: { en: 'Pet services marketplace', tr: 'Evcil hayvan hizmetleri pazaryeri' },
-    nowLink: { en: 'View project', tr: 'Projeyi gör' },
-    stack: { en: 'Tech stack', tr: 'Tech stack' },
+    now: { en: 'Currently Working On', tr: 'Şu an üzerinde çalıştığım' },
+    nowDesc: { en: 'Pet Services Marketplace', tr: 'Evcil hayvan hizmetleri pazaryeri' },
+    nowLink: { en: 'View Project', tr: 'Projeyi gör' },
+    stack: { en: 'Tech Stack', tr: 'Tech Stack' },
     photoNote: { en: 'same guy, bigger dreams :)', tr: 'aynı Kaan, daha büyük hayaller :)' },
   },
   ask: {
     title: { en: 'About me', tr: 'Hakkımda' },
-    placeholder: { en: 'Ask about my work…', tr: 'İşlerim hakkında bir şey sor…' },
-    inputLabel: { en: 'Ask me a question', tr: 'Bana bir soru sor' },
-    send: { en: 'Send', tr: 'Gönder' },
-    fallback: {
-      en: "That one isn't covered here. Try one of the questions above, or email me at kaanekimoz@gmail.com.",
-      tr: 'Bu soru burada yok. Yukarıdaki sorulardan birini dene ya da bana yaz: kaanekimoz@gmail.com.',
-    },
-  },
-  work: {
-    title: { en: 'Patimania', tr: 'Patimania' },
-    lede: {
-      en: "A marketplace that connects pet hotels, groomers and pet taxis with pet owners across Türkiye. I'm the only engineer on it, so every screen and every table you see here is mine.",
-      tr: "Türkiye'de pet otellerini, kuaförleri ve pet taksileri hayvan sahipleriyle buluşturan bir pazaryeri. Projenin tek mühendisi benim; burada gördüğün her ekranı ve her tabloyu ben yazdım.",
-    },
-    status: { en: 'soft launch · payments off', tr: 'ön yayında · ödeme kapalı' },
-    tabs: { en: ['Home', 'Search', 'Business', 'Mobile', 'Panel', 'Calendar'], tr: ['Ana sayfa', 'Arama', 'İşletme', 'Mobil', 'Panel', 'Takvim'] },
-    rows: [
-      { k: { en: 'surfaces', tr: 'platformlar' }, v: { en: 'Web (<b>128</b> routes) · iOS & Android app (<b>45</b> screens)', tr: 'Web (<b>128</b> sayfa) · iOS ve Android uygulaması (<b>45</b> ekran)' } },
-      { k: { en: 'backend', tr: 'arka uç' }, v: { en: '<b>32</b> NestJS domain modules', tr: '<b>32</b> NestJS alan modülü' } },
-      { k: { en: 'data', tr: 'veri' }, v: { en: '<b>68</b> tables · <b>106</b> foreign keys · <b>124</b> migrations live · PostGIS', tr: '<b>68</b> tablo · <b>106</b> yabancı anahtar · canlıda <b>124</b> migration · PostGIS' } },
-      { k: { en: 'quality', tr: 'kalite' }, v: { en: '<b>76</b> end-to-end test suites · <b>3,900</b> assertions · <b>7</b> CI guard scripts', tr: '<b>76</b> uçtan uca test paketi · <b>3.900</b> doğrulama · <b>7</b> CI nöbetçisi' } },
-      { k: { en: 'code', tr: 'kod' }, v: { en: '<b>315,165</b> lines of TypeScript across API, web, app and tests', tr: 'API, web, uygulama ve testlerde <b>315.165</b> satır TypeScript' } },
-      { k: { en: 'history', tr: 'geçmiş' }, v: { en: '<b>2,441</b> commits in 115 days, since 2 July 2026', tr: "2 Temmuz 2026'dan bu yana 115 günde <b>2.441</b> commit" } },
-    ],
-    models: { en: 'Data models', tr: 'Veri modelleri' },
-    modules: { en: 'Domain modules', tr: 'Alan modülleri' },
-    note: {
-      en: "It's in a soft launch. The storefront, search and business onboarding are open, and the businesses listed so far are demo records. Real payments stay off until the payment provider is connected; the flow itself is tested. The app is in Google Play closed testing and TestFlight external testing. Numbers measured from the repository and the live database on 24 October 2026.",
-      tr: 'Proje ön yayında. Vitrin, arama ve işletme kaydı açık; şu an listelenen işletmeler demo kaydı. Ödeme sağlayıcısı bağlanana kadar gerçek ödeme kapalı, akışın kendisi test edildi. Uygulama Google Play kapalı testinde ve TestFlight dış testinde. Rakamlar 24 Ekim 2026’da kod deposundan ve canlı veritabanından ölçüldü.',
-    },
-    visit: { en: 'Visit patimania.com ↗', tr: "patimania.com'u ziyaret et ↗" },
-    appTitle: { en: 'The mobile app', tr: 'Mobil uygulama' },
-    appLede: { en: 'Eight of its 45 screens: search, hotels, a room, a groomer, taxi offers, bookings, reviews and a driver profile. The businesses are demo records.', tr: '45 ekranından sekizi: arama, oteller, oda, kuaför, taksi teklifleri, rezervasyonlar, yorumlar ve şoför profili. İşletmeler demo kaydı.' },
-    archTitle: { en: 'How it fits together', tr: 'Nasıl çalışıyor' },
-    arch: [
-      { en: 'System architecture', tr: 'Sistem mimarisi' },
-      { en: 'Booking and money flow', tr: 'Rezervasyon ve para akışı' },
-      { en: 'Data model', tr: 'Veri modeli' },
-    ],
-    archNote: { en: 'Diagrams are in Turkish; open one to see it full size.', tr: 'Tam boyutu görmek için bir şemaya tıkla.' },
-  },
-  notes: {
-    title: { en: 'Notes from the build', tr: 'Yapım notları' },
-    lede: { en: 'A few problems I ran into on Patimania, and what I did about them.', tr: "Patimania'da karşılaştığım birkaç sorun ve onları nasıl çözdüğüm." },
-    items: [
-      {
-        h: { en: 'Two customers, one room', tr: 'Aynı oda, iki müşteri' },
-        p: {
-          en: "Two people could try to book the same room at the same moment. I didn't leave that to the app logic; I made it impossible in the database. A PostgreSQL EXCLUDE constraint rejects overlapping bookings, so only one of the two writes goes through.",
-          tr: 'İki kişi aynı odayı aynı anda ayırtmaya çalışabiliyordu. Bunu uygulama mantığına bırakmadım, veritabanında imkânsız hâle getirdim: PostgreSQL’deki bir EXCLUDE kısıtı çakışan rezervasyonları reddediyor, iki yazımdan yalnızca biri geçiyor.',
-        },
-      },
-      {
-        h: { en: 'Approved twice', tr: 'İki kez onaylanan işlem' },
-        p: {
-          en: "I tested what happens when two people press approve at the same time. Both requests succeeded and two accepted rows appeared. Now every status change only runs if the row is still in the state it expects, so the second request fails.",
-          tr: 'Aynı anda iki kişinin “onayla”ya basmasını denedim: iki istek de başarılı döndü, iki ayrı kabul kaydı oluştu. Artık her durum değişikliği yalnızca kayıt hâlâ beklenen durumdaysa çalışıyor; ikinci istek reddediliyor.',
-        },
-      },
-      {
-        h: { en: 'A permission I forgot', tr: 'Unutulan bir yetki' },
-        p: {
-          en: 'In the admin panel, forgetting a permission entry opened an endpoint instead of closing it. I added a CI check that fails the build when a new admin endpoint has no permission. It caught a real hole: support staff could close their own customers’ complaints.',
-          tr: 'Yönetim panelinde bir yetki satırını unutmak, ilgili ucu kapatmak yerine açıyordu. Yetkisi tanımlanmamış yeni bir uç eklenirse derlemeyi durduran bir CI kontrolü yazdım. Kontrol gerçek bir açık yakaladı: destek personeli kendi müşterilerinin şikâyetlerini tek başına kapatabiliyordu.',
-        },
-      },
-      {
-        h: { en: 'Quietly broken on iOS', tr: "iOS'ta sessiz bir arıza" },
-        p: {
-          en: 'A deep link stopped working on iOS while the plain smoke tests stayed green. What caught it was a check I had written to compare app.json, the iOS association file and the route table.',
-          tr: 'iOS’ta bir derin bağlantı çalışmayı bıraktı ama düz duman testleri yeşil kaldı. Sorunu, app.json, iOS ilişkilendirme dosyası ve rota tablosunu karşılaştırmak için yazdığım kontrol yakaladı.',
-        },
-      },
-    ],
   },
   method: {
     title: { en: 'How I use AI', tr: 'Yapay zekâyı nasıl kullanıyorum' },
@@ -115,11 +41,21 @@ export const copy = {
         en: "I've been building with AI coding agents for two years. Every day I use Claude Code with MCP, split bigger changes across several agents, and run local models with Ollama when they're enough. I write my own agent skills for the parts of my work I keep repeating, and I've shipped LLM features to real users.",
         tr: "İki yıldır yapay zekâ kodlama ajanlarıyla çalışıyorum. Her gün MCP ile Claude Code kullanıyorum; büyük değişiklikleri birkaç ajana bölüyorum, yeterli olduğunda Ollama ile yerel modeller çalıştırıyorum. Sık tekrarladığım işler için kendi agent skill'lerimi yazıyorum, gerçek kullanıcılara LLM özellikleri de sundum.",
       },
-      {
-        en: "Patimania's code was written with Claude Code from start to finish. That's how one person shipped an API, a website, a mobile app and an admin panel in four months. The harder part was checking it: AI writes wrong code just as fast and just as confidently as right code. So the decisions stay with me, written down with their reasons (102 decision records so far), and the checks run on every change: 76 end-to-end test suites with 3,900 assertions, and 7 CI guard scripts that fail the build on mistakes that would otherwise slip through quietly.",
-        tr: "Patimania'nın kodu baştan sona Claude Code ile yazıldı. Tek kişinin dört ayda API, web sitesi, mobil uygulama ve yönetim paneli çıkarabilmesinin sebebi bu. Asıl zor kısım denetimdi: yapay zekâ yanlış kodu da doğru kod kadar hızlı ve emin yazıyor. Bu yüzden kararlar bende kalıyor ve gerekçesiyle yazıya geçiyor (şu ana kadar 102 karar kaydı); kontroller de her değişiklikte çalışıyor: 3.900 doğrulamalı 76 uçtan uca test paketi ve gözden kaçabilecek hataları derleme anında yakalayan 7 CI nöbetçisi.",
-      },
     ],
+    flow: {
+      me: { en: 'Me', tr: 'Ben' },
+      meSub: { en: 'plan · review', tr: 'plan · inceleme' },
+      agent: { en: 'Agent', tr: 'Ajan' },
+      log: [
+        { en: 'me → plan the change', tr: 'ben → değişikliği planla' },
+        { en: 'claude code → load my skills', tr: "claude code → skill'lerimi yükle" },
+        { en: 'mcp → read the repo, run tools', tr: 'mcp → repoyu oku, araçları çalıştır' },
+        { en: 'split the work across 3 agents', tr: 'işi 3 ajana böl' },
+        { en: 'ollama → small task on a local model', tr: 'ollama → küçük iş yerel modelde' },
+        { en: 'agents → diffs back for review', tr: "ajanlar → diff'ler incelemeye" },
+        { en: 'me → review, test, merge ✓', tr: 'ben → incele, test et, birleştir ✓' },
+      ],
+    },
   },
   career: {
     title: { en: 'How I got here', tr: 'Buraya nasıl geldim' },
@@ -199,7 +135,6 @@ export const copy = {
     ],
   },
   sources: {
-    work: { en: 'Patimania', tr: 'Patimania' },
     method: { en: 'How I use AI', tr: 'Yapay zekâ' },
     career: { en: 'Career', tr: 'Kariyer' },
     skills: { en: 'Tech Stack', tr: 'Tech Stack' },
@@ -211,73 +146,67 @@ export const copy = {
 
 export type SectionId = keyof typeof copy.sources;
 
-/** Pre-written answers for the ask box. `keys` are matched as whole words (or word prefixes for keys longer than 3). */
-export const QA: { id: string; keys: string[]; q: L10n; a: L10n; stats?: Record<Lang, string[]>; src: SectionId[] }[] = [
+/** Pre-written questions and answers for the ask box. */
+export const QA: { id: string; q: L10n; a: L10n; stats?: Record<Lang, string[]>; src: SectionId[] }[] = [
   {
     id: 'what',
-    keys: ['build', 'builds', 'do', 'job', 'role', 'kim', 'kimsin', 'yapıyor', 'iş', 'işi', 'işin', 'meslek'],
     q: { en: 'What do I do?', tr: 'Ne yapıyorum?' },
     a: {
       en: "I'm a full-stack developer in Istanbul. I build products from start to finish: the backend, the web app, the mobile app and the pipeline that ships them. I work with AI coding agents, and the architecture, code review and testing stay with me.",
       tr: "İstanbul'da full-stack geliştiriciyim. Ürünleri baştan sona geliştiriyorum: arka uç, web uygulaması, mobil uygulama ve hepsini yayına alan altyapı. Yapay zekâ kodlama ajanlarıyla çalışıyorum; mimari, kod incelemesi ve testler bende.",
     },
-    src: ['work', 'career'],
+    stats: { en: ['30+ projects', '5,000+ commits', '6+ yrs experience'], tr: ['30+ proje', '5.000+ commit', '6+ yıl deneyim'] },
+    src: ['career'],
   },
   {
-    id: 'built',
-    keys: ['projects', 'project', 'portfolio', 'built', 'made', 'work', 'works', 'patimania', 'proje', 'projeler', 'projelerin', 'portfolyo', 'neler', 'geliştirdin', 'yaptın'],
-    q: { en: 'What have I built?', tr: 'Neler geliştirdim?' },
+    id: 'now',
+    q: { en: 'What am I working on?', tr: 'Şu an ne üzerinde çalışıyorum?' },
     a: {
-      en: "More than 30 projects over six-plus years: web platforms, iOS and Android apps, admin panels, and Unity games from VR to hyper-casual. Not all of them are in this portfolio; what you see here is a selection.",
-      tr: "Altı yılı aşkın sürede 30'dan fazla proje: web platformları, iOS ve Android uygulamaları, yönetim panelleri ve VR'dan hiper-casual'a Unity oyunları. Hepsi bu portfolyoda yok; burada gördüklerin bir seçki.",
+      en: "Patimania, a marketplace that connects pet hotels, groomers and pet taxis with pet owners across Türkiye. I'm its only engineer and built every part of it: the NestJS and PostgreSQL backend, the Next.js website, the iOS and Android app in React Native, and the business and admin panels. Payments are held in escrow until the service is done, and double bookings are blocked by the database itself. It's in a soft launch at patimania.com: the listed businesses are demo records for now, real payments switch on once the payment provider is connected, and the app is in Google Play closed testing and on TestFlight.",
+      tr: "Patimania: Türkiye genelinde pet otellerini, kuaförleri ve pet taksileri hayvan sahipleriyle buluşturan bir pazaryeri. Tek mühendisi benim ve her parçasını ben geliştirdim: NestJS ve PostgreSQL ile arka uç, Next.js ile web sitesi, React Native ile iOS ve Android uygulaması, işletme ve yönetim panelleri. Ödeme, hizmet tamamlanana kadar Ödeme Güvencesi ile bekletiliyor; çift rezervasyonu doğrudan veritabanı engelliyor. Platform patimania.com'da ön yayında: listelenen işletmeler şimdilik demo kayıtlar, gerçek ödemeler ödeme sağlayıcısı bağlanınca açılacak, uygulama da Google Play kapalı testinde ve TestFlight'ta.",
     },
-    stats: { en: ['30+ projects', '5,000+ commits', '6+ yrs experience'], tr: ['30+ proje', '5.000+ commit', '6+ yıl deneyim'] },
-    src: ['work', 'games'],
+    stats: { en: ['2,441 commits', '68 tables', '76 E2E test suites'], tr: ['2.441 commit', '68 tablo', '76 uçtan uca test paketi'] },
+    src: [],
+  },
+  {
+    id: 'skills',
+    q: { en: 'What are my skills?', tr: 'Yeteneklerim neler?' },
+    a: {
+      en: 'Taking a product from idea to release: data modelling and backend APIs, web and mobile interfaces, CI and deployment, and working with AI agents under checks I set up. In TestGorilla assessments in September 2026 I scored in the 99th percentile for .NET, React and artificial intelligence, the 98th for Microsoft Azure and the 97th for English.',
+      tr: 'Bir ürünü fikirden yayına taşımak: veri modeli ve arka uç API’leri, web ve mobil arayüzler, CI ve yayın süreci, yapay zekâ ajanlarıyla kendi kurduğum denetimler altında çalışmak. Eylül 2026’daki TestGorilla değerlendirmelerinde .NET, React ve yapay zekâda 99., Microsoft Azure’da 98., İngilizcede 97. yüzdelik dilimde yer aldım.',
+    },
+    src: ['skills', 'evals'],
   },
   {
     id: 'stack',
-    keys: ['stack', 'tech', 'skill', 'skills', 'language', 'languages', 'teknoloji', 'yetenek', 'dil', 'typescript', 'react', 'next.js', 'nextjs', 'nestjs', 'node', 'docker', '.net', 'c#', 'postgres', 'postgresql', 'expo', 'mobile', 'mobil', 'biliyor'],
     q: { en: "What's my stack?", tr: 'Hangi teknolojileri kullanıyorum?' },
     a: {
       en: 'Mostly TypeScript: NestJS, Prisma and PostgreSQL on the backend, Next.js and React on the web, React Native with Expo on mobile, Docker and GitHub Actions to ship. I also work with C# and .NET, and spent six years in Unity before that.',
       tr: 'Ağırlıklı olarak TypeScript: arka uçta NestJS, Prisma ve PostgreSQL; webde Next.js ve React; mobilde Expo ile React Native; yayın için Docker ve GitHub Actions. C# ve .NET ile de çalışıyorum; öncesinde altı yıl Unity kullandım.',
     },
-    src: ['skills', 'evals'],
-  },
-  {
-    id: 'evals',
-    keys: ['test', 'tests', 'tested', 'testgorilla', 'percentile', 'score', 'assessment', 'sınav', 'puan', 'yüzdelik', 'değerlendirme'],
-    q: { en: 'My test results', tr: 'Test sonuçlarım' },
-    a: {
-      en: 'In TestGorilla assessments in September 2026 I scored in the 99th percentile for .NET, React and artificial intelligence, the 98th for Microsoft Azure and the 97th for English.',
-      tr: 'Eylül 2026’daki TestGorilla değerlendirmelerinde .NET, React ve yapay zekâda 99., Microsoft Azure’da 98., İngilizcede 97. yüzdelik dilimde yer aldım.',
-    },
-    src: ['evals'],
+    src: ['skills'],
   },
   {
     id: 'ai',
-    keys: ['ai', 'agent', 'agents', 'claude', 'llm', 'gpt', 'yapay', 'zeka', 'zekâ', 'ajan', 'ajanlar'],
     q: { en: 'How do I use AI?', tr: 'Yapay zekâyı nasıl kullanıyorum?' },
     a: {
       en: "Every day. I work with coding agents like Claude Code and MCP, write my own agent skills, and have shipped LLM features to real users. The architecture, the review and the tests stay with me: agents write code fast, but I decide what goes live.",
       tr: "Her gün. Claude Code ve MCP gibi kodlama ajanlarıyla çalışıyorum, kendi agent skill'lerimi yazıyorum ve gerçek kullanıcılara LLM özellikleri sundum. Mimari, kod incelemesi ve testler bende kalıyor: ajanlar kodu hızlı yazıyor ama neyin yayına çıkacağına ben karar veriyorum.",
     },
-    src: ['method', 'work'],
+    src: ['method'],
   },
   {
-    id: 'start',
-    keys: ['start', 'started', 'game', 'games', 'unity', 'background', 'school', 'university', 'education', 'experience', 'years', 'oyun', 'oyunlar', 'başladı', 'okul', 'üniversite', 'eğitim', 'deneyim', 'tecrübe', 'yıl', 'yıllık'],
-    q: { en: 'Where did I start?', tr: 'Nereden başladım?' },
+    id: 'story',
+    q: { en: "What's my story?", tr: 'Kısaca hikayem' },
     a: {
-      en: 'With games. I studied Digital Game Design at İstinye University and spent six years shipping Unity games: Brick Game on Google Play, the roguelike Orbs of The Power, VR and hyper-casual titles. Then retail systems at a grocery chain, and now full-stack web and mobile products.',
-      tr: "Oyunlardan. İstinye Üniversitesi'nde Dijital Oyun Tasarımı okudum ve altı yıl boyunca Unity ile oyunlar yayımladım: Google Play'deki Brick Game, roguelike Orbs of The Power, VR ve hiper-casual oyunlar. Ardından bir market zincirinde perakende sistemleri üzerinde çalıştım; şimdi de full-stack web ve mobil ürünler geliştiriyorum.",
+      en: 'I studied Digital Game Design at İstinye University and spent six years making Unity games: Brick Game on Google Play, the roguelike Orbs of The Power, VR and hyper-casual titles. Games taught me performance budgets and how software should feel. Then I worked on retail systems at a grocery chain, and now I build full-stack web and mobile products.',
+      tr: "İstinye Üniversitesi'nde Dijital Oyun Tasarımı okudum ve altı yıl boyunca Unity ile oyunlar geliştirdim: Google Play'deki Brick Game, roguelike Orbs of The Power, VR ve hiper-casual oyunlar. Performans bütçesini ve bir yazılımın nasıl hissettirmesi gerektiğini oyunlardan öğrendim. Ardından bir market zincirinde perakende sistemleri üzerinde çalıştım; şimdi de full-stack web ve mobil ürünler geliştiriyorum.",
     },
     src: ['career', 'games'],
   },
   {
     id: 'contact',
-    keys: ['contact', 'email', 'mail', 'hire', 'hiring', 'reach', 'available', 'availability', 'cv', 'resume', 'linkedin', 'where', 'based', 'location', 'remote', 'iletişim', 'ulaş', 'ulaşırım', 'eposta', 'e-posta', 'adres', 'nerede', 'konum', 'özgeçmiş', 'müsait', 'uzaktan'],
-    q: { en: 'How to reach me', tr: 'Bana nasıl ulaşırsın?' },
+    q: { en: 'How can you reach me?', tr: 'Bana nasıl ulaşabilirsin?' },
     a: {
       en: "Email works best: kaanekimoz@gmail.com. I'm based in Sarıyer, Istanbul (GMT+3). For my CV or availability, just ask; LinkedIn and GitHub are linked below.",
       tr: 'En kolayı e-posta: kaanekimoz@gmail.com. Sarıyer, İstanbul’da yaşıyorum (GMT+3). Özgeçmiş ya da müsaitlik için doğrudan bana yazabilirsin; LinkedIn ve GitHub aşağıda.',
