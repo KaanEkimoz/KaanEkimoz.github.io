@@ -130,7 +130,6 @@ export const copy = {
   },
   skills: {
     title: { en: 'Tech Stack', tr: 'Tech Stack' },
-    lede: { en: 'Grouped by where each tool sits in a product.', tr: 'Her araç, üründe durduğu yere göre gruplandı.' },
   },
   evals: {
     title: { en: 'Test results', tr: 'Test sonuçları' },
