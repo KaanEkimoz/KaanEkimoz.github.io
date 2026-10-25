@@ -56,9 +56,10 @@
 }
 
 html[data-theme='light'] {
-  --bg-base: 243 246 255;
+  /* A blue-grey ground so white cards stand out, blue-tinted borders and shadows. */
+  --bg-base: 233 239 252;
   --bg-elev: 255 255 255;
-  --bg-elev-2: 232 238 252;
+  --bg-elev-2: 222 231 251;
 
   --accent-1: 36 89 232;
   --accent-2: 14 116 144;
@@ -66,15 +67,15 @@ html[data-theme='light'] {
   --accent-strong: 36 89 232;
 
   --text-100: 10 19 48;
-  --text-200: 77 91 124;
-  --text-300: 95 108 140;
+  --text-200: 70 85 120;
+  --text-300: 92 106 140;
 
-  --border: 213 221 240;
+  --border: 200 212 240;
 
   --grid-line: 36 89 232;
   --field-boost: 2;
   --glow: 0 0 0 1px rgb(36 89 232 / 0.14), 0 24px 60px -32px rgb(36 89 232 / 0.45);
-  --shadow: 0 1px 2px rgb(10 19 48 / 0.05), 0 20px 50px -30px rgb(10 19 48 / 0.3);
+  --shadow: 0 1px 2px rgb(20 45 120 / 0.06), 0 14px 34px -16px rgb(36 89 232 / 0.26);
 
   color-scheme: light;
 }
@@ -336,4 +337,25 @@ html[data-theme='light'] {
       transition: none;
     }
   }
+}
+
+/* Light theme details: soft blue washes behind the page and behind every
+   other home section, blue-tinted card shadows, a tinted header and footer.
+   The dark theme is untouched. */
+html[data-theme='light'] body {
+  background:
+    radial-gradient(1100px 520px at 88% -6%, rgb(61 123 255 / 0.12), transparent 62%),
+    radial-gradient(900px 600px at -12% 38%, rgb(34 211 238 / 0.07), transparent 60%),
+    rgb(var(--bg-base));
+}
+html[data-theme='light'] :is(#method, #skills, #writing) {
+  padding-bottom: clamp(72px, 8vw, 104px);
+  background: linear-gradient(180deg, rgb(61 123 255 / 0.075), rgb(61 123 255 / 0.03) 70%, rgb(61 123 255 / 0.06));
+  border-block: 1px solid rgb(36 89 232 / 0.1);
+}
+html[data-theme='light'] :is(.panel, .lite-yt) {
+  box-shadow: var(--shadow);
+}
+html[data-theme='light'] .site-footer {
+  background: linear-gradient(180deg, rgb(61 123 255 / 0.05), rgb(61 123 255 / 0.1));
 }
