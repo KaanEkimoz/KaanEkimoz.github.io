@@ -2,6 +2,7 @@
 import BaseLayout from '@layouts/BaseLayout.astro';
 import HeroSection from '@components/home/HeroSection.astro';
 import PatimaniaSection from '@components/home/PatimaniaSection.astro';
+import NotesSection from '@components/home/NotesSection.astro';
 import MethodSection from '@components/home/MethodSection.astro';
 import CareerSection from '@components/home/CareerSection.astro';
 import SkillsSection from '@components/home/SkillsSection.astro';
@@ -25,6 +26,7 @@ const w = copy.writing;
 <BaseLayout lang={lang}>
   <HeroSection lang={lang} />
   <PatimaniaSection lang={lang} />
+  <NotesSection lang={lang} />
   <MethodSection lang={lang} />
   <CareerSection lang={lang} />
   <SkillsSection lang={lang} />
@@ -36,10 +38,7 @@ const w = copy.writing;
       <section class="sec" id="writing">
         <div class="wrap">
           <div class="head" data-fade-in>
-            <div class="sec-head">
-              <span class="eyebrow">{pick(w.eyebrow, lang)}</span>
-              <h2>{pick(w.title, lang)}</h2>
-            </div>
+            <h2>{pick(w.title, lang)}</h2>
             <a class="link" href={localizedPath('/blog', lang)}>{pick(w.all, lang)}</a>
           </div>
           <div class="posts">
@@ -61,8 +60,11 @@ const w = copy.writing;
     gap: 16px;
     margin-bottom: 44px;
   }
-  .head .sec-head {
-    margin-bottom: 0;
+  .head h2 {
+    font-size: clamp(1.9rem, 3.8vw, 2.9rem);
+    line-height: 1.08;
+    letter-spacing: -0.04em;
+    font-weight: 500;
   }
   .posts {
     display: grid;

@@ -90,9 +90,9 @@ const en: Dict = {
     siteDescription:
       'Full-stack engineer in Istanbul. I build and ship complete products: NestJS and PostgreSQL backends, Next.js web apps, React Native mobile apps and the pipelines that deploy them.',
     blogTitle: 'Blog',
-    blogDescription: 'Devlogs, build notes and things Kaan Usta learned shipping software.',
+    blogDescription: 'Devlogs, build notes and things I learned shipping software.',
     projectsTitle: 'Projects',
-    projectsDescription: 'Products and games by Kaan Usta: Patimania (web, iOS, Android) and six years of Unity games.',
+    projectsDescription: 'My products and games: Patimania (web, iOS, Android) and six years of Unity games.',
   },
 };
 
@@ -138,9 +138,9 @@ const tr: Dict = {
     siteDescription:
       "İstanbul'da full-stack yazılım mühendisi. Ürünleri uçtan uca kurup yayına alıyorum: NestJS ve PostgreSQL arka uçlar, Next.js web uygulamaları, React Native mobil uygulamalar ve bunları dağıtan altyapı.",
     blogTitle: 'Blog',
-    blogDescription: 'Kaan Usta’nın geliştirme günlükleri, yapım notları ve yazılım yayımlarken öğrendikleri.',
+    blogDescription: 'Geliştirme günlüklerim, yapım notlarım ve yazılım yayımlarken öğrendiklerim.',
     projectsTitle: 'Projeler',
-    projectsDescription: 'Kaan Usta’nın ürünleri ve oyunları: Patimania (web, iOS, Android) ve altı yıllık Unity oyunları.',
+    projectsDescription: 'Ürünlerim ve oyunlarım: Patimania (web, iOS, Android) ve altı yıllık Unity oyunları.',
   },
 };
 

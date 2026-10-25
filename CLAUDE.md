@@ -68,11 +68,12 @@ These come from mistakes made in earlier sessions. Follow them in every session,
 
 **Design**
 - Kaan likes blue and a futuristic data/AI look. He rejected a draft that looked like Claude's own UI. Build on the existing tokens and shared classes instead of adding new palettes.
+- He also said the site looked AI-made. Avoid the template tells: no eyebrow label on every section, no gradient or blue-accent word in headings, no glow on cards, no slogans ("end to end", "built by one engineer"). Vary section layouts, and prefer real material (his photo, real stories from his work) over decoration.
 
 ## Site structure
 
 ```
-/                    hero (name + title over the data canvas), intro + Q&A box, Patimania, how I work, career, skills, evals, games, latest posts, contact
+/                    hero (name + title over the data canvas), intro + Q&A box, Patimania, build notes, how I use AI, career, skills, evals, games, latest posts, contact
 /projects[/<slug>]   grid with filter pills (All | Products & Web | Games) and detail pages
 /blog[/<slug>]       posts (md / mdx)
 /brickcrack-privacy  hidden, for App Store Connect (iOS build name "BrickCrack" = Brick Game)
@@ -86,7 +87,7 @@ These come from mistakes made in earlier sessions. Follow them in every session,
 - **Content files:** EN `foo.md`, TR `foo-tr.md` (dash, not dot — Astro strips dots from ids). Slug pages drop the `-tr` suffix (`slugOf` in `src/lib/content.ts`) so both languages share one slug; `getProjects(lang)` / `getPosts(lang)` there return a locale's entries already filtered and sorted. Schemas in `src/content.config.ts` (`lang`, `published`, `featured`, `youtubeId`, `coverImage`, `gallery`…).
 - **Theme:** dark-first navy with blue (`--accent-1`), cyan (`--accent-2`) and indigo (`--accent-3`) accents. Design tokens in `src/styles/global.css` are **space-separated RGB triplets** (`--accent-1: 61 123 255`) so Tailwind's `rgb(var(--x) / <alpha-value>)` works. Dark in `:root`, light in `html[data-theme='light']`. Don't put hex values back into `tailwind.config.mjs`. In canvas/inline styles wrap tokens with `rgb(...)`.
 - **Shared classes** (`@layer components` in `global.css`): `.wrap`, `.sec`, `.sec-head`, `.eyebrow`, `.grad-em`, `.panel`, `.btn`, `.btn-ghost`, `.link`, `.mono-chip`.
-- **Key components:** `BaseLayout` (head, pre-paint theme + language scripts, hreflang), `Header` / `Footer` / `Mark`, the home sections in `src/components/home/` (`HeroField` canvas, `HeroSection` with the pre-written Q&A box, `PatimaniaSection`, `MethodSection`, `CareerSection`, `SkillsSection`, `EvalsSection`, `GamesSection`, `ContactSection`), `ProjectFilter`, `ProjectCard`, `ProjectModal`, `BlogCard`, `PageHeader`, `LiteYouTube`, `ThemeToggle`, `LanguageToggle`.
+- **Key components:** `BaseLayout` (head, pre-paint theme + language scripts, hreflang), `Header` / `Footer` / `Mark`, the home sections in `src/components/home/` (`HeroField` canvas, `HeroSection` with the pre-written Q&A box, `PatimaniaSection`, `NotesSection` (build stories), `MethodSection`, `CareerSection`, `SkillsSection`, `EvalsSection`, `GamesSection`, `ContactSection`), `ProjectFilter`, `ProjectCard`, `ProjectModal`, `BlogCard`, `PageHeader`, `LiteYouTube`, `ThemeToggle`, `LanguageToggle`.
 - **Home copy and data** (Q&A, career nodes, skills, evals, Patimania numbers) live in `src/lib/home.ts`, EN and TR side by side. Numbers there come from Kaan's profile brief; don't add figures or claims (store status, metrics) he hasn't confirmed.
 - **Client scripts** init on `astro:page-load` and clean up on `astro:before-swap`. The project modal injects `#project-detail` from a detail page into other pages, so `ProjectPage` uses utilities / global classes only (scoped CSS wouldn't load there); its back link carries `data-back` so the modal can hide it.
 - **Images:** put content images in `src/assets/` (Astro optimizes them); `public/` is served as-is. Keep big PNGs under ~2 MB.
@@ -103,6 +104,7 @@ These come from mistakes made in earlier sessions. Follow them in every session,
 ## Writing rules
 
 - **Turkish copy must be idiomatic, never a calque.** Rewrite the idea in Turkish instead of following English sentence structure. Examples Kaan rejected → preferred: "… lisansıyla başladı" → "üniversitede … okudu"; "varsayılan olarak" → "zaten / normalde" or drop it; "tatlı bir nokta" → "ideal bir denge"; "elimde üç oyun vardı" → "üç oyun üzerinde çalıştım"; "yazmaktansa göstermek daha kolay geldi" → "İşte Nisan ayında yaptıklarım.".
+- **Site copy is in Kaan's own voice, first person** ("I build…", "Ne yapıyorum?"), including the ask box questions and answers. Headings and labels can be plain nouns ("Hakkımda", "Projeler", "Blog"). Write plainly and specifically; no slogans.
 - Keep proper nouns and tech chips unchanged (game titles, "Kaan Usta", stack names). Patimania: "Ödeme Güvencesi" in public TR copy, "escrow" in EN.
 - The **welcome** post is written by Claude in the **third person** about Kaan ("He works in…", signed "— Claude"); never first person. Kaan's own posts are first person.
 - Devlog intros are short and plain, leading into the video with a colon ("Three games I worked on in May:").

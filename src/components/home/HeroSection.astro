@@ -1,6 +1,8 @@
 ---
 import HeroField from '@components/home/HeroField.astro';
+import { Image } from 'astro:assets';
 import Mark from '@components/Mark.astro';
+import portrait from '@/assets/portrait.png';
 import { SOCIAL } from '@lib/constants';
 import { copy, pick, QA } from '@lib/home';
 import type { Lang } from '@lib/i18n';
@@ -30,17 +32,15 @@ const first = data.qa[0];
   <HeroField />
   <div class="wrap hero-in">
     <p class="name"><Mark size={22} /><span>Kaan Usta</span></p>
-    <h1 class="grad-em" set:html={pick(c.title, lang)} />
+    <h1>{pick(c.title, lang)}</h1>
   </div>
 </section>
 
 <section class="about">
   <div class="wrap grid">
     <div class="intro">
+      <Image class="me" src={portrait} alt="Kaan Usta" width={224} height={224} />
       <p class="lede">{pick(c.lede, lang)}</p>
-      <ul class="facts">
-        {c.facts.map((f) => <li>{pick(f, lang)}</li>)}
-      </ul>
       <div class="cta">
         <a class="btn" href={`mailto:${SOCIAL.email}`}>{pick(c.email, lang)}</a>
         <a class="btn btn-ghost" href={SOCIAL.linkedin} target="_blank" rel="noopener">LinkedIn ↗</a>
@@ -132,24 +132,12 @@ const first = data.qa[0];
     line-height: 1.5;
     max-width: 30rem;
   }
-  .facts {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 8px 18px;
-    color: rgb(var(--text-200));
-    font-size: 0.9rem;
-  }
-  .facts li {
-    display: inline-flex;
-    align-items: center;
-    gap: 7px;
-  }
-  .facts li::before {
-    content: '';
-    width: 6px;
-    height: 6px;
-    border-radius: 50%;
-    background: rgb(var(--accent-2));
+  .intro :global(.me) {
+    width: 112px;
+    height: 112px;
+    border-radius: 24px;
+    object-fit: cover;
+    border: 1px solid rgb(var(--border));
   }
   .cta {
     display: flex;

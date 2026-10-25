@@ -13,8 +13,7 @@ const top = (v: number) => (lang === 'tr' ? `ilk %${100 - v}` : `top ${100 - v}%
 <section class="sec" id="evals">
   <div class="wrap">
     <div class="sec-head" data-fade-in>
-      <span class="eyebrow">{pick(c.eyebrow, lang)}</span>
-      <h2 set:html={pick(c.title, lang)} />
+      <h2>{pick(c.title, lang)}</h2>
     </div>
     <div class="evals panel" data-fade-in data-evals>
       <table>
