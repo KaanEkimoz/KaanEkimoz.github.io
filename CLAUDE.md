@@ -75,7 +75,7 @@ These come from mistakes made in earlier sessions. Follow them in every session,
 ## Site structure
 
 ```
-/                    hero (greeting, title, stats, 'currently working on' + tech stack over the data canvas, bars on the bottom edge), photo + Q&A box (question chips only, no text input), how I use AI, career, Tech Stack, evals, games row, latest posts, contact
+/                    hero (greeting, title, stats, 'currently working on' + tech stack over the data canvas, bars on the bottom edge), photo + Q&A box (question chips only, no text input), how I use AI (animated AI studio map, `AIStudio` + `src/lib/ai-studio.ts`), My Journey (career as hexagon steps with tool fans, `CareerSection`), Tech Stack, evals, games row, latest posts, contact
 /projects[/<slug>]   grid with filter pills (All | Products & Web | Games) and detail pages
 /blog[/<slug>]       posts (md / mdx)
 /resume              Özgeçmiş / Resume, built from home.ts facts (CAREER, SKILL_GROUPS, EVALS, copy.resume); prints to A4

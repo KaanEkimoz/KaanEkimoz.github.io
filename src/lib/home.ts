@@ -71,9 +71,13 @@ export const copy = {
     },
   },
   career: {
-    title: { en: 'How I got here', tr: 'Buraya nasıl geldim' },
-    lede: { en: 'Games first, then retail systems, now Patimania. Hover or tap a step for details.', tr: 'Önce oyunlar, sonra perakende sistemleri, şimdi Patimania. Ayrıntı için bir adıma dokun ya da üzerine gel.' },
-    lanes: { en: ['Software', 'Games', 'Education'], tr: ['Yazılım', 'Oyun', 'Eğitim'] },
+    title: { en: 'My Journey', tr: 'Yolculuğum' },
+    lede: { en: 'From game design to full-stack products. Hover or tap a step to see the tools I used there.', tr: 'Oyun tasarımından full-stack ürünlere. Bir adımın üstüne gel ya da dokun, orada kullandığım araçları gör.' },
+    lanes: { en: ['software', 'games', 'education'], tr: ['yazılım', 'oyun', 'eğitim'] },
+    now: { en: 'NOW', tr: 'ŞU AN' },
+    prev: { en: '← prev', tr: '← önceki' },
+    next: { en: 'next →', tr: 'sonraki →' },
+    step: { en: 'Step', tr: 'Adım' },
   },
   skills: {
     title: { en: 'Tech Stack', tr: 'Tech Stack' },
@@ -247,24 +251,23 @@ export const EVALS: { name: L10n; value: number }[] = [
 ];
 
 /** Career nodes. `s`/`e` are fractional years; lane 0 software, 1 games, 2 education. `lab` puts the label above (-1) or below (+1). */
-export const CAREER: { lane: 0 | 1 | 2; lab: number; s: number; e: number; long?: boolean; sw?: boolean; title: L10n; at: string; when: L10n; d: L10n }[] = [
-  { lane: 2, lab: -1, s: 2020.0, e: 2024.5, title: { en: 'B.Sc. Digital Game Design', tr: 'Dijital Oyun Tasarımı lisansı' }, at: 'İstinye University', when: { en: '2020 — 2024', tr: '2020 — 2024' },
-    d: { en: 'Taught entirely in English. Where programming and engines became the focus.', tr: 'Eğitim dili tamamen İngilizceydi. Programlama ve oyun motorları burada asıl odağım oldu.' } },
-  { lane: 1, lab: -1, s: 2022.25, e: 2022.5, title: { en: 'Jr. Game Developer', tr: 'Jr. Game Developer' }, at: '208 Studios', when: { en: 'Apr — Jun 2022', tr: 'Nis — Haz 2022' },
-    d: { en: 'Hyper-casual games and rapid prototypes, including Draw Rush and Stack Runner.', tr: 'Draw Rush ve Stack Runner dahil hiper-casual oyunlar ve hızlı prototipler.' } },
-  { lane: 1, lab: 1.7, s: 2022.0, e: 2026.85, long: true, title: { en: 'Game Developer', tr: 'Game Developer' }, at: 'Ekimoz Games', when: { en: '2022 — now', tr: '2022 — devam' },
-    d: { en: 'Self-published mobile games: publishing, ad mediation and monetisation.', tr: 'Kendi yayımladığım mobil oyunlar: yayıncılık, reklam mediasyonu ve monetizasyon.' } },
-  { lane: 1, lab: -1, s: 2023.33, e: 2023.75, title: { en: 'Unity XR Developer', tr: 'Unity XR Developer' }, at: 'Visionary Spaces', when: { en: 'May — Sep 2023', tr: 'May — Eyl 2023' },
-    d: { en: 'VR scenes and games with physics-based mechanics.', tr: 'Fizik tabanlı mekaniklerle VR sahneleri ve oyunları.' } },
-  { lane: 1, lab: -1, s: 2024.83, e: 2025.83, title: { en: 'Unity Developer', tr: 'Unity Developer' }, at: 'YTÜ DOGDOK', when: { en: 'Nov 2024 — Oct 2025', tr: 'Kas 2024 — Eki 2025' },
-    d: { en: 'Core gameplay systems for mobile games in a team of three.', tr: 'Üç kişilik ekipte mobil oyunların temel oynanış sistemleri.' } },
-  { lane: 0, lab: -1, sw: true, s: 2025.83, e: 2026.08, title: { en: 'Retail Technology Specialist', tr: 'Perakende Teknolojileri Uzmanı' }, at: 'Gurmenin Sepeti', when: { en: 'Nov 2025 — Jan 2026', tr: 'Kas 2025 — Oca 2026' },
-    d: { en: "Took a grocery chain's POS, barcode and scale systems live across its stores, plus its online sales system.", tr: 'Market zincirinin kasa, barkod ve terazi sistemlerini mağazalarda canlıya aldım; online satış sistemini de yayına açtım.' } },
-  { lane: 0, lab: 1, sw: true, s: 2026.42, e: 2026.85, title: { en: 'Full-Stack Engineer', tr: 'Full-Stack Engineer' }, at: 'Patimania', when: { en: 'Jun 2026 — now', tr: 'Haz 2026 — devam' },
-    d: { en: 'Architecture, backend, web, mobile, design system, escrow payments and CI/CD.', tr: 'Mimari, arka uç, web, mobil, tasarım sistemi, Ödeme Güvencesi altyapısı ve CI/CD.' } },
+/** Career steps (lane 0 software, 1 games, 2 education). `tools` are keys of TOOLS in JourneySection. */
+export const CAREER: { lane: 0 | 1 | 2; s: number; e: number; title: L10n; at: string; when: L10n; d: L10n; tools: string[] }[] = [
+  { lane: 2, s: 2020.0, e: 2024.5, title: { en: 'B.Sc. Digital Game Design', tr: 'Dijital Oyun Tasarımı lisansı' }, at: 'İstinye University', when: { en: '2020 — 2024', tr: '2020 — 2024' },
+    d: { en: 'Taught entirely in English. Where programming and engines became the focus.', tr: 'Eğitim dili tamamen İngilizceydi. Programlama ve oyun motorları burada asıl odağım oldu.' }, tools: ['unity', 'csharp', 'unrealengine', 'design'] },
+  { lane: 1, s: 2022.25, e: 2022.5, title: { en: 'Jr. Game Developer', tr: 'Jr. Game Developer' }, at: '208 Studios', when: { en: 'Apr — Jun 2022', tr: 'Nis — Haz 2022' },
+    d: { en: 'Hyper-casual games and rapid prototypes, including Draw Rush and Stack Runner.', tr: 'Draw Rush ve Stack Runner dahil hiper-casual oyunlar ve hızlı prototipler.' }, tools: ['unity', 'csharp', 'mobile', 'github'] },
+  { lane: 1, s: 2022.0, e: 2026.85, title: { en: 'Game Developer', tr: 'Game Developer' }, at: 'Ekimoz Games', when: { en: '2022 — now', tr: '2022 — devam' },
+    d: { en: 'Self-published mobile games: publishing, ad mediation and monetisation.', tr: 'Kendi yayımladığım mobil oyunlar: yayıncılık, reklam mediasyonu ve monetizasyon.' }, tools: ['unity', 'csharp', 'googleplay', 'android'] },
+  { lane: 1, s: 2023.33, e: 2023.75, title: { en: 'Unity XR Developer', tr: 'Unity XR Developer' }, at: 'Visionary Spaces', when: { en: 'May — Sep 2023', tr: 'May — Eyl 2023' },
+    d: { en: 'VR scenes and games with physics-based mechanics.', tr: 'Fizik tabanlı mekaniklerle VR sahneleri ve oyunları.' }, tools: ['unity', 'csharp', 'xr', 'physics'] },
+  { lane: 1, s: 2024.83, e: 2025.83, title: { en: 'Unity Developer', tr: 'Unity Developer' }, at: 'YTÜ DOGDOK', when: { en: 'Nov 2024 — Oct 2025', tr: 'Kas 2024 — Eki 2025' },
+    d: { en: 'Core gameplay systems for mobile games in a team of three.', tr: 'Üç kişilik ekipte mobil oyunların temel oynanış sistemleri.' }, tools: ['unity', 'csharp', 'mobile', 'gameplay'] },
+  { lane: 0, s: 2025.83, e: 2026.08, title: { en: 'Retail Technology Specialist', tr: 'Perakende Teknolojileri Uzmanı' }, at: 'Gurmenin Sepeti', when: { en: 'Nov 2025 — Jan 2026', tr: 'Kas 2025 — Oca 2026' },
+    d: { en: "Took a grocery chain's POS, barcode and scale systems live across its stores, plus its online sales system.", tr: 'Market zincirinin kasa, barkod ve terazi sistemlerini mağazalarda canlıya aldım; online satış sistemini de yayına açtım.' }, tools: ['pos', 'barcode', 'scale', 'cart'] },
+  { lane: 0, s: 2026.42, e: 2026.85, title: { en: 'Full-Stack Engineer', tr: 'Full-Stack Engineer' }, at: 'Patimania', when: { en: 'Jun 2026 — now', tr: 'Haz 2026 — devam' },
+    d: { en: 'Architecture, backend, web, mobile, design system, escrow payments and CI/CD.', tr: 'Mimari, arka uç, web, mobil, tasarım sistemi, Ödeme Güvencesi altyapısı ve CI/CD.' }, tools: ['nextdotjs', 'nestjs', 'postgresql', 'expo'] },
 ];
-/** Edges between career nodes (indices into CAREER), in time order. */
-export const CAREER_EDGES: [number, number][] = [[0, 1], [1, 3], [3, 4], [4, 5], [5, 6]];
 
 export const PATIMANIA_MODULES =
   'auth users providers services service-types reservations payments disputes cart messages notifications reviews favorites search geo addresses pets media campaigns banners announcements events reports analytics support abuse jobs maintenance platform-settings admin-alerts demo-panel taxi'.split(' ');
