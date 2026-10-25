@@ -68,12 +68,13 @@ These come from mistakes made in earlier sessions. Follow them in every session,
 
 **Design**
 - Kaan likes blue and a futuristic data/AI look. He rejected a draft that looked like Claude's own UI. Build on the existing tokens and shared classes instead of adding new palettes.
+- No home-page sections dedicated to Patimania (removed 25 Oct 2026): it's his first product of several, so it appears as a project (hero card, Q&A answer, /projects), not as its own section.
 - He also said the site looked AI-made. Avoid the template tells: no eyebrow label on every section, no gradient or blue-accent word in headings, no glow on cards, no slogans ("end to end", "built by one engineer"). Vary section layouts, and prefer real material (his photo, real stories from his work) over decoration.
 
 ## Site structure
 
 ```
-/                    hero (greeting, title, stats, 'currently working on' + tech stack over the data canvas, bars on the bottom edge), photo + Q&A box, Patimania (+ app screens, architecture), build notes, how I use AI, career, Tech Stack, evals, games row, latest posts, contact
+/                    hero (greeting, title, stats, 'currently working on' + tech stack over the data canvas, bars on the bottom edge), photo + Q&A box (question chips only, no text input), how I use AI, career, Tech Stack, evals, games row, latest posts, contact
 /projects[/<slug>]   grid with filter pills (All | Products & Web | Games) and detail pages
 /blog[/<slug>]       posts (md / mdx)
 /resume              Özgeçmiş / Resume, built from home.ts facts (CAREER, SKILL_GROUPS, EVALS, copy.resume); prints to A4
@@ -89,8 +90,8 @@ These come from mistakes made in earlier sessions. Follow them in every session,
 - **Theme:** dark-first navy with blue (`--accent-1`), cyan (`--accent-2`) and indigo (`--accent-3`) accents. Design tokens in `src/styles/global.css` are **space-separated RGB triplets** (`--accent-1: 61 123 255`) so Tailwind's `rgb(var(--x) / <alpha-value>)` works. Dark in `:root`, light in `html[data-theme='light']`. Don't put hex values back into `tailwind.config.mjs`. In canvas/inline styles wrap tokens with `rgb(...)`.
 - **Shared classes** (`@layer components` in `global.css`): `.wrap`, `.sec`, `.sec-head`, `.eyebrow`, `.grad-em`, `.panel`, `.btn`, `.btn-ghost`, `.link`, `.mono-chip`, `.hand` (Caveat handwritten notes).
 - **Logos:** `BrandIcon` renders simple-icons by export name (`siNextdotjs`…); LinkedIn is drawn in the component because simple-icons dropped it.
-- **Key components:** `BaseLayout` (head, pre-paint theme + language scripts, hreflang), `Header` / `Footer` / `Mark`, the home sections in `src/components/home/` (`HeroField` canvas, `HeroSection` with the pre-written Q&A box, `PatimaniaSection`, `NotesSection` (build stories), `MethodSection`, `CareerSection`, `SkillsSection`, `EvalsSection`, `GamesSection`, `ContactSection`), `ProjectFilter`, `ProjectCard`, `ProjectModal`, `BlogCard`, `PageHeader`, `LiteYouTube`, `ThemeToggle`, `LanguageToggle`.
-- **Home copy and data** (Q&A, career nodes, skills, evals, Patimania numbers) live in `src/lib/home.ts`, EN and TR side by side. Numbers there come from Kaan's profile brief; don't add figures or claims (store status, metrics) he hasn't confirmed.
+- **Key components:** `BaseLayout` (head, pre-paint theme + language scripts, hreflang), `Header` / `Footer` / `Mark`, the home sections in `src/components/home/` (`HeroField` canvas, `HeroSection` with the pre-written Q&A box, `MethodSection`, `CareerSection`, `SkillsSection`, `EvalsSection`, `GamesSection`, `ContactSection`), `ProjectFilter`, `ProjectCard`, `ProjectModal`, `BlogCard`, `PageHeader`, `LiteYouTube`, `ThemeToggle`, `LanguageToggle`.
+- **Home copy and data** (Q&A, career nodes, skills, evals) live in `src/lib/home.ts`, EN and TR side by side. Numbers there come from Kaan's profile brief; don't add figures or claims (store status, metrics) he hasn't confirmed.
 - **Client scripts** init on `astro:page-load` and clean up on `astro:before-swap`. The project modal injects `#project-detail` from a detail page into other pages, so `ProjectPage` uses utilities / global classes only (scoped CSS wouldn't load there); its back link carries `data-back` so the modal can hide it.
 - **Images:** put content images in `src/assets/` (Astro optimizes them); `public/` is served as-is. Keep big PNGs under ~2 MB.
 - **OG image:** must be JPEG — WhatsApp silently rejects palette PNGs. Regenerate from `scripts/og-image.svg` after `node scripts/install-og-fonts.mjs` (without the fonts librsvg falls back silently):
