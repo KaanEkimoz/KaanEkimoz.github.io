@@ -56,6 +56,9 @@ const detailHref = localizedPath(`/projects/${slugOf(project.id)}`, lang);
     background: rgb(var(--bg-elev));
     transition: border-color 0.25s, transform 0.25s cubic-bezier(0.2, 0.8, 0.2, 1), box-shadow 0.25s;
   }
+  :global(html[data-theme='light']) .card {
+    box-shadow: var(--shadow);
+  }
   .card:hover {
     border-color: rgb(var(--accent-1) / 0.55);
     transform: translateY(-2px);
