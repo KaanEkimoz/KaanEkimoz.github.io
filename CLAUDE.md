@@ -104,7 +104,7 @@ These come from mistakes made in earlier sessions. Follow them in every session,
 - **Blog** (`src/content/blog/`): welcome, april-2026-developer-update (mdx), may-2026-developer-update (mdx), each with `-tr`.
 - Adding a project: `<slug>.md` + `<slug>-tr.md`, `src/assets/projects/<slug>/cover.*` + `gallery/`. Set `category: product` for products (wide card on /projects) or leave the default `game`; `coverPosition` crops the cover in tight tiles. Covers are 16:9; an optional `coverSquare` (1:1) is used by the square cards of the home strip, otherwise the wide cover is shown whole over a blurred copy.
 - Adding a post: `<slug>.{md,mdx}` + `-tr`, hero image in `src/assets/blog/`; in MDX use `import LiteYouTube from '@components/LiteYouTube.astro'`.
-- Blog covers are one family made by `scripts/blog-cover.mjs` (run `node scripts/install-og-fonts.mjs` first): a monthly devlog is `node scripts/blog-cover.mjs devlog "JUNE 2026" src/assets/blog/june-2026.jpg` (only the date changes); `intro` makes the Meet Kaan cover.
+- Blog covers are one family made by `scripts/blog-cover.mjs` (light blue field, floor grid, cyan date over a centred white title, after the original May 2026 cover; Kaan wants them plain) (run `node scripts/install-og-fonts.mjs` first): a monthly devlog is `node scripts/blog-cover.mjs devlog "JUNE 2026" src/assets/blog/june-2026.jpg` (only the date changes); `intro` makes the Meet Kaan cover.
 
 ## Writing rules
 
