@@ -166,6 +166,41 @@ export const copy = {
     socials: { en: 'Elsewhere', tr: 'Sosyal' },
     note: { en: 'good ideas start with a message :)', tr: 'iyi fikirler bir mesajla başlar :)' },
   },
+  resume: {
+    title: { en: 'Resume', tr: 'Özgeçmiş' },
+    metaDescription: { en: 'Resume of Kaan Usta, full-stack AI developer in Istanbul.', tr: "Kaan Usta'nın özgeçmişi; İstanbul'da full-stack AI developer." },
+    print: { en: 'Print / save as PDF', tr: 'Yazdır / PDF olarak kaydet' },
+    summary: {
+      en: "Full-stack developer in Istanbul. Since June 2026 I've been the only engineer on Patimania, a pet-services marketplace with a website, an iOS and Android app, and business and admin panels. I build with AI coding agents and check the work with tests and CI guards I wrote myself. Before that I spent six years making games in Unity.",
+      tr: "İstanbul'da full-stack geliştiriciyim. Haziran 2026'dan beri web sitesi, iOS ve Android uygulaması, işletme ve yönetim panelinden oluşan bir evcil hayvan hizmetleri pazaryeri olan Patimania'nın tek mühendisiyim. Yapay zekâ kodlama ajanlarıyla geliştiriyor, işi kendi yazdığım testler ve CI nöbetçileriyle denetliyorum. Öncesinde altı yıl Unity ile oyun geliştirdim.",
+    },
+    experience: { en: 'Experience', tr: 'Deneyim' },
+    education: { en: 'Education', tr: 'Eğitim' },
+    skills: { en: 'Tech stack', tr: 'Tech stack' },
+    tests: { en: 'Assessments', tr: 'Testler' },
+    tests_note: { en: 'TestGorilla, September 2026 · percentile among all test takers', tr: 'TestGorilla, Eylül 2026 · tüm katılımcılar arasındaki yüzdelik dilim' },
+    languages: { en: 'Languages', tr: 'Diller' },
+    languagesValue: { en: 'Turkish · English', tr: 'Türkçe · İngilizce' },
+    links: { en: 'Links', tr: 'Bağlantılar' },
+    patimania: [
+      {
+        en: 'Designed and built the whole product alone: NestJS API (32 modules), Next.js website (128 routes), React Native + Expo app (45 screens), business and admin panels.',
+        tr: 'Ürünün tamamını tek başıma tasarlayıp geliştirdim: NestJS API (32 modül), Next.js web sitesi (128 sayfa), React Native + Expo uygulaması (45 ekran), işletme ve yönetim panelleri.',
+      },
+      {
+        en: 'PostgreSQL + PostGIS data model with 68 tables; double booking blocked in the database with an EXCLUDE constraint; escrow money flow with an append-only ledger.',
+        tr: '68 tabloluk PostgreSQL + PostGIS veri modeli; çift rezervasyonu veritabanında engelleyen EXCLUDE kısıtı; yalnız eklenebilir defterli Ödeme Güvencesi akışı.',
+      },
+      {
+        en: 'AI-assisted development with Claude Code, checked by 76 end-to-end test suites (3,900 assertions), 7 CI guard scripts and 102 written decision records.',
+        tr: 'Claude Code ile yapay zekâ destekli geliştirme; 76 uçtan uca test paketi (3.900 doğrulama), 7 CI nöbetçisi ve yazıya geçmiş 102 karar kaydıyla denetim.',
+      },
+      {
+        en: 'Docker on a server in Türkiye, a staging-to-production pipeline and OTA mobile releases. Soft launch: real payments off, app in Google Play closed testing and TestFlight.',
+        tr: "Türkiye'deki sunucuda Docker, staging'den prod'a yayın hattı ve OTA mobil güncellemeler. Ön yayın: gerçek ödeme kapalı, uygulama Google Play kapalı testinde ve TestFlight'ta.",
+      },
+    ],
+  },
   sources: {
     work: { en: 'Patimania', tr: 'Patimania' },
     method: { en: 'How I use AI', tr: 'Yapay zekâ' },

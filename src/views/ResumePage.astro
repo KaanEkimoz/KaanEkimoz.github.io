@@ -1,0 +1,294 @@
+---
+/**
+ * Resume: one page built from the same facts as the home page
+ * (career nodes, skills, evals in home.ts). Prints cleanly to A4.
+ */
+import BaseLayout from '@layouts/BaseLayout.astro';
+import { Image } from 'astro:assets';
+import portrait from '@/assets/portrait.png';
+import { SOCIAL } from '@lib/constants';
+import { CAREER, EVALS, SKILL_GROUPS, copy, pick } from '@lib/home';
+import { localizedPath, type Lang } from '@lib/i18n';
+
+interface Props {
+  lang: Lang;
+}
+
+const { lang } = Astro.props;
+const r = copy.resume;
+const jobs = CAREER.filter((n) => n.lane !== 2).sort((a, b) => b.s - a.s);
+const school = CAREER.filter((n) => n.lane === 2);
+const links = [
+  { label: SOCIAL.email, href: `mailto:${SOCIAL.email}` },
+  { label: 'linkedin.com/in/yusufkaanusta', href: SOCIAL.linkedin },
+  { label: 'github.com/KaanEkimoz', href: SOCIAL.github },
+  { label: 'kaanusta.dev', href: localizedPath('/', lang) },
+];
+---
+
+<BaseLayout lang={lang} title={pick(r.title, lang)} description={pick(r.metaDescription, lang)}>
+  <article class="wrap cv">
+    <header class="top">
+      <Image class="me" src={portrait} alt="" width={176} height={176} />
+      <div class="who">
+        <h1>Kaan Usta</h1>
+        <p class="role">{pick(copy.hero.title, lang)} · {lang === 'tr' ? 'İstanbul' : 'Istanbul'}</p>
+        <ul class="links">
+          {links.map((l) => <li><a href={l.href}>{l.label}</a></li>)}
+        </ul>
+      </div>
+      <button class="btn btn-ghost print" type="button" data-print>{pick(r.print, lang)}</button>
+    </header>
+
+    <p class="summary">{pick(r.summary, lang)}</p>
+
+    <section>
+      <h2>{pick(r.experience, lang)}</h2>
+      <ol class="jobs">
+        {jobs.map((j) => (
+          <li>
+            <div class="when">{pick(j.when, lang)}</div>
+            <div>
+              <h3>{pick(j.title, lang)} <span>· {j.at}</span></h3>
+              {j.at === 'Patimania' ? (
+                <ul class="points">{r.patimania.map((p) => <li>{pick(p, lang)}</li>)}</ul>
+              ) : (
+                <p>{pick(j.d, lang)}</p>
+              )}
+            </div>
+          </li>
+        ))}
+      </ol>
+    </section>
+
+    <section>
+      <h2>{pick(r.education, lang)}</h2>
+      <ol class="jobs">
+        {school.map((j) => (
+          <li>
+            <div class="when">{pick(j.when, lang)}</div>
+            <div>
+              <h3>{pick(j.title, lang)} <span>· {j.at}</span></h3>
+              <p>{pick(j.d, lang)}</p>
+            </div>
+          </li>
+        ))}
+      </ol>
+    </section>
+
+    <div class="cols">
+      <section>
+        <h2>{pick(r.skills, lang)}</h2>
+        <dl class="skills">
+          {SKILL_GROUPS.map((g) => (
+            <div><dt>{pick(g.label, lang)}</dt><dd>{g.items.join(' · ')}</dd></div>
+          ))}
+        </dl>
+      </section>
+      <section>
+        <h2>{pick(r.tests, lang)}</h2>
+        <dl class="skills">
+          {EVALS.map((e) => (
+            <div><dt>{pick(e.name, lang)}</dt><dd>{lang === 'tr' ? `${e.value}. yüzdelik` : `${e.value}th percentile`}</dd></div>
+          ))}
+        </dl>
+        <p class="small">{pick(r.tests_note, lang)}</p>
+        <h2 class="mt">{pick(r.languages, lang)}</h2>
+        <p>{pick(r.languagesValue, lang)}</p>
+      </section>
+    </div>
+  </article>
+</BaseLayout>
+
+<style>
+  .cv {
+    max-width: 52rem;
+    padding-top: clamp(40px, 7vw, 72px);
+    display: grid;
+    gap: 36px;
+  }
+  .top {
+    display: flex;
+    gap: 22px;
+    align-items: center;
+  }
+  .top :global(.me) {
+    width: 88px;
+    height: 88px;
+    border-radius: 20px;
+    object-fit: cover;
+    border: 1px solid rgb(var(--border));
+  }
+  .who {
+    flex: 1;
+    min-width: 0;
+    display: grid;
+    gap: 4px;
+  }
+  h1 {
+    font-size: clamp(2rem, 4.4vw, 2.8rem);
+    line-height: 1.05;
+    letter-spacing: -0.04em;
+    font-weight: 500;
+  }
+  .role {
+    color: rgb(var(--text-100));
+    font-weight: 500;
+  }
+  .links {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 2px 16px;
+    font-size: 0.88rem;
+  }
+  .links a {
+    color: rgb(var(--accent-2));
+  }
+  .links a:hover {
+    text-decoration: underline;
+  }
+  .print {
+    align-self: start;
+  }
+  .summary {
+    font-size: 1.08rem;
+    line-height: 1.65;
+    color: rgb(var(--text-100));
+  }
+  h2 {
+    font-size: 0.82rem;
+    font-weight: 600;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: rgb(var(--accent-1));
+    padding-bottom: 8px;
+    margin-bottom: 14px;
+    border-bottom: 1px solid rgb(var(--border));
+  }
+  .mt {
+    margin-top: 24px;
+  }
+  .jobs {
+    display: grid;
+    gap: 18px;
+  }
+  .jobs > li {
+    display: grid;
+    grid-template-columns: 9.5rem minmax(0, 1fr);
+    gap: 16px;
+  }
+  .when {
+    font: 0.8rem/1.9 'JetBrains Mono', ui-monospace, monospace;
+    color: rgb(var(--text-300));
+  }
+  h3 {
+    font-size: 1.02rem;
+    font-weight: 600;
+    letter-spacing: -0.01em;
+    margin-bottom: 4px;
+  }
+  h3 span {
+    font-weight: 400;
+    color: rgb(var(--text-200));
+  }
+  .jobs p,
+  .points li,
+  .skills dd,
+  section > p {
+    color: rgb(var(--text-200));
+    font-size: 0.94rem;
+    line-height: 1.6;
+  }
+  .points {
+    display: grid;
+    gap: 6px;
+    padding-left: 1.1em;
+    list-style: disc;
+  }
+  .points li::marker {
+    color: rgb(var(--accent-1));
+  }
+  .cols {
+    display: grid;
+    grid-template-columns: minmax(0, 1.3fr) minmax(0, 1fr);
+    gap: 40px;
+  }
+  .skills {
+    display: grid;
+    gap: 8px;
+  }
+  .skills div {
+    display: grid;
+    grid-template-columns: 7.5rem minmax(0, 1fr);
+    gap: 12px;
+  }
+  dt {
+    font-size: 0.88rem;
+    font-weight: 500;
+    color: rgb(var(--text-100));
+  }
+  .small {
+    margin-top: 8px;
+    font-size: 0.8rem !important;
+    color: rgb(var(--text-300)) !important;
+  }
+  @media (max-width: 700px) {
+    .top {
+      flex-wrap: wrap;
+    }
+    .who {
+      flex-basis: 100%;
+    }
+    .links a {
+      overflow-wrap: anywhere;
+    }
+    .jobs > li,
+    .cols {
+      grid-template-columns: minmax(0, 1fr);
+      gap: 4px;
+    }
+    .cols {
+      gap: 32px;
+    }
+  }
+
+  /* Paper: light colors, no site chrome, no button. */
+  @media print {
+    :global(.site-header),
+    :global(footer),
+    :global(.skip),
+    :global(#project-modal),
+    .print {
+      display: none !important;
+    }
+    :global(html),
+    :global(body) {
+      background: #fff !important;
+      --text-100: 10 19 48;
+      --text-200: 50 60 85;
+      --text-300: 95 108 140;
+      --accent-1: 36 89 232;
+      --accent-2: 14 116 144;
+      --border: 213 221 240;
+    }
+    .cv {
+      padding-top: 0;
+      gap: 22px;
+      max-width: none;
+    }
+    .jobs > li,
+    .skills div {
+      break-inside: avoid;
+    }
+  }
+  @page {
+    margin: 14mm;
+  }
+</style>
+
+<script>
+  function init() {
+    document.querySelector('[data-print]')?.addEventListener('click', () => print());
+  }
+  document.addEventListener('astro:page-load', init);
+</script>
