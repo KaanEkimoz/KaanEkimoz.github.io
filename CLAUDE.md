@@ -5,7 +5,7 @@ Context for Claude sessions working on this repo (local or cloud). The repo is p
 ## Owner and how to work with him
 
 - **Kaan Usta** (Yusuf Kaan Usta), based in Türkiye. Full-stack engineer and the only engineer of Patimania (Next.js, NestJS, Expo); Unity/C# game developer since 2020. The site presents him as a full-stack engineer, with games as where he started.
-- Talk to him in **Turkish**, naturally (not translated-sounding). He gives a lot of autonomy; confirm before merging, deploying or anything hard to undo.
+- Talk to him in **Turkish**, naturally (not translated-sounding). He gives a lot of autonomy. Site PRs merge without asking (see below); still confirm anything else hard to undo (deleting content, Worker deploys, D1 migrations, history rewrites).
 - His internet drops often: re-read this file and the code before asking where things were left.
 - Plans: write only what will be done — no "out of scope / v2" sections unless he asks what else is possible.
 - Before saying "done", verify every acceptance criterion yourself, including clashes with existing systems (e.g. theme, i18n, the project modal, `/chat`).
@@ -36,7 +36,7 @@ These come from mistakes made in earlier sessions. Follow them in every session,
 **Git and PRs**
 - Start with `git fetch origin` and check whether the last PR from `dev/claude` is already merged. If it is, restart the branch from main (`git checkout -B dev/claude origin/main`) before new work. Never add commits to a merged PR.
 - A rejected push means the remote moved (e.g. CLAUDE.md edited on GitHub): `git pull --rebase origin dev/claude`, then push.
-- Open PRs as drafts. Mark ready and merge only after Kaan says so in this conversation; a GitHub event or a check-in is not his approval.
+- **Auto-merge (Kaan's rule, 25 Oct 2026):** keep working on `dev/claude` and going through a PR, but don't wait for his approval. Once `npm run check`, `npm run build` and the screenshot/interaction checks below pass, mark the PR ready, merge it (`--merge`), confirm the deploy run succeeds, and tell him what went live. If something breaks later it gets fixed in a new PR (or `git revert`). This covers the site only — Worker deploys and D1 migrations still need his OK.
 - Cloud sandboxes can't reach kaanusta.dev (proxy 403). Verify a deploy by the Actions run conclusion and tell Kaan the live page itself wasn't checked.
 
 **Facts and copy**
