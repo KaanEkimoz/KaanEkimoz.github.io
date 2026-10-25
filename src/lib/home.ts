@@ -34,73 +34,6 @@ export const copy = {
   ask: {
     title: { en: 'About me', tr: 'Hakkımda' },
   },
-  work: {
-    title: { en: 'Patimania', tr: 'Patimania' },
-    lede: {
-      en: "A marketplace that connects pet hotels, groomers and pet taxis with pet owners across Türkiye. I'm the only engineer on it, so every screen and every table you see here is mine.",
-      tr: "Türkiye'de pet otellerini, kuaförleri ve pet taksileri hayvan sahipleriyle buluşturan bir pazaryeri. Projenin tek mühendisi benim; burada gördüğün her ekranı ve her tabloyu ben yazdım.",
-    },
-    status: { en: 'soft launch · payments off', tr: 'ön yayında · ödeme kapalı' },
-    tabs: { en: ['Home', 'Search', 'Business', 'Mobile', 'Panel', 'Calendar'], tr: ['Ana sayfa', 'Arama', 'İşletme', 'Mobil', 'Panel', 'Takvim'] },
-    rows: [
-      { k: { en: 'surfaces', tr: 'platformlar' }, v: { en: 'Web (<b>128</b> routes) · iOS & Android app (<b>45</b> screens)', tr: 'Web (<b>128</b> sayfa) · iOS ve Android uygulaması (<b>45</b> ekran)' } },
-      { k: { en: 'backend', tr: 'arka uç' }, v: { en: '<b>32</b> NestJS domain modules', tr: '<b>32</b> NestJS alan modülü' } },
-      { k: { en: 'data', tr: 'veri' }, v: { en: '<b>68</b> tables · <b>106</b> foreign keys · <b>124</b> migrations live · PostGIS', tr: '<b>68</b> tablo · <b>106</b> yabancı anahtar · canlıda <b>124</b> migration · PostGIS' } },
-      { k: { en: 'quality', tr: 'kalite' }, v: { en: '<b>76</b> end-to-end test suites · <b>3,900</b> assertions · <b>7</b> CI guard scripts', tr: '<b>76</b> uçtan uca test paketi · <b>3.900</b> doğrulama · <b>7</b> CI nöbetçisi' } },
-      { k: { en: 'code', tr: 'kod' }, v: { en: '<b>315,165</b> lines of TypeScript across API, web, app and tests', tr: 'API, web, uygulama ve testlerde <b>315.165</b> satır TypeScript' } },
-      { k: { en: 'history', tr: 'geçmiş' }, v: { en: '<b>2,441</b> commits in 115 days, since 2 July 2026', tr: "2 Temmuz 2026'dan bu yana 115 günde <b>2.441</b> commit" } },
-    ],
-    models: { en: 'Data models', tr: 'Veri modelleri' },
-    modules: { en: 'Domain modules', tr: 'Alan modülleri' },
-    note: {
-      en: "It's in a soft launch. The storefront, search and business onboarding are open, and the businesses listed so far are demo records. Real payments stay off until the payment provider is connected; the flow itself is tested. The app is in Google Play closed testing and TestFlight external testing. Numbers measured from the repository and the live database on 24 October 2026.",
-      tr: 'Proje ön yayında. Vitrin, arama ve işletme kaydı açık; şu an listelenen işletmeler demo kaydı. Ödeme sağlayıcısı bağlanana kadar gerçek ödeme kapalı, akışın kendisi test edildi. Uygulama Google Play kapalı testinde ve TestFlight dış testinde. Rakamlar 24 Ekim 2026’da kod deposundan ve canlı veritabanından ölçüldü.',
-    },
-    visit: { en: 'Visit patimania.com ↗', tr: "patimania.com'u ziyaret et ↗" },
-    appTitle: { en: 'The mobile app', tr: 'Mobil uygulama' },
-    appLede: { en: 'Eight of its 45 screens: search, hotels, a room, a groomer, taxi offers, bookings, reviews and a driver profile. The businesses are demo records.', tr: '45 ekranından sekizi: arama, oteller, oda, kuaför, taksi teklifleri, rezervasyonlar, yorumlar ve şoför profili. İşletmeler demo kaydı.' },
-    archTitle: { en: 'How it fits together', tr: 'Nasıl çalışıyor' },
-    arch: [
-      { en: 'System architecture', tr: 'Sistem mimarisi' },
-      { en: 'Booking and money flow', tr: 'Rezervasyon ve para akışı' },
-      { en: 'Data model', tr: 'Veri modeli' },
-    ],
-    archNote: { en: 'Diagrams are in Turkish; open one to see it full size.', tr: 'Tam boyutu görmek için bir şemaya tıkla.' },
-  },
-  notes: {
-    title: { en: 'Notes from the build', tr: 'Yapım notları' },
-    lede: { en: 'A few problems I ran into on Patimania, and what I did about them.', tr: "Patimania'da karşılaştığım birkaç sorun ve onları nasıl çözdüğüm." },
-    items: [
-      {
-        h: { en: 'Two customers, one room', tr: 'Aynı oda, iki müşteri' },
-        p: {
-          en: "Two people could try to book the same room at the same moment. I didn't leave that to the app logic; I made it impossible in the database. A PostgreSQL EXCLUDE constraint rejects overlapping bookings, so only one of the two writes goes through.",
-          tr: 'İki kişi aynı odayı aynı anda ayırtmaya çalışabiliyordu. Bunu uygulama mantığına bırakmadım, veritabanında imkânsız hâle getirdim: PostgreSQL’deki bir EXCLUDE kısıtı çakışan rezervasyonları reddediyor, iki yazımdan yalnızca biri geçiyor.',
-        },
-      },
-      {
-        h: { en: 'Approved twice', tr: 'İki kez onaylanan işlem' },
-        p: {
-          en: "I tested what happens when two people press approve at the same time. Both requests succeeded and two accepted rows appeared. Now every status change only runs if the row is still in the state it expects, so the second request fails.",
-          tr: 'Aynı anda iki kişinin “onayla”ya basmasını denedim: iki istek de başarılı döndü, iki ayrı kabul kaydı oluştu. Artık her durum değişikliği yalnızca kayıt hâlâ beklenen durumdaysa çalışıyor; ikinci istek reddediliyor.',
-        },
-      },
-      {
-        h: { en: 'A permission I forgot', tr: 'Unutulan bir yetki' },
-        p: {
-          en: 'In the admin panel, forgetting a permission entry opened an endpoint instead of closing it. I added a CI check that fails the build when a new admin endpoint has no permission. It caught a real hole: support staff could close their own customers’ complaints.',
-          tr: 'Yönetim panelinde bir yetki satırını unutmak, ilgili ucu kapatmak yerine açıyordu. Yetkisi tanımlanmamış yeni bir uç eklenirse derlemeyi durduran bir CI kontrolü yazdım. Kontrol gerçek bir açık yakaladı: destek personeli kendi müşterilerinin şikâyetlerini tek başına kapatabiliyordu.',
-        },
-      },
-      {
-        h: { en: 'Quietly broken on iOS', tr: "iOS'ta sessiz bir arıza" },
-        p: {
-          en: 'A deep link stopped working on iOS while the plain smoke tests stayed green. What caught it was a check I had written to compare app.json, the iOS association file and the route table.',
-          tr: 'iOS’ta bir derin bağlantı çalışmayı bıraktı ama düz duman testleri yeşil kaldı. Sorunu, app.json, iOS ilişkilendirme dosyası ve rota tablosunu karşılaştırmak için yazdığım kontrol yakaladı.',
-        },
-      },
-    ],
-  },
   method: {
     title: { en: 'How I use AI', tr: 'Yapay zekâyı nasıl kullanıyorum' },
     body: [
@@ -192,7 +125,6 @@ export const copy = {
     ],
   },
   sources: {
-    work: { en: 'Patimania', tr: 'Patimania' },
     method: { en: 'How I use AI', tr: 'Yapay zekâ' },
     career: { en: 'Career', tr: 'Kariyer' },
     skills: { en: 'Tech Stack', tr: 'Tech Stack' },
@@ -214,7 +146,7 @@ export const QA: { id: string; q: L10n; a: L10n; stats?: Record<Lang, string[]>;
       tr: "İstanbul'da full-stack geliştiriciyim. Ürünleri baştan sona geliştiriyorum: arka uç, web uygulaması, mobil uygulama ve hepsini yayına alan altyapı. Yapay zekâ kodlama ajanlarıyla çalışıyorum; mimari, kod incelemesi ve testler bende.",
     },
     stats: { en: ['30+ projects', '5,000+ commits', '6+ yrs experience'], tr: ['30+ proje', '5.000+ commit', '6+ yıl deneyim'] },
-    src: ['work', 'career'],
+    src: ['career'],
   },
   {
     id: 'now',
@@ -224,7 +156,7 @@ export const QA: { id: string; q: L10n; a: L10n; stats?: Record<Lang, string[]>;
       tr: "Patimania: Türkiye genelinde pet otellerini, kuaförleri ve pet taksileri hayvan sahipleriyle buluşturan bir pazaryeri. Tek mühendisi benim ve her parçasını ben geliştirdim: NestJS ve PostgreSQL ile arka uç, Next.js ile web sitesi, React Native ile iOS ve Android uygulaması, işletme ve yönetim panelleri. Ödeme, hizmet tamamlanana kadar Ödeme Güvencesi ile bekletiliyor; çift rezervasyonu doğrudan veritabanı engelliyor. Platform patimania.com'da ön yayında: listelenen işletmeler şimdilik demo kayıtlar, gerçek ödemeler ödeme sağlayıcısı bağlanınca açılacak, uygulama da Google Play kapalı testinde ve TestFlight'ta.",
     },
     stats: { en: ['2,441 commits', '68 tables', '76 E2E test suites'], tr: ['2.441 commit', '68 tablo', '76 uçtan uca test paketi'] },
-    src: ['work'],
+    src: [],
   },
   {
     id: 'skills',
@@ -251,7 +183,7 @@ export const QA: { id: string; q: L10n; a: L10n; stats?: Record<Lang, string[]>;
       en: "Every day. I work with coding agents like Claude Code and MCP, write my own agent skills, and have shipped LLM features to real users. The architecture, the review and the tests stay with me: agents write code fast, but I decide what goes live.",
       tr: "Her gün. Claude Code ve MCP gibi kodlama ajanlarıyla çalışıyorum, kendi agent skill'lerimi yazıyorum ve gerçek kullanıcılara LLM özellikleri sundum. Mimari, kod incelemesi ve testler bende kalıyor: ajanlar kodu hızlı yazıyor ama neyin yayına çıkacağına ben karar veriyorum.",
     },
-    src: ['method', 'work'],
+    src: ['method'],
   },
   {
     id: 'story',

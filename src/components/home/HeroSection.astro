@@ -7,7 +7,7 @@ import portraitBg from '@/assets/portrait-bg.jpg';
 import portraitMe from '@/assets/portrait-me.webp';
 import pmIcon from '@/assets/projects/patimania/icon.png';
 import { copy, pick, QA } from '@lib/home';
-import type { Lang } from '@lib/i18n';
+import { localizedPath, type Lang } from '@lib/i18n';
 
 interface Props {
   lang: Lang;
@@ -53,7 +53,7 @@ const stack = [
 
     <aside class="side">
       <p class="label">{pick(c.now, lang)}</p>
-      <a class="now" href="#work">
+      <a class="now" href={localizedPath('/projects/patimania', lang)} data-project-modal>
         <Image src={pmIcon} alt="" width={44} height={44} />
         <span><b>Patimania</b><small>{pick(c.nowDesc, lang)}</small><em>{pick(c.nowLink, lang)} →</em></span>
       </a>
