@@ -29,7 +29,7 @@ export const copy = {
   },
   ask: {
     title: { en: 'Ask about Kaan', tr: 'Kaan hakkında sor' },
-    mode: { en: 'from his CV', tr: 'özgeçmişinden' },
+    mode: { en: 'About Kaan', tr: 'Kaan Hakkında' },
     placeholder: { en: 'Ask about his work…', tr: 'İşleri hakkında bir şey sor…' },
     inputLabel: { en: 'Ask a question about Kaan', tr: 'Kaan hakkında bir soru sor' },
     send: { en: 'Send', tr: 'Gönder' },

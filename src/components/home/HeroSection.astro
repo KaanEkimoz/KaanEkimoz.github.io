@@ -44,6 +44,9 @@ const first = data.qa[0];
     </div>
 
     <div class="ask-col">
+      <div class="chips" data-chips>
+        {data.qa.map((x, i) => <button class="chip" type="button" data-qa={i} aria-pressed={i === 0 ? 'true' : 'false'}>{x.q}</button>)}
+      </div>
       <div class="ask" data-ask>
         <div class="ask-head">
           <b><Mark size={16} /><span>{pick(a.title, lang)}</span></b>
@@ -65,9 +68,6 @@ const first = data.qa[0];
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 19V5M5 12l7-7 7 7"></path></svg>
           </button>
         </form>
-      </div>
-      <div class="chips" data-chips>
-        {data.qa.map((x, i) => <button class="chip" type="button" data-qa={i} aria-pressed={i === 0 ? 'true' : 'false'}>{x.q}</button>)}
       </div>
       <p class="disclaim">{pick(a.disclaimer, lang)}</p>
     </div>
@@ -321,7 +321,7 @@ const first = data.qa[0];
     display: flex;
     flex-wrap: wrap;
     gap: 8px;
-    margin-top: 14px;
+    margin-bottom: 14px;
   }
   .chip {
     min-height: 36px;
