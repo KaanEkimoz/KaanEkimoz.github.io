@@ -9,6 +9,7 @@
 @import '@fontsource/jetbrains-mono/400.css';
 @import '@fontsource/jetbrains-mono/500.css';
 @import '@fontsource/jetbrains-mono/600.css';
+@import '@fontsource/caveat/500.css';
 @import '@fontsource/inter/400.css';
 @import '@fontsource/inter/500.css';
 @import '@fontsource/inter/600.css';
@@ -209,6 +210,13 @@ html[data-theme='light'] {
   .link:hover {
     text-decoration: underline;
     text-underline-offset: 3px;
+  }
+  /* Handwritten margin notes (Caveat), the human touch on the home page. */
+  .hand {
+    font: 500 clamp(1.25rem, 1.8vw, 1.6rem)/1.15 Caveat, 'Comic Sans MS', cursive;
+    color: rgb(var(--text-200));
+    transform: rotate(-4deg);
+    pointer-events: none;
   }
   .mono-chip {
     font: 0.74rem 'JetBrains Mono', ui-monospace, monospace;

@@ -43,7 +43,7 @@ These come from mistakes made in earlier sessions. Follow them in every session,
 - Never invent numbers, levels, dates or status. Facts live in `src/lib/home.ts`; everything else must match it.
 - When a fact changes, grep for the old one across `src/content`, `src/lib`, README and this file. Project pages, blog posts and Q&A answers repeat facts, and stale copies there contradicted the home page before.
 - If two places disagree (once: English "C1" in contact vs "B2" in the evals), don't pick one. Drop the unverified one and ask Kaan.
-- No store status (in review, closed testing) or usage metrics without his confirmation. Patimania is in soft launch with payments off until he says otherwise.
+- No store status or usage metrics without his confirmation. Patimania facts come from his portfolio package (`Patimania-Portfolyo/08-metinler/02-olculmus-rakamlar.md`, measured 24 Oct 2026): soft launch, real payments off, live businesses are demo records (say so, don't hide it), app in Google Play closed test + TestFlight external test, code written with Claude Code (say so, framed as AI-assisted development with the checks he built around it).
 - Don't write unmeasured claims into docs (a "Lighthouse 100" line had to be removed).
 - Personal data stays out of this public repo: no phone, street address, birth date or finances, and no CV link without asking.
 
@@ -73,7 +73,7 @@ These come from mistakes made in earlier sessions. Follow them in every session,
 ## Site structure
 
 ```
-/                    hero (name + title over the data canvas), intro + Q&A box, Patimania, build notes, how I use AI, career, skills, evals, games, latest posts, contact
+/                    hero (greeting, title, stats, 'currently working on' + tech stack over the data canvas, bars on the bottom edge), photo + Q&A box, Patimania (+ app screens, architecture), build notes, how I use AI, career, Tech Stack, evals, games row, latest posts, contact
 /projects[/<slug>]   grid with filter pills (All | Products & Web | Games) and detail pages
 /blog[/<slug>]       posts (md / mdx)
 /brickcrack-privacy  hidden, for App Store Connect (iOS build name "BrickCrack" = Brick Game)
@@ -86,7 +86,8 @@ These come from mistakes made in earlier sessions. Follow them in every session,
 - **i18n:** EN at `/…` (default, no prefix), TR at `/tr/…`. Strings + helpers in `src/lib/i18n.ts` (`t`, `localizedPath`, `alternateUrl`). Page bodies live once in `src/views/*.astro` and take a `lang` prop; `src/pages/…` and `src/pages/tr/…` are thin wrappers, so a page change is made in the view, not twice. `LanguageToggle` remembers the choice in `localStorage.fx-lang`; the pre-paint redirect in `BaseLayout` only runs on the root paths.
 - **Content files:** EN `foo.md`, TR `foo-tr.md` (dash, not dot — Astro strips dots from ids). Slug pages drop the `-tr` suffix (`slugOf` in `src/lib/content.ts`) so both languages share one slug; `getProjects(lang)` / `getPosts(lang)` there return a locale's entries already filtered and sorted. Schemas in `src/content.config.ts` (`lang`, `published`, `featured`, `youtubeId`, `coverImage`, `gallery`…).
 - **Theme:** dark-first navy with blue (`--accent-1`), cyan (`--accent-2`) and indigo (`--accent-3`) accents. Design tokens in `src/styles/global.css` are **space-separated RGB triplets** (`--accent-1: 61 123 255`) so Tailwind's `rgb(var(--x) / <alpha-value>)` works. Dark in `:root`, light in `html[data-theme='light']`. Don't put hex values back into `tailwind.config.mjs`. In canvas/inline styles wrap tokens with `rgb(...)`.
-- **Shared classes** (`@layer components` in `global.css`): `.wrap`, `.sec`, `.sec-head`, `.eyebrow`, `.grad-em`, `.panel`, `.btn`, `.btn-ghost`, `.link`, `.mono-chip`.
+- **Shared classes** (`@layer components` in `global.css`): `.wrap`, `.sec`, `.sec-head`, `.eyebrow`, `.grad-em`, `.panel`, `.btn`, `.btn-ghost`, `.link`, `.mono-chip`, `.hand` (Caveat handwritten notes).
+- **Logos:** `BrandIcon` renders simple-icons by export name (`siNextdotjs`…); LinkedIn is drawn in the component because simple-icons dropped it.
 - **Key components:** `BaseLayout` (head, pre-paint theme + language scripts, hreflang), `Header` / `Footer` / `Mark`, the home sections in `src/components/home/` (`HeroField` canvas, `HeroSection` with the pre-written Q&A box, `PatimaniaSection`, `NotesSection` (build stories), `MethodSection`, `CareerSection`, `SkillsSection`, `EvalsSection`, `GamesSection`, `ContactSection`), `ProjectFilter`, `ProjectCard`, `ProjectModal`, `BlogCard`, `PageHeader`, `LiteYouTube`, `ThemeToggle`, `LanguageToggle`.
 - **Home copy and data** (Q&A, career nodes, skills, evals, Patimania numbers) live in `src/lib/home.ts`, EN and TR side by side. Numbers there come from Kaan's profile brief; don't add figures or claims (store status, metrics) he hasn't confirmed.
 - **Client scripts** init on `astro:page-load` and clean up on `astro:before-swap`. The project modal injects `#project-detail` from a detail page into other pages, so `ProjectPage` uses utilities / global classes only (scoped CSS wouldn't load there); its back link carries `data-back` so the modal can hide it.

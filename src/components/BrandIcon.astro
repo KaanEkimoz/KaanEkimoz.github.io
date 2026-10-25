@@ -1,0 +1,38 @@
+---
+/**
+ * A brand logo from simple-icons, rendered inline at build time.
+ * Brand colors that would vanish on the dark or light background
+ * (near-black, near-white) fall back to the current text color.
+ */
+import * as icons from 'simple-icons';
+
+interface Props {
+  /** simple-icons export name, e.g. "siNextdotjs"; "linkedin" is drawn here (removed from simple-icons). */
+  name: string;
+  size?: number;
+  /** Use the brand color when it reads on both themes (default true). */
+  color?: boolean;
+}
+
+const { name, size = 18, color = true } = Astro.props;
+
+const LINKEDIN =
+  'M20.45 20.45h-3.56v-5.57c0-1.33-.02-3.04-1.85-3.04-1.85 0-2.14 1.45-2.14 2.94v5.67H9.34V9h3.42v1.56h.05c.48-.9 1.64-1.85 3.37-1.85 3.6 0 4.27 2.37 4.27 5.46v6.28zM5.34 7.43a2.06 2.06 0 1 1 0-4.13 2.06 2.06 0 0 1 0 4.13zM7.12 20.45H3.56V9h3.56v11.45zM22.22 0H1.77C.79 0 0 .77 0 1.73v20.54C0 23.23.79 24 1.77 24h20.45c.98 0 1.78-.77 1.78-1.73V1.73C24 .77 23.2 0 22.22 0z';
+
+const icon = (icons as unknown as Record<string, { path: string; hex: string; title: string }>)[name];
+const path = name === 'linkedin' ? LINKEDIN : icon?.path;
+const hex = name === 'linkedin' ? '0A66C2' : icon?.hex;
+
+// Relative luminance of the brand color; very dark or very light marks use currentColor.
+const lum = (h: string) => {
+  const [r, g, b] = [0, 2, 4].map((i) => parseInt(h.slice(i, i + 2), 16) / 255).map((c) => (c <= 0.03928 ? c / 12.92 : ((c + 0.055) / 1.055) ** 2.4));
+  return 0.2126 * r + 0.7152 * g + 0.0722 * b;
+};
+const fill = color && hex && lum(hex) > 0.04 && lum(hex) < 0.7 ? `#${hex}` : 'currentColor';
+---
+
+{path && (
+  <svg width={size} height={size} viewBox="0 0 24 24" aria-hidden="true" fill={fill} style="flex:none">
+    <path d={path}></path>
+  </svg>
+)}
