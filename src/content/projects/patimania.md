@@ -4,8 +4,8 @@ platform: Web
 genres: ["Marketplace", "SaaS", "Pet-tech"]
 year: 2026
 duration: "Jun 2026 — ongoing"
-role: "Solo engineer"
-description: "A multi-sided marketplace for pet-hotel, grooming, and pet-taxi services in Türkiye. Payments are held in escrow via iyzico until the service is confirmed complete. Web + iOS + Android — solo build, in soft launch."
+role: "Full-stack engineer"
+description: "A multi-sided marketplace for pet-hotel, grooming, and pet-taxi services in Türkiye. Payments are held in escrow via iyzico until the service is confirmed complete. Web + iOS + Android, in soft launch."
 techStack:
   - "Next.js 15"
   - "React 19"
@@ -36,7 +36,7 @@ gallery:
 order: 0
 ---
 
-Patimania is a multi-sided marketplace for pet-hotel, grooming, and pet-taxi services in Türkiye. Payments are held in escrow via iyzico and only released once the service is confirmed complete. I'm building the whole thing solo — data model to devops, backend to mobile app — with the first commit on 2 July 2026.
+Patimania is a multi-sided marketplace for pet-hotel, grooming, and pet-taxi services in Türkiye. Payments are held in escrow via iyzico and only released once the service is confirmed complete. I'm building it end to end, from the data model to devops and from the backend to the mobile app; the first commit was on 2 July 2026.
 
 It's in soft launch at patimania.com: the storefront, search and business onboarding are open, and the businesses listed so far are demo records. Real payments stay off until the payment provider is connected; the flow itself is tested. The mobile app is in Google Play closed testing and TestFlight external testing.
 

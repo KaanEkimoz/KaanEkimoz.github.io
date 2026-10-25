@@ -1,12 +1,14 @@
 ---
 /**
- * Career as a pipeline DAG on a real time axis (2020 → 2027).
- * Everything is laid out at build time: x positions are fractions of the
- * plot width, so the chart stays to scale at any width. JS only draws the
- * edges in as you scroll and swaps the detail line on hover/tap.
- * Phones get a vertical list instead.
+ * My Journey: the career as a row of coloured hexagon steps on one rail.
+ * The selected step sits forward; the pointer magnifies its neighbours like
+ * a dock, and hovering a step fans out the four tools I used there. A tap
+ * selects a step (and fans its tools on touch screens); the detail panel
+ * below follows the selection. Everything is rendered at build time; JS
+ * only scales the hexes and swaps which step is open.
  */
-import { CAREER, CAREER_EDGES, copy, pick } from '@lib/home';
+import * as si from 'simple-icons';
+import { CAREER, copy, pick } from '@lib/home';
 import type { Lang } from '@lib/i18n';
 
 interface Props {
@@ -14,304 +16,624 @@ interface Props {
 }
 const { lang } = Astro.props;
 const c = copy.career;
-const Y0 = 2020, Y1 = 2027, PAD_L = 92, PAD_R = 150, HEIGHT = 330;
-const frac = (y: number) => (y - Y0) / (Y1 - Y0);
-const xCss = (f: number) => `calc(${PAD_L}px + (100% - ${PAD_L + PAD_R}px) * ${f.toFixed(4)})`;
-const laneY = [HEIGHT * 0.2, HEIGHT * 0.52, HEIGHT * 0.84];
-const yOf = (n: (typeof CAREER)[number]) => laneY[n.lane] + (n.long ? 13 : 0);
-const years = Array.from({ length: Y1 - Y0 + 1 }, (_, i) => Y0 + i);
-const selected = CAREER.length - 1;
-const edges = CAREER_EDGES.map(([a, b]) => {
-  const A = CAREER[a], B = CAREER[b];
-  const ax = frac(A.s) * 1000, ay = yOf(A), bx = frac(B.s) * 1000, by = yOf(B), mx = (ax + bx) / 2;
-  return ay === by ? `M${ax},${ay} Q${mx},${ay - 34} ${bx},${by}` : `M${ax},${ay} C${mx},${ay} ${mx},${by} ${bx},${by}`;
-});
-const sorted = [...CAREER].sort((a, b) => b.s - a.s);
+const steps = [...CAREER].sort((a, b) => a.s - b.s);
+const last = steps.length - 1;
+
+type Icon = { brand: string } | { glyph: string } | { badge: string };
+// App-tile background (brand colours where the brand has one) and the mark drawn on it.
+const TOOLS: Record<string, { name: { en: string; tr: string }; tile: string; icon: Icon }> = {
+  unity: { name: { en: 'Unity', tr: 'Unity' }, tile: 'linear-gradient(135deg,#5b616e,#16181d)', icon: { brand: 'siUnity' } },
+  csharp: { name: { en: 'C#', tr: 'C#' }, tile: 'linear-gradient(135deg,#a660c8,#68217a)', icon: { badge: 'C#' } },
+  unrealengine: { name: { en: 'Unreal Engine', tr: 'Unreal Engine' }, tile: 'linear-gradient(135deg,#3a3f55,#0e1128)', icon: { brand: 'siUnrealengine' } },
+  design: { name: { en: 'Game design', tr: 'Oyun tasarımı' }, tile: 'linear-gradient(135deg,#a597ff,#5a46e6)', icon: { glyph: '<path d="M2.5 9.5 12 5l9.5 4.5L12 14z"/><path d="M6.5 11.6v3.9c0 1.4 2.5 2.8 5.5 2.8s5.5-1.4 5.5-2.8v-3.9M21.5 9.5v5"/>' } },
+  googleplay: { name: { en: 'Google Play', tr: 'Google Play' }, tile: 'linear-gradient(135deg,#ffffff,#e9eef7)', icon: { brand: 'siGoogleplay' } },
+  android: { name: { en: 'Android', tr: 'Android' }, tile: 'linear-gradient(135deg,#5ef0a0,#1fae63)', icon: { brand: 'siAndroid' } },
+  mobile: { name: { en: 'Mobile', tr: 'Mobil' }, tile: 'linear-gradient(135deg,#ff8cc0,#e0397f)', icon: { glyph: '<rect x="7" y="2.5" width="10" height="19" rx="2.2"/><path d="M11 18.5h2"/>' } },
+  github: { name: { en: 'GitHub', tr: 'GitHub' }, tile: 'linear-gradient(135deg,#3b434c,#0d1117)', icon: { brand: 'siGithub' } },
+  xr: { name: { en: 'Unity XR', tr: 'Unity XR' }, tile: 'linear-gradient(135deg,#d48cff,#7b3fe4)', icon: { badge: 'XR' } },
+  physics: { name: { en: 'Physics', tr: 'Fizik' }, tile: 'linear-gradient(135deg,#5fe3f5,#0e8fbf)', icon: { glyph: '<circle cx="12" cy="12" r="1.5"/><ellipse cx="12" cy="12" rx="9" ry="3.4"/><ellipse cx="12" cy="12" rx="9" ry="3.4" transform="rotate(60 12 12)"/><ellipse cx="12" cy="12" rx="9" ry="3.4" transform="rotate(120 12 12)"/>' } },
+  gameplay: { name: { en: 'Gameplay', tr: 'Oynanış' }, tile: 'linear-gradient(135deg,#78a6ff,#2459e8)', icon: { glyph: '<path d="M7 8h10a4 4 0 0 1 3.9 4.9l-.9 4a2.5 2.5 0 0 1-4.3 1.1L14 16h-4l-1.7 2a2.5 2.5 0 0 1-4.3-1.1l-.9-4A4 4 0 0 1 7 8z"/><path d="M8 11v3M6.5 12.5h3"/>' } },
+  pos: { name: { en: 'POS', tr: 'Kasa (POS)' }, tile: 'linear-gradient(135deg,#ffc061,#ff7a1a)', icon: { glyph: '<rect x="4" y="11" width="16" height="9" rx="1.6"/><path d="M7 11V5h9v6M8 14.5h1.5M11.3 14.5h1.5M14.6 14.5h1.5M8 17.3h8"/>' } },
+  barcode: { name: { en: 'Barcode', tr: 'Barkod' }, tile: 'linear-gradient(135deg,#55dcf2,#1a7fd6)', icon: { glyph: '<path d="M4 5v14M7 5v14M9.5 5v14M13 5v14M15.2 5v14M18 5v14M20 5v14"/>' } },
+  scale: { name: { en: 'Scales', tr: 'Terazi' }, tile: 'linear-gradient(135deg,#6be8b8,#12a676)', icon: { glyph: '<path d="M12 4.5v15M7 19.5h10M4.5 8h15M7 8l-3 6.5h6zM17 8l-3 6.5h6z"/>' } },
+  cart: { name: { en: 'Online sales', tr: 'Online satış' }, tile: 'linear-gradient(135deg,#ff8aa6,#e0396a)', icon: { glyph: '<path d="M3 4.5h2.2l2 9.6a1.5 1.5 0 0 0 1.5 1.2h8.4a1.5 1.5 0 0 0 1.5-1.1L20.8 8H6"/><circle cx="9.6" cy="19.2" r="1.2"/><circle cx="16.8" cy="19.2" r="1.2"/>' } },
+  nextdotjs: { name: { en: 'Next.js', tr: 'Next.js' }, tile: 'linear-gradient(135deg,#3a3a3a,#000)', icon: { brand: 'siNextdotjs' } },
+  nestjs: { name: { en: 'NestJS', tr: 'NestJS' }, tile: 'linear-gradient(135deg,#ff5d7a,#c8102e)', icon: { brand: 'siNestjs' } },
+  postgresql: { name: { en: 'PostgreSQL', tr: 'PostgreSQL' }, tile: 'linear-gradient(135deg,#6a9ef0,#336791)', icon: { brand: 'siPostgresql' } },
+  expo: { name: { en: 'Expo', tr: 'Expo' }, tile: 'linear-gradient(135deg,#7a66ff,#4630eb)', icon: { brand: 'siExpo' } },
+};
+const brandPath = (n: string) => (si as unknown as Record<string, { path: string }>)[n].path;
+// Google Play keeps its four colours; every other mark is white on its tile.
+const iconSvg = (k: string) => {
+  const ic = TOOLS[k].icon;
+  if ('brand' in ic) {
+    if (k === 'googleplay')
+      return `<svg viewBox="0 0 24 24" aria-hidden="true"><defs><linearGradient id="gp-grad" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#00c3ff"/><stop offset=".38" stop-color="#00e676"/><stop offset=".7" stop-color="#ffd400"/><stop offset="1" stop-color="#ff3a44"/></linearGradient></defs><path d="${brandPath(ic.brand)}" fill="url(#gp-grad)"/></svg>`;
+    return `<svg viewBox="0 0 24 24" aria-hidden="true"><path d="${brandPath(ic.brand)}" fill="#fff"/></svg>`;
+  }
+  if ('badge' in ic) return `<svg viewBox="0 0 24 24" aria-hidden="true"><text class="badge" x="12" y="12.5">${ic.badge}</text></svg>`;
+  return `<svg viewBox="0 0 24 24" aria-hidden="true"><g class="glyph">${ic.glyph}</g></svg>`;
+};
+
+// Pointy-top hexagon in a 78×88 box, and four tools on an arc above it.
+const HEX = 'M39 3 L74 23 L74 65 L39 85 L4 65 L4 23 Z';
+const HEX_IN = 'M39 10 L68 26.5 L68 61.5 L39 78 L10 61.5 L10 26.5 Z';
+const FAN = [-66, -22, 22, 66].map((d) => { const r = (d * Math.PI) / 180; return [Math.sin(r) * 84, -Math.cos(r) * 84 - 14]; });
 ---
 
 <section class="sec" id="career">
   <div class="wrap">
     <div class="sec-head" data-fade-in>
       <h2>{pick(c.title, lang)}</h2>
-      <p>{pick(c.lede, lang)}</p>
     </div>
 
-    <div class="dag panel" data-fade-in data-dag>
-      <div class="plot" style={`height:${HEIGHT}px`}>
-        {years.map((y) => (
-          <span class="tick" style={`left:${xCss(frac(y))}`}><i></i><em>{y}</em></span>
-        ))}
-        {c.lanes[lang].map((n, k) => <span class="lane" style={`top:${laneY[k]}px`}>{n}</span>)}
-        {CAREER.map((n) => (
-          <span
-            class:list={['bar', n.sw && 'sw', n.lane === 2 && 'edu', n.long && 'long']}
-            style={`left:${xCss(frac(n.s))};top:${yOf(n)}px;width:calc((100% - ${PAD_L + PAD_R}px) * ${(frac(n.e) - frac(n.s)).toFixed(4)})`}
-          ></span>
-        ))}
-        <svg class="edges" viewBox={`0 0 1000 ${HEIGHT}`} preserveAspectRatio="none" style={`left:${PAD_L}px;width:calc(100% - ${PAD_L + PAD_R}px)`} aria-hidden="true">
-          {edges.map((d) => <path d={d} pathLength="1" vector-effect="non-scaling-stroke"></path>)}
-        </svg>
-        {CAREER.map((n, i) => (
-          <button
-            type="button"
-            class:list={['node', n.sw && 'sw', i === selected && 'on']}
-            style={`left:${xCss(frac(n.s))};top:${yOf(n) + n.lab * 21}px`}
-            data-node={i}
-            data-title={pick(n.title, lang)}
-            data-at={n.at}
-            data-when={pick(n.when, lang)}
-            data-d={pick(n.d, lang)}
-            aria-label={`${pick(n.title, lang)}, ${n.at}, ${pick(n.when, lang)}`}
-          >
-            <i></i><span>{n.at}<small>{pick(n.when, lang)}</small></span>
-          </button>
-        ))}
+    <div class="journey panel" data-journey>
+      <div class="map" data-map>
+        <div class="track" data-track>
+          <div class="rail"><span></span></div>
+          {steps.map((n, i) => (
+            <button
+              type="button"
+              class:list={['step', i === last && 'sel']}
+              style={`--c:var(--s${i})`}
+              data-i={i}
+              aria-pressed={i === last ? 'true' : 'false'}
+              aria-label={`${pick(c.step, lang)} ${i + 1}: ${pick(n.title, lang)}, ${n.at}`}
+            >
+              <span class="hexwrap">
+                {i === last && <span class="now">{pick(c.now, lang)}</span>}
+                <svg class="hex" viewBox="0 0 78 88" aria-hidden="true">
+                  <defs>
+                    <linearGradient id={`jh-${i}`} x1="0" y1="0" x2="0.4" y2="1"><stop class="g0" offset="0"></stop><stop class="g1" offset="1"></stop></linearGradient>
+                  </defs>
+                  <path class="shape" d={HEX} style={`--gid:url(#jh-${i})`}></path>
+                  <path class="inner" d={HEX_IN}></path>
+                  <text x="39" y="45">{i + 1}</text>
+                </svg>
+              </span>
+              <span class="fan" aria-hidden="true">
+                {n.tools.map((t, k) => (
+                  <span class="tool" style={`--tb:${TOOLS[t].tile};--k:${k};--tx:${FAN[k][0].toFixed(1)}px;--ty:${FAN[k][1].toFixed(1)}px`}>
+                    <Fragment set:html={iconSvg(t)} />
+                    <em>{pick(TOOLS[t].name, lang)}</em>
+                  </span>
+                ))}
+              </span>
+              <span class="lab"><small>{Math.floor(n.s)}</small><span>{n.at}</span></span>
+            </button>
+          ))}
+        </div>
       </div>
-      <div class="detail" aria-live="polite" data-detail>
-        <b>{pick(CAREER[selected].title, lang)} · {CAREER[selected].at}</b>
-        <span>{pick(CAREER[selected].when, lang)}</span>
-        <p>{pick(CAREER[selected].d, lang)}</p>
-      </div>
-      <ol class="list">
-        {sorted.map((n) => (
-          <li class:list={[n.sw && 'sw']}>
-            <small>{pick(n.when, lang)}</small>
-            <b>{pick(n.title, lang)} · {n.at}</b>
-            <p>{pick(n.d, lang)}</p>
-          </li>
-        ))}
-      </ol>
+
+      {steps.map((n, i) => (
+        <div class="detail" style={`--c:var(--s${i})`} data-detail={i} hidden={i !== last} aria-live="polite">
+          <h3>{pick(n.title, lang)}</h3>
+          <span class="meta">{n.at} · {pick(n.when, lang)}</span>
+          <p>{pick(n.d, lang)}</p>
+          <div class="tools">
+            {n.tools.map((t) => (
+              <span><i style={`--tb:${TOOLS[t].tile}`}><Fragment set:html={iconSvg(t)} /></i>{pick(TOOLS[t].name, lang)}</span>
+            ))}
+          </div>
+          <div class="nav">
+            <button type="button" data-step="-1" disabled={i === 0} aria-label={pick(c.prev, lang)}>
+              <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M14.5 6 8.5 12l6 6"></path></svg>
+            </button>
+            <span class="count">{i + 1} / {steps.length}</span>
+            <button type="button" data-step="1" disabled={i === last} aria-label={pick(c.next, lang)}>
+              <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m9.5 6 6 6-6 6"></path></svg>
+            </button>
+          </div>
+        </div>
+      ))}
     </div>
   </div>
 </section>
 
 <style>
-  .dag {
-    padding: 18px 18px 14px;
+  /* One colour per step, in both themes. */
+  .journey {
+    --s0: #9d8cff;
+    --s1: #ff8a4c;
+    --s2: #ff5fa2;
+    --s3: #c06bff;
+    --s4: #4f8bff;
+    --s5: #2fd39a;
+    --s6: #2fd3ee;
+    padding: clamp(16px, 3vw, 32px);
   }
-  .plot {
+  :global(html[data-theme='light']) .journey {
+    --s0: #6a55f0;
+    --s1: #e2632a;
+    --s2: #e0397f;
+    --s3: #9a3fe0;
+    --s4: #2f66f0;
+    --s5: #12a676;
+    --s6: #0e9fbf;
+  }
+  .map {
+    overflow-x: auto;
+    overflow-y: hidden;
+    scrollbar-width: thin;
+  }
+  .track {
+    --slot: 132px;
     position: relative;
+    display: grid;
+    grid-template-columns: repeat(7, var(--slot));
+    justify-content: center;
+    min-width: max-content;
+    margin: 0 auto;
+    padding: 132px 60px 30px; /* room above and at the ends for the tool fan, below for a grown label */
   }
-  .tick {
+  /* One straight rail through every hex centre, in the steps' colours. */
+  .rail {
     position: absolute;
-    top: 6px;
-    bottom: 0;
-    width: 0;
-  }
-  .tick i {
-    position: absolute;
-    top: 0;
-    bottom: 22px;
-    width: 1px;
+    left: calc(60px + var(--slot) / 2);
+    right: calc(60px + var(--slot) / 2);
+    top: calc(132px + 44px);
+    height: 4px;
+    margin-top: -2px;
+    border-radius: 2px;
     background: rgb(var(--border));
+    overflow: hidden;
   }
-  .tick em {
+  .rail span {
     position: absolute;
-    bottom: 2px;
-    transform: translateX(-50%);
-    font: 500 11px 'JetBrains Mono', ui-monospace, monospace;
-    font-style: normal;
-    color: rgb(var(--text-300));
+    inset: 0;
+    transform-origin: left;
+    transform: scaleX(0);
+    background: linear-gradient(90deg, var(--s0), var(--s1) 16.7%, var(--s2) 33.3%, var(--s3) 50%, var(--s4) 66.7%, var(--s5) 83.3%, var(--s6));
+    transition: transform 1.8s cubic-bezier(0.3, 0.6, 0.2, 1);
   }
-  .lane {
+  .journey.on .rail span,
+  .journey:not(.js) .rail span {
+    transform: none;
+  }
+
+  .step {
+    position: relative;
+    display: grid;
+    justify-items: center;
+    grid-template-rows: 88px auto;
+    background: none;
+    border: 0;
+    padding: 0;
+    cursor: pointer;
+    outline: none;
+  }
+  .hexwrap {
+    position: relative;
+    width: 78px;
+    height: 88px;
+    transform: scale(var(--sc, 1));
+    transition: filter 0.3s;
+  }
+  .hex {
     position: absolute;
-    left: 0;
-    transform: translateY(-50%);
-    font: 500 10px 'JetBrains Mono', ui-monospace, monospace;
-    letter-spacing: 0.1em;
-    text-transform: uppercase;
-    color: rgb(var(--text-300));
-  }
-  .bar {
-    position: absolute;
-    min-width: 4px;
-    height: 6px;
-    margin-top: -3px;
-    border-radius: 3px;
-    background: rgb(var(--text-300));
-    opacity: 0.85;
-  }
-  .bar.sw {
-    background: rgb(var(--accent-1));
-  }
-  .bar.edu {
-    background: rgb(var(--accent-2));
-  }
-  .bar.long {
-    height: 3px;
-    margin-top: -1.5px;
-    opacity: 0.45;
-  }
-  .edges {
-    position: absolute;
-    top: 0;
+    inset: 0;
+    width: 100%;
     height: 100%;
     overflow: visible;
   }
-  .edges path {
+  .hex .shape {
+    fill: rgb(var(--bg-elev));
+    stroke: rgb(var(--border));
+    stroke-width: 2.5;
+    transition: fill 0.35s, stroke 0.35s;
+  }
+  .hex .inner {
     fill: none;
-    stroke: rgb(var(--accent-1));
-    stroke-width: 1.5;
-    opacity: 0.6;
-    stroke-dasharray: 1;
-    stroke-dashoffset: 0;
+    stroke: var(--c);
+    stroke-opacity: 0;
+    stroke-width: 1;
+    transition: stroke-opacity 0.35s;
   }
-  .node {
+  .hex text {
+    font: 600 22px 'JetBrains Mono', ui-monospace, monospace;
+    fill: rgb(var(--text-300));
+    text-anchor: middle;
+    dominant-baseline: central;
+    transition: fill 0.35s;
+  }
+  .hex .g0 {
+    stop-color: color-mix(in oklab, var(--c) 62%, #fff);
+  }
+  .hex .g1 {
+    stop-color: var(--c);
+  }
+  .journey.on .step .shape,
+  .journey:not(.js) .step .shape {
+    stroke: var(--c);
+    fill: color-mix(in oklab, var(--c) 14%, rgb(var(--bg-elev)));
+  }
+  .journey.on .step .inner,
+  .journey:not(.js) .step .inner {
+    stroke-opacity: 0.35;
+  }
+  .journey.on .step text,
+  .journey:not(.js) .step text {
+    fill: var(--c);
+  }
+  .journey .step.sel .shape {
+    fill: var(--gid);
+    stroke: var(--c);
+  }
+  .journey .step.sel .inner {
+    stroke: #fff;
+    stroke-opacity: 0.45;
+  }
+  .journey .step.sel text {
+    fill: #fff;
+  }
+  .step.sel .hexwrap {
+    filter: drop-shadow(0 12px 22px color-mix(in oklab, var(--c) 45%, transparent));
+  }
+  .step:focus-visible .shape {
+    stroke: rgb(var(--accent-2));
+    stroke-width: 3.5;
+  }
+  .now {
     position: absolute;
-    display: flex;
-    align-items: center;
-    gap: 6px;
-    padding: 0;
-    transform: translate(-6px, -50%);
-    text-align: left;
-  }
-  .node i {
-    flex: none;
-    width: 12px;
-    height: 12px;
-    border-radius: 50%;
-    background: rgb(var(--bg-elev));
-    border: 2px solid rgb(var(--text-300));
-    transition: transform 0.25s cubic-bezier(0.2, 0.8, 0.2, 1), background 0.2s, border-color 0.2s;
-  }
-  .node.sw i {
-    border-color: rgb(var(--accent-1));
-  }
-  .node span {
-    padding: 3px 7px;
-    border-radius: 7px;
-    font-size: 0.8rem;
-    line-height: 1.2;
+    left: 50%;
+    top: -22px;
+    transform: translateX(-50%);
+    font: 600 0.68rem 'JetBrains Mono', ui-monospace, monospace;
+    letter-spacing: 0.1em;
+    color: var(--s6);
     white-space: nowrap;
-    color: rgb(var(--text-200));
-    background: rgb(var(--bg-elev) / 0.85);
-    transition: color 0.2s;
+    animation: bob 1.6s ease-in-out infinite;
   }
-  .node small {
-    display: block;
-    font: 0.66rem 'JetBrains Mono', ui-monospace, monospace;
-    color: rgb(var(--text-300));
+  @keyframes bob {
+    50% {
+      transform: translate(-50%, -4px);
+    }
   }
-  .node:hover i,
-  .node.on i {
-    transform: scale(1.35);
-    background: rgb(var(--accent-1));
-    border-color: rgb(var(--accent-1));
-  }
-  .node:hover span,
-  .node.on span {
-    color: rgb(var(--text-100));
-  }
-  .detail {
-    margin-top: 10px;
-    padding-top: 14px;
-    border-top: 1px solid rgb(var(--border));
-    min-height: 4.4em;
+  /* Labels sit on one line; they move down only by how much the hex grew. */
+  .lab {
     display: grid;
-    gap: 4px;
+    justify-items: center;
+    gap: 2px;
+    padding-top: 14px;
+    transform: translateY(var(--ly, 0px));
+    text-align: center;
+    width: var(--slot);
   }
-  .detail b {
-    font-weight: 600;
+  .lab small {
+    font: 600 0.7rem 'JetBrains Mono', ui-monospace, monospace;
+    letter-spacing: 0.05em;
+    color: var(--c);
+  }
+  .lab span {
+    font-size: 0.84rem;
+    line-height: 1.25;
+    color: rgb(var(--text-200));
+    max-width: 118px;
+  }
+  .step.sel .lab span {
     color: rgb(var(--text-100));
+    font-weight: 500;
   }
-  .detail span {
-    font: 0.74rem 'JetBrains Mono', ui-monospace, monospace;
+
+  /* Tool fan above the hex. */
+  .fan {
+    position: absolute;
+    left: 50%;
+    top: var(--ft, 44px);
+    width: 0;
+    height: 0;
+    z-index: 3;
+    pointer-events: none;
+  }
+  .tool {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 48px;
+    height: 48px;
+    margin: -24px 0 0 -24px;
+    border-radius: 14px;
+    display: grid;
+    place-items: center;
+    background: var(--tb);
+    box-shadow: inset 0 1px 0 rgb(255 255 255 / 0.28), inset 0 -2px 6px rgb(0 0 0 / 0.18), 0 10px 20px rgb(0 0 0 / 0.28);
+    opacity: 0;
+    transform: scale(0.3);
+    transition: transform 0.45s cubic-bezier(0.2, 1.4, 0.4, 1), opacity 0.25s;
+    transition-delay: calc(var(--k) * 45ms);
+  }
+  .tool :global(svg) {
+    width: 24px;
+    height: 24px;
+  }
+  .journey :global(.glyph) {
+    fill: none;
+    stroke: #fff;
+    stroke-width: 1.8;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+  }
+  .journey :global(.badge) {
+    font: 700 11px 'JetBrains Mono', ui-monospace, monospace;
+    fill: #fff;
+    text-anchor: middle;
+    dominant-baseline: central;
+  }
+  .tool em {
+    position: absolute;
+    bottom: 100%;
+    margin-bottom: 6px;
+    left: 50%;
+    transform: translateX(-50%);
+    font: 500 0.66rem 'JetBrains Mono', ui-monospace, monospace;
+    font-style: normal;
+    color: rgb(var(--bg-base));
+    white-space: nowrap;
+    background: rgb(var(--text-100));
+    border-radius: 6px;
+    padding: 1px 7px;
+    opacity: 0;
+    transition: opacity 0.15s;
+    pointer-events: none;
+  }
+  .tool:hover em {
+    opacity: 1;
+  }
+  .step.fanned {
+    z-index: 4;
+  }
+  .step.fanned .now {
+    opacity: 0;
+  }
+  .step.fanned .fan {
+    pointer-events: auto;
+  }
+  .step.fanned .tool {
+    opacity: 1;
+    transform: translate(var(--tx), var(--ty));
+  }
+  .step.fanned .tool:hover {
+    transform: translate(var(--tx), var(--ty)) scale(1.12);
+  }
+
+  /* Detail panel for the selected step. */
+  .detail {
+    margin-top: 14px;
+    border-top: 1px solid rgb(var(--border));
+    padding-top: 20px;
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    gap: 6px;
+    align-items: start;
+  }
+  .detail[hidden] {
+    display: none;
+  }
+  .detail:not([hidden]) > * {
+    animation: rise 0.4s cubic-bezier(0.2, 0.8, 0.2, 1) both;
+  }
+  @keyframes rise {
+    from {
+      opacity: 0;
+      transform: translateY(6px);
+    }
+  }
+  .detail h3 {
+    margin: 0;
+    font: 500 1.3rem Sora, ui-sans-serif, sans-serif;
+    letter-spacing: -0.03em;
+  }
+  .detail .meta {
+    font: 500 0.82rem 'JetBrains Mono', ui-monospace, monospace;
     color: rgb(var(--text-300));
   }
   .detail p {
+    grid-column: 1 / -1;
+    margin: 4px 0 0;
     color: rgb(var(--text-200));
-    font-size: 0.94rem;
+    max-width: 62ch;
   }
-  .list {
-    display: none;
+  .tools {
+    grid-column: 1 / -1;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    margin-top: 6px;
   }
-  @media (max-width: 860px) {
-    .plot,
-    .detail {
-      display: none;
+  .tools > span {
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    font: 500 0.76rem 'JetBrains Mono', ui-monospace, monospace;
+    color: rgb(var(--text-100));
+    background: rgb(var(--bg-elev-2));
+    border: 1px solid rgb(var(--border));
+    border-radius: 9px;
+    padding: 3px 10px 3px 3px;
+  }
+  .tools i {
+    width: 22px;
+    height: 22px;
+    border-radius: 6px;
+    background: var(--tb);
+    display: grid;
+    place-items: center;
+    box-shadow: inset 0 1px 0 rgb(255 255 255 / 0.25);
+  }
+  .tools i :global(svg) {
+    width: 13px;
+    height: 13px;
+  }
+  .tools i :global(.badge) {
+    font-size: 15px;
+  }
+  /* Prev / next: two blue arrows centred under the detail. */
+  .nav {
+    grid-column: 1 / -1;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 14px;
+    margin-top: 14px;
+  }
+  .nav button {
+    width: 44px;
+    height: 44px;
+    border-radius: 50%;
+    display: grid;
+    place-items: center;
+    border: 1px solid rgb(var(--accent-1) / 0.45);
+    background: linear-gradient(135deg, rgb(var(--accent-1) / 0.22), rgb(var(--accent-2) / 0.14));
+    color: rgb(var(--accent-1));
+    cursor: pointer;
+    transition: transform 0.15s, background 0.2s, color 0.2s, border-color 0.2s;
+  }
+  .nav button svg {
+    width: 20px;
+    height: 20px;
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 2.4;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+  }
+  .nav button:hover:not(:disabled) {
+    background: linear-gradient(135deg, rgb(var(--accent-1)), rgb(var(--accent-2)));
+    border-color: transparent;
+    color: #fff;
+  }
+  .nav button:active:not(:disabled) {
+    transform: scale(0.94);
+  }
+  .nav button:disabled {
+    opacity: 0.3;
+    cursor: default;
+  }
+  .nav .count {
+    min-width: 3.5em;
+    text-align: center;
+    font: 500 0.8rem 'JetBrains Mono', ui-monospace, monospace;
+    color: rgb(var(--text-300));
+    font-variant-numeric: tabular-nums;
+  }
+  @media (max-width: 720px) {
+    .track {
+      --slot: 116px;
     }
-    .list {
-      display: grid;
-      position: relative;
-      padding-left: 18px;
-    }
-    .list::before {
-      content: '';
-      position: absolute;
-      left: 5px;
-      top: 10px;
-      bottom: 10px;
-      width: 1.5px;
-      background: rgb(var(--accent-1) / 0.4);
-    }
-    .list li {
-      position: relative;
-      display: grid;
-      gap: 2px;
-      padding: 10px 0 12px 14px;
-    }
-    .list li::before {
-      content: '';
-      position: absolute;
-      left: -18px;
-      top: 15px;
-      width: 10px;
-      height: 10px;
-      border-radius: 50%;
-      background: rgb(var(--bg-elev));
-      border: 2px solid rgb(var(--text-300));
-    }
-    .list li.sw::before {
-      background: rgb(var(--accent-1));
-      border-color: rgb(var(--accent-1));
-    }
-    .list small {
-      font: 0.72rem 'JetBrains Mono', ui-monospace, monospace;
-      color: rgb(var(--text-300));
-    }
-    .list b {
-      color: rgb(var(--text-100));
-      font-weight: 600;
-    }
-    .list p {
-      color: rgb(var(--text-200));
-      font-size: 0.9rem;
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .rail span,
+    .tool,
+    .now,
+    .detail > * {
+      transition: none;
+      animation: none;
     }
   }
 </style>
 
 <script>
-  let cleanup: (() => void) | null = null;
+  let stop: (() => void) | null = null;
 
   function init() {
-    cleanup?.();
-    const dag = document.querySelector<HTMLElement>('[data-dag]');
-    if (!dag) return;
-    const detail = dag.querySelector<HTMLElement>('[data-detail]')!;
-    const nodes = [...dag.querySelectorAll<HTMLButtonElement>('[data-node]')];
-    const select = (b: HTMLButtonElement) => {
-      nodes.forEach((n) => n.classList.toggle('on', n === b));
-      const el = (tag: string, text: string) => Object.assign(document.createElement(tag), { textContent: text });
-      detail.replaceChildren(el('b', `${b.dataset.title} · ${b.dataset.at}`), el('span', b.dataset.when || ''), el('p', b.dataset.d || ''));
-    };
-    nodes.forEach((b) => ['pointerenter', 'focus', 'click'].forEach((ev) => b.addEventListener(ev, () => select(b))));
+    stop?.();
+    const root = document.querySelector<HTMLElement>('[data-journey]');
+    if (!root) return;
+    const map = root.querySelector<HTMLElement>('[data-map]')!;
+    const track = root.querySelector<HTMLElement>('[data-track]')!;
+    const steps = [...track.querySelectorAll<HTMLButtonElement>('.step')];
+    const details = [...root.querySelectorAll<HTMLElement>('[data-detail]')];
+    const last = steps.length - 1;
+    const reduced = matchMedia('(prefers-reduced-motion: reduce)').matches;
+    const fine = matchMedia('(hover: hover) and (pointer: fine)').matches;
+    root.classList.add('js');
 
-    // Edges draw in, in time order, as the chart scrolls into view.
-    if (matchMedia('(prefers-reduced-motion: reduce)').matches) return;
-    const paths = [...dag.querySelectorAll<SVGPathElement>('.edges path')];
-    let queued = false;
-    const paint = () => {
-      queued = false;
-      const r = dag.getBoundingClientRect();
-      const p = Math.min(1, Math.max(0, (innerHeight * 0.95 - r.top) / (innerHeight * 0.5)));
-      paths.forEach((path, i) => (path.style.strokeDashoffset = String(1 - Math.min(1, Math.max(0, p * paths.length - i)))));
+    let sel = last;
+    const setFan = (i: number) => steps.forEach((b, k) => b.classList.toggle('fanned', k === i));
+    const select = (i: number, opts: { fan?: boolean; focus?: boolean; scroll?: boolean } = {}) => {
+      sel = Math.max(0, Math.min(last, i));
+      steps.forEach((b, k) => { b.classList.toggle('sel', k === sel); b.setAttribute('aria-pressed', String(k === sel)); });
+      details.forEach((d, k) => (d.hidden = k !== sel));
+      if (!fine || opts.fan) setFan(sel);
+      if (opts.focus) steps[sel].focus();
+      if (opts.scroll) steps[sel].scrollIntoView({ block: 'nearest', inline: 'center', behavior: reduced ? 'auto' : 'smooth' });
+      targets();
     };
-    const onScroll = () => { if (!queued) { queued = true; requestAnimationFrame(paint); } };
-    paint();
-    addEventListener('scroll', onScroll, { passive: true });
-    cleanup = () => { removeEventListener('scroll', onScroll); cleanup = null; };
+
+    // Dock-style scale: the selected hex sits forward; the pointer magnifies its neighbours.
+    const cur = steps.map(() => 1);
+    const tgt = steps.map(() => 1);
+    let px: number | null = null, raf = 0;
+    function targets() {
+      steps.forEach((b, k) => {
+        let s = k === sel ? 1.32 : 0.92;
+        if (px !== null) {
+          const r = b.getBoundingClientRect();
+          const f = Math.max(0, 1 - Math.abs(px - (r.left + r.width / 2)) / 210);
+          s = Math.max(s, 0.92 + 0.5 * f * f * (3 - 2 * f));
+        }
+        tgt[k] = s;
+      });
+      if (!raf) raf = requestAnimationFrame(tick);
+    }
+    function tick() {
+      raf = 0;
+      let moving = false;
+      steps.forEach((b, k) => {
+        cur[k] += (tgt[k] - cur[k]) * (reduced ? 1 : 0.16);
+        if (Math.abs(tgt[k] - cur[k]) > 0.002) moving = true; else cur[k] = tgt[k];
+        b.style.setProperty('--sc', cur[k].toFixed(3));
+        b.style.setProperty('--ly', `${((cur[k] - 1) * 44).toFixed(1)}px`);
+        b.style.setProperty('--ft', `${(44 - (cur[k] - 1) * 44).toFixed(1)}px`);
+      });
+      if (moving) raf = requestAnimationFrame(tick);
+    }
+
+    const onMove = (e: PointerEvent) => { if (e.pointerType !== 'mouse') return; px = e.clientX; targets(); };
+    const onLeave = () => { px = null; setFan(-1); targets(); };
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key !== 'ArrowRight' && e.key !== 'ArrowLeft') return;
+      e.preventDefault();
+      select(sel + (e.key === 'ArrowRight' ? 1 : -1), { focus: true, fan: true, scroll: true });
+    };
+    const onNav = (e: Event) => { const b = (e.target as Element).closest<HTMLElement>('[data-step]'); if (b) select(sel + Number(b.dataset.step), { fan: true, scroll: true }); };
+    if (fine) {
+      track.addEventListener('pointermove', onMove);
+      track.addEventListener('pointerleave', onLeave);
+      steps.forEach((b, i) => b.addEventListener('pointerenter', () => setFan(i)));
+    }
+    steps.forEach((b, i) => b.addEventListener('click', () => select(i, { fan: true, scroll: !fine })));
+    track.addEventListener('keydown', onKey);
+    root.addEventListener('click', onNav);
+    const onScroll = () => { if (px !== null) targets(); };
+    map.addEventListener('scroll', onScroll, { passive: true });
+    addEventListener('resize', targets);
+
+    // Opening: the rail draws and the steps light up one by one.
+    let timers: number[] = [];
+    const open = () => {
+      root.classList.add('on');
+      if (!fine) setFan(sel);
+    };
+    targets();
+    // Narrow screens start scrolled to the end, where the current step is.
+    if (map.scrollWidth > map.clientWidth) map.scrollLeft = map.scrollWidth;
+    let io: IntersectionObserver | null = null;
+    if (reduced) open();
+    else {
+      io = new IntersectionObserver(([e]) => { if (e.isIntersecting) { io?.disconnect(); timers.push(window.setTimeout(open, 120)); } }, { threshold: 0.3 });
+      io.observe(root);
+    }
+
+    stop = () => {
+      io?.disconnect();
+      timers.forEach(clearTimeout);
+      cancelAnimationFrame(raf);
+      removeEventListener('resize', targets);
+      stop = null;
+    };
   }
 
   document.addEventListener('astro:page-load', init);
-  document.addEventListener('astro:before-swap', () => cleanup?.());
+  document.addEventListener('astro:before-swap', () => stop?.());
 </script>

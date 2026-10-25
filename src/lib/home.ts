@@ -42,25 +42,40 @@ export const copy = {
         tr: "İki yıldır yapay zekâ kodlama ajanlarıyla çalışıyorum. Her gün MCP ile Claude Code kullanıyorum; büyük değişiklikleri birkaç ajana bölüyorum, yeterli olduğunda Ollama ile yerel modeller çalıştırıyorum. Sık tekrarladığım işler için kendi agent skill'lerimi yazıyorum, gerçek kullanıcılara LLM özellikleri de sundum.",
       },
     ],
-    flow: {
-      me: { en: 'Me', tr: 'Ben' },
-      meSub: { en: 'plan · review', tr: 'plan · inceleme' },
-      agent: { en: 'Agent', tr: 'Ajan' },
-      log: [
-        { en: 'me → plan the change', tr: 'ben → değişikliği planla' },
-        { en: 'claude code → load my skills', tr: "claude code → skill'lerimi yükle" },
-        { en: 'mcp → read the repo, run tools', tr: 'mcp → repoyu oku, araçları çalıştır' },
-        { en: 'split the work across 3 agents', tr: 'işi 3 ajana böl' },
-        { en: 'ollama → small task on a local model', tr: 'ollama → küçük iş yerel modelde' },
-        { en: 'agents → diffs back for review', tr: "ajanlar → diff'ler incelemeye" },
-        { en: 'me → review, test, merge ✓', tr: 'ben → incele, test et, birleştir ✓' },
+    studio: {
+      aria: { en: 'Animated map of how I work with AI: me, the agents I hand work to, their tools, the code, my projects and the people who use them.', tr: 'Yapay zekâyla nasıl çalıştığımın hareketli haritası: ben, işi verdiğim ajanlar, araçları, yazdığım kod, projelerim ve onları kullanan insanlar.' },
+      stages: [
+        { en: 'Me', tr: 'Ben' },
+        { en: 'MCP + Skills', tr: "MCP + Skill'ler" },
+        { en: 'Agents', tr: 'Ajanlar' },
+        { en: 'Modes', tr: 'Modlar' },
+        { en: 'Code', tr: 'Kod' },
+        { en: 'Projects', tr: 'Projeler' },
+        { en: 'End User', tr: 'Son kullanıcı' },
       ],
+      // Labels that change with the language (keyed by node id); names of tools stay as they are.
+      names: {
+        local: { en: 'Local LLMs', tr: "Yerel LLM'ler" },
+        'hub-skills': { en: 'Skills + Memory', tr: "Skill'ler + Hafıza" },
+        'hub-langs': { en: 'Languages', tr: 'Diller' },
+        'hub-infra': { en: 'Engines & Deployment', tr: 'Motorlar & Yayın' },
+        'hub-outputs': { en: 'Projects', tr: 'Projeler' },
+        'hub-users': { en: 'End User', tr: 'Son kullanıcı' },
+        'o-soft': { en: 'Software', tr: 'Yazılımlar' },
+        'o-games': { en: 'Games', tr: 'Oyunlar' },
+        'o-auto': { en: 'Automations', tr: 'Otomasyonlar' },
+        'u-users': { en: 'Users', tr: 'Kullanıcılar' },
+        'u-customers': { en: 'Customers', tr: 'Müşteriler' },
+        'u-biz': { en: 'Businesses', tr: 'İşletmeler' },
+      },
     },
   },
   career: {
-    title: { en: 'How I got here', tr: 'Buraya nasıl geldim' },
-    lede: { en: 'Games first, then retail systems, now Patimania. Hover or tap a step for details.', tr: 'Önce oyunlar, sonra perakende sistemleri, şimdi Patimania. Ayrıntı için bir adıma dokun ya da üzerine gel.' },
-    lanes: { en: ['Software', 'Games', 'Education'], tr: ['Yazılım', 'Oyun', 'Eğitim'] },
+    title: { en: 'My Journey', tr: 'Yolculuğum' },
+    now: { en: 'NOW', tr: 'ŞU AN' },
+    prev: { en: 'Previous step', tr: 'Önceki adım' },
+    next: { en: 'Next step', tr: 'Sonraki adım' },
+    step: { en: 'Step', tr: 'Adım' },
   },
   skills: {
     title: { en: 'Tech Stack', tr: 'Tech Stack' },
@@ -104,8 +119,8 @@ export const copy = {
     metaDescription: { en: 'Resume of Kaan Usta, full-stack AI developer in Istanbul.', tr: "Kaan Usta'nın özgeçmişi; İstanbul'da full-stack AI developer." },
     print: { en: 'Print / save as PDF', tr: 'Yazdır / PDF olarak kaydet' },
     summary: {
-      en: "Full-stack developer in Istanbul. Since June 2026 I've been the only engineer on Patimania, a pet-services marketplace with a website, an iOS and Android app, and business and admin panels. I build with AI coding agents and check the work with tests and CI guards I wrote myself. Before that I spent six years making games in Unity.",
-      tr: "İstanbul'da full-stack geliştiriciyim. Haziran 2026'dan beri web sitesi, iOS ve Android uygulaması, işletme ve yönetim panelinden oluşan bir evcil hayvan hizmetleri pazaryeri olan Patimania'nın tek mühendisiyim. Yapay zekâ kodlama ajanlarıyla geliştiriyor, işi kendi yazdığım testler ve CI nöbetçileriyle denetliyorum. Öncesinde altı yıl Unity ile oyun geliştirdim.",
+      en: "Full-stack developer in Istanbul. Since June 2026 I've been building Patimania, a pet-services marketplace with a website, an iOS and Android app, and business and admin panels. I build with AI coding agents and check the work with tests and CI guards I wrote myself. Before that I spent six years making games in Unity.",
+      tr: "İstanbul'da full-stack geliştiriciyim. Haziran 2026'dan beri web sitesi, iOS ve Android uygulaması, işletme ve yönetim panelinden oluşan bir evcil hayvan hizmetleri pazaryeri olan Patimania'yı geliştiriyorum. Yapay zekâ kodlama ajanlarıyla geliştiriyor, işi kendi yazdığım testler ve CI nöbetçileriyle denetliyorum. Öncesinde altı yıl Unity ile oyun geliştirdim.",
     },
     experience: { en: 'Experience', tr: 'Deneyim' },
     education: { en: 'Education', tr: 'Eğitim' },
@@ -117,8 +132,8 @@ export const copy = {
     links: { en: 'Links', tr: 'Bağlantılar' },
     patimania: [
       {
-        en: 'Designed and built the whole product alone: NestJS API (32 modules), Next.js website (128 routes), React Native + Expo app (45 screens), business and admin panels.',
-        tr: 'Ürünün tamamını tek başıma tasarlayıp geliştirdim: NestJS API (32 modül), Next.js web sitesi (128 sayfa), React Native + Expo uygulaması (45 ekran), işletme ve yönetim panelleri.',
+        en: 'Designed and built the product: NestJS API (32 modules), Next.js website (128 routes), React Native + Expo app (45 screens), business and admin panels.',
+        tr: 'Ürünü tasarlayıp geliştirdim: NestJS API (32 modül), Next.js web sitesi (128 sayfa), React Native + Expo uygulaması (45 ekran), işletme ve yönetim panelleri.',
       },
       {
         en: 'PostgreSQL + PostGIS data model with 68 tables; double booking blocked in the database with an EXCLUDE constraint; escrow money flow with an append-only ledger.',
@@ -162,8 +177,8 @@ export const QA: { id: string; q: L10n; a: L10n; stats?: Record<Lang, string[]>;
     id: 'now',
     q: { en: 'What am I working on?', tr: 'Şu an ne üzerinde çalışıyorum?' },
     a: {
-      en: "Patimania, a marketplace that connects pet hotels, groomers and pet taxis with pet owners across Türkiye. I'm its only engineer and built every part of it: the NestJS and PostgreSQL backend, the Next.js website, the iOS and Android app in React Native, and the business and admin panels. Payments are held in escrow until the service is done, and double bookings are blocked by the database itself. It's in a soft launch at patimania.com: the listed businesses are demo records for now, real payments switch on once the payment provider is connected, and the app is in Google Play closed testing and on TestFlight.",
-      tr: "Patimania: Türkiye genelinde pet otellerini, kuaförleri ve pet taksileri hayvan sahipleriyle buluşturan bir pazaryeri. Tek mühendisi benim ve her parçasını ben geliştirdim: NestJS ve PostgreSQL ile arka uç, Next.js ile web sitesi, React Native ile iOS ve Android uygulaması, işletme ve yönetim panelleri. Ödeme, hizmet tamamlanana kadar Ödeme Güvencesi ile bekletiliyor; çift rezervasyonu doğrudan veritabanı engelliyor. Platform patimania.com'da ön yayında: listelenen işletmeler şimdilik demo kayıtlar, gerçek ödemeler ödeme sağlayıcısı bağlanınca açılacak, uygulama da Google Play kapalı testinde ve TestFlight'ta.",
+      en: "Patimania, a marketplace that connects pet hotels, groomers and pet taxis with pet owners across Türkiye. I built every part of it: the NestJS and PostgreSQL backend, the Next.js website, the iOS and Android app in React Native, and the business and admin panels. Payments are held in escrow until the service is done, and double bookings are blocked by the database itself. It's in a soft launch at patimania.com: the listed businesses are demo records for now, real payments switch on once the payment provider is connected, and the app is in Google Play closed testing and on TestFlight.",
+      tr: "Patimania: Türkiye genelinde pet otellerini, kuaförleri ve pet taksileri hayvan sahipleriyle buluşturan bir pazaryeri. Her parçasını ben geliştirdim: NestJS ve PostgreSQL ile arka uç, Next.js ile web sitesi, React Native ile iOS ve Android uygulaması, işletme ve yönetim panelleri. Ödeme, hizmet tamamlanana kadar Ödeme Güvencesi ile bekletiliyor; çift rezervasyonu doğrudan veritabanı engelliyor. Platform patimania.com'da ön yayında: listelenen işletmeler şimdilik demo kayıtlar, gerçek ödemeler ödeme sağlayıcısı bağlanınca açılacak, uygulama da Google Play kapalı testinde ve TestFlight'ta.",
     },
     stats: { en: ['2,441 commits', '68 tables', '76 E2E test suites'], tr: ['2.441 commit', '68 tablo', '76 uçtan uca test paketi'] },
     src: [],
@@ -234,24 +249,23 @@ export const EVALS: { name: L10n; value: number }[] = [
 ];
 
 /** Career nodes. `s`/`e` are fractional years; lane 0 software, 1 games, 2 education. `lab` puts the label above (-1) or below (+1). */
-export const CAREER: { lane: 0 | 1 | 2; lab: number; s: number; e: number; long?: boolean; sw?: boolean; title: L10n; at: string; when: L10n; d: L10n }[] = [
-  { lane: 2, lab: -1, s: 2020.0, e: 2024.5, title: { en: 'B.Sc. Digital Game Design', tr: 'Dijital Oyun Tasarımı lisansı' }, at: 'İstinye University', when: { en: '2020 — 2024', tr: '2020 — 2024' },
-    d: { en: 'Taught entirely in English. Where programming and engines became the focus.', tr: 'Eğitim dili tamamen İngilizceydi. Programlama ve oyun motorları burada asıl odağım oldu.' } },
-  { lane: 1, lab: -1, s: 2022.25, e: 2022.5, title: { en: 'Jr. Game Developer', tr: 'Jr. Game Developer' }, at: '208 Studios', when: { en: 'Apr — Jun 2022', tr: 'Nis — Haz 2022' },
-    d: { en: 'Hyper-casual games and rapid prototypes, including Draw Rush and Stack Runner.', tr: 'Draw Rush ve Stack Runner dahil hiper-casual oyunlar ve hızlı prototipler.' } },
-  { lane: 1, lab: 1.7, s: 2022.0, e: 2026.85, long: true, title: { en: 'Game Developer', tr: 'Game Developer' }, at: 'Ekimoz Games', when: { en: '2022 — now', tr: '2022 — devam' },
-    d: { en: 'Self-published mobile games: publishing, ad mediation and monetisation.', tr: 'Kendi yayımladığım mobil oyunlar: yayıncılık, reklam mediasyonu ve monetizasyon.' } },
-  { lane: 1, lab: -1, s: 2023.33, e: 2023.75, title: { en: 'Unity XR Developer', tr: 'Unity XR Developer' }, at: 'Visionary Spaces', when: { en: 'May — Sep 2023', tr: 'May — Eyl 2023' },
-    d: { en: 'VR scenes and games with physics-based mechanics.', tr: 'Fizik tabanlı mekaniklerle VR sahneleri ve oyunları.' } },
-  { lane: 1, lab: -1, s: 2024.83, e: 2025.83, title: { en: 'Unity Developer', tr: 'Unity Developer' }, at: 'YTÜ DOGDOK', when: { en: 'Nov 2024 — Oct 2025', tr: 'Kas 2024 — Eki 2025' },
-    d: { en: 'Core gameplay systems for mobile games in a team of three.', tr: 'Üç kişilik ekipte mobil oyunların temel oynanış sistemleri.' } },
-  { lane: 0, lab: -1, sw: true, s: 2025.83, e: 2026.08, title: { en: 'Retail Technology Specialist', tr: 'Perakende Teknolojileri Uzmanı' }, at: 'Gurmenin Sepeti', when: { en: 'Nov 2025 — Jan 2026', tr: 'Kas 2025 — Oca 2026' },
-    d: { en: "Took a grocery chain's POS, barcode and scale systems live across its stores, plus its online sales system.", tr: 'Market zincirinin kasa, barkod ve terazi sistemlerini mağazalarda canlıya aldım; online satış sistemini de yayına açtım.' } },
-  { lane: 0, lab: 1, sw: true, s: 2026.42, e: 2026.85, title: { en: 'Full-Stack Engineer', tr: 'Full-Stack Engineer' }, at: 'Patimania', when: { en: 'Jun 2026 — now', tr: 'Haz 2026 — devam' },
-    d: { en: 'Sole engineer: architecture, backend, web, mobile, design system, escrow payments and CI/CD.', tr: 'Tek mühendis: mimari, arka uç, web, mobil, tasarım sistemi, Ödeme Güvencesi altyapısı ve CI/CD.' } },
+/** Career steps (lane 0 software, 1 games, 2 education). `tools` are keys of TOOLS in JourneySection. */
+export const CAREER: { lane: 0 | 1 | 2; s: number; e: number; title: L10n; at: string; when: L10n; d: L10n; tools: string[] }[] = [
+  { lane: 2, s: 2020.0, e: 2024.5, title: { en: 'B.Sc. Digital Game Design', tr: 'Dijital Oyun Tasarımı lisansı' }, at: 'İstinye University', when: { en: '2020 — 2024', tr: '2020 — 2024' },
+    d: { en: 'Taught entirely in English. Where programming and engines became the focus.', tr: 'Eğitim dili tamamen İngilizceydi. Programlama ve oyun motorları burada asıl odağım oldu.' }, tools: ['unity', 'csharp', 'unrealengine', 'design'] },
+  { lane: 1, s: 2022.25, e: 2022.5, title: { en: 'Jr. Game Developer', tr: 'Jr. Game Developer' }, at: '208 Studios', when: { en: 'Apr — Jun 2022', tr: 'Nis — Haz 2022' },
+    d: { en: 'Hyper-casual games and rapid prototypes, including Draw Rush and Stack Runner.', tr: 'Draw Rush ve Stack Runner dahil hiper-casual oyunlar ve hızlı prototipler.' }, tools: ['unity', 'csharp', 'mobile', 'github'] },
+  { lane: 1, s: 2022.0, e: 2026.85, title: { en: 'Game Developer', tr: 'Game Developer' }, at: 'Ekimoz Games', when: { en: '2022 — now', tr: '2022 — devam' },
+    d: { en: 'Self-published mobile games: publishing, ad mediation and monetisation.', tr: 'Kendi yayımladığım mobil oyunlar: yayıncılık, reklam mediasyonu ve monetizasyon.' }, tools: ['unity', 'csharp', 'googleplay', 'android'] },
+  { lane: 1, s: 2023.33, e: 2023.75, title: { en: 'Unity XR Developer', tr: 'Unity XR Developer' }, at: 'Visionary Spaces', when: { en: 'May — Sep 2023', tr: 'May — Eyl 2023' },
+    d: { en: 'VR scenes and games with physics-based mechanics.', tr: 'Fizik tabanlı mekaniklerle VR sahneleri ve oyunları.' }, tools: ['unity', 'csharp', 'xr', 'physics'] },
+  { lane: 1, s: 2024.83, e: 2025.83, title: { en: 'Unity Developer', tr: 'Unity Developer' }, at: 'YTÜ DOGDOK', when: { en: 'Nov 2024 — Oct 2025', tr: 'Kas 2024 — Eki 2025' },
+    d: { en: 'Core gameplay systems for mobile games in a team of three.', tr: 'Üç kişilik ekipte mobil oyunların temel oynanış sistemleri.' }, tools: ['unity', 'csharp', 'mobile', 'gameplay'] },
+  { lane: 0, s: 2025.83, e: 2026.08, title: { en: 'Retail Technology Specialist', tr: 'Perakende Teknolojileri Uzmanı' }, at: 'Gurmenin Sepeti', when: { en: 'Nov 2025 — Jan 2026', tr: 'Kas 2025 — Oca 2026' },
+    d: { en: "Took a grocery chain's POS, barcode and scale systems live across its stores, plus its online sales system.", tr: 'Market zincirinin kasa, barkod ve terazi sistemlerini mağazalarda canlıya aldım; online satış sistemini de yayına açtım.' }, tools: ['pos', 'barcode', 'scale', 'cart'] },
+  { lane: 0, s: 2026.42, e: 2026.85, title: { en: 'Full-Stack Engineer', tr: 'Full-Stack Engineer' }, at: 'Patimania', when: { en: 'Jun 2026 — now', tr: 'Haz 2026 — devam' },
+    d: { en: 'Architecture, backend, web, mobile, design system, escrow payments and CI/CD.', tr: 'Mimari, arka uç, web, mobil, tasarım sistemi, Ödeme Güvencesi altyapısı ve CI/CD.' }, tools: ['nextdotjs', 'nestjs', 'postgresql', 'expo'] },
 ];
-/** Edges between career nodes (indices into CAREER), in time order. */
-export const CAREER_EDGES: [number, number][] = [[0, 1], [1, 3], [3, 4], [4, 5], [5, 6]];
 
 export const PATIMANIA_MODULES =
   'auth users providers services service-types reservations payments disputes cart messages notifications reviews favorites search geo addresses pets media campaigns banners announcements events reports analytics support abuse jobs maintenance platform-settings admin-alerts demo-panel taxi'.split(' ');

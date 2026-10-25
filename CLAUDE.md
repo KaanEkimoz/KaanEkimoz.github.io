@@ -4,7 +4,7 @@ Context for Claude sessions working on this repo (local or cloud). The repo is p
 
 ## Owner and how to work with him
 
-- **Kaan Usta** (Yusuf Kaan Usta), based in Türkiye. Full-stack engineer and the only engineer of Patimania (Next.js, NestJS, Expo); Unity/C# game developer since 2020. The site presents him as a full-stack engineer, with games as where he started.
+- **Kaan Usta** (Yusuf Kaan Usta), based in Türkiye. Full-stack engineer who builds Patimania (Next.js, NestJS, Expo); Unity/C# game developer since 2020. The site presents him as a full-stack engineer, with games as where he started.
 - Talk to him in **Turkish**, naturally (not translated-sounding). He gives a lot of autonomy. Site PRs merge without asking (see below); still confirm anything else hard to undo (deleting content, Worker deploys, D1 migrations, history rewrites).
 - His internet drops often: re-read this file and the code before asking where things were left.
 - Plans: write only what will be done — no "out of scope / v2" sections unless he asks what else is possible.
@@ -68,13 +68,14 @@ These come from mistakes made in earlier sessions. Follow them in every session,
 
 **Design**
 - Kaan likes blue and a futuristic data/AI look. He rejected a draft that looked like Claude's own UI. Build on the existing tokens and shared classes instead of adding new palettes.
+- Don't call him the "sole / only engineer" or say he built things "alone" (Kaan, 25 Oct 2026): he has worked with very good people on many projects and doesn't want solo work emphasised.
 - No home-page sections dedicated to Patimania (removed 25 Oct 2026): it's his first product of several, so it appears as a project (hero card, Q&A answer, /projects), not as its own section.
 - He also said the site looked AI-made. Avoid the template tells: no eyebrow label on every section, no gradient or blue-accent word in headings, no glow on cards, no slogans ("end to end", "built by one engineer"). Vary section layouts, and prefer real material (his photo, real stories from his work) over decoration.
 
 ## Site structure
 
 ```
-/                    hero (greeting, title, stats, 'currently working on' + tech stack over the data canvas, bars on the bottom edge), photo + Q&A box (question chips only, no text input), how I use AI, career, Tech Stack, evals, games row, latest posts, contact
+/                    hero (greeting, title, stats, 'currently working on' + tech stack over the data canvas, bars on the bottom edge), photo + Q&A box (question chips only, no text input), how I use AI (animated AI studio map, `AIStudio` + `src/lib/ai-studio.ts`), My Journey (career as hexagon steps with tool fans, `CareerSection`), Tech Stack, evals, games row, latest posts, contact
 /projects[/<slug>]   grid with filter pills (All | Products & Web | Games) and detail pages
 /blog[/<slug>]       posts (md / mdx)
 /resume              Özgeçmiş / Resume, built from home.ts facts (CAREER, SKILL_GROUPS, EVALS, copy.resume); prints to A4

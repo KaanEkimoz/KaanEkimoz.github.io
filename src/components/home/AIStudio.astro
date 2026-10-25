@@ -1,0 +1,456 @@
+---
+/**
+ * Animated map of how I work with AI, ported from my studio artifact: me on
+ * the left, the agents I hand work to in the middle, their tools and modes,
+ * then code, projects and the people who use them. Signals run along the
+ * wires; hovering an agent opens its arms and lights its road to the end
+ * user. Wide screens get the left-to-right flow, phones the top-to-bottom layers.
+ */
+import { copy, pick } from '@lib/home';
+import type { Lang } from '@lib/i18n';
+
+interface Props {
+  lang: Lang;
+}
+const { lang } = Astro.props;
+const s = copy.method.studio;
+const labels = {
+  stages: s.stages.map((x) => pick(x, lang)),
+  names: Object.fromEntries(Object.entries(s.names).map(([k, v]) => [k, pick(v, lang)])),
+};
+---
+
+<div class="studio" data-studio data-labels={JSON.stringify(labels)}>
+  <canvas role="img" aria-label={pick(s.aria, lang)}></canvas>
+</div>
+
+<style>
+  /* The map keeps its own colour set: one hue per layer, as in the artifact. */
+  .studio {
+    --panel: #0c1222;
+    --panel-2: #111a2e;
+    --line: #1c2740;
+    --line-2: #26355a;
+    --fg: #e7edf9;
+    --muted: #8794b3;
+    --dim: #56627f;
+    --ground: #060912;
+    --human: #ffd8a8;
+    --a-cc: #ee8a5b;
+    --a-local: #c6ef6a;
+    --a-agy: #6aa8ff;
+    --a-gpt: #4fd2c4;
+    --a-gem: #b49cff;
+    --a-copilot: #a9bbd8;
+    --a-grok: #eef1f7;
+    --agents: #5ad1f2;
+    --mcp: #4fe0a1;
+    --skills: #ff86c0;
+    --langs: #ffd166;
+    --infra: #7fa7ff;
+    --outputs: #ffa25c;
+    --users: #ff6f7d;
+    position: relative;
+    border: 1px solid var(--line);
+    border-radius: 18px;
+    overflow: hidden;
+    background: radial-gradient(1200px 600px at 50% 45%, var(--panel) 0%, var(--ground) 70%);
+  }
+  .studio::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    opacity: 0.35;
+    background-image: linear-gradient(var(--line) 1px, transparent 1px), linear-gradient(90deg, var(--line) 1px, transparent 1px);
+    background-size: 48px 48px;
+    -webkit-mask-image: radial-gradient(ellipse at center, #000 30%, transparent 75%);
+    mask-image: radial-gradient(ellipse at center, #000 30%, transparent 75%);
+  }
+  :global(html[data-theme='light']) .studio {
+    --panel: #ffffff;
+    --panel-2: #f3f6fd;
+    --line: #dde4f2;
+    --line-2: #c4cfe8;
+    --fg: #0a1330;
+    --muted: #4a5878;
+    --dim: #8a96b3;
+    --ground: #eef2fb;
+    --human: #d9822b;
+    --a-cc: #d9622b;
+    --a-local: #6d9e14;
+    --a-agy: #2f6fe0;
+    --a-gpt: #109e8f;
+    --a-gem: #7a5cf0;
+    --a-copilot: #5a6f93;
+    --a-grok: #2b3245;
+    --agents: #0e9fbf;
+    --mcp: #12a06a;
+    --skills: #d6458f;
+    --langs: #b88400;
+    --infra: #3b63d8;
+    --outputs: #e0711f;
+    --users: #e0384a;
+  }
+  canvas {
+    position: relative;
+    display: block;
+    width: 100%;
+    height: 600px;
+  }
+  @media (max-width: 899px) {
+    canvas {
+      height: 1180px;
+    }
+  }
+</style>
+
+<script>
+  import { EXTRA, GROUPS, HUB_FROM, ICON_LIGHT, ICON_SRC, NODES, NODE_ICON } from '@lib/ai-studio';
+
+  type Node = { id: string; g: string; label: string; c?: string; hub?: boolean; x: number; y: number; tx: number; ty: number; a: number; placed?: boolean };
+  type Edge = { a: Node; b: Node; kind: 'agent' | 'hub' | 'member' | 'extra'; bend: number };
+  type Labels = { stages: string[]; names: Record<string, string> };
+
+  // Agent arms stay folded into their agent until it is hovered.
+  const ARM_OF: Record<string, string> = { cc: 'claude', cagents: 'claude', teams: 'claude', sub: 'claude', codex: 'chatgpt', gptwork: 'chatgpt', ollama: 'local', qwen: 'local', llama: 'local', deepseek: 'local' };
+  const STAGE_X = [0.058, 0.26, 0.5, 0.625, 0.705, 0.81, 0.94];
+  const FONT = { display: 'Sora, ui-sans-serif, system-ui, sans-serif', body: 'Geist, ui-sans-serif, system-ui, sans-serif', mono: '"JetBrains Mono", ui-monospace, monospace' };
+
+  let stop: (() => void) | null = null;
+
+  function init() {
+    stop?.();
+    const root = document.querySelector<HTMLElement>('[data-studio]');
+    const cv = root?.querySelector('canvas');
+    const ctx = cv?.getContext('2d');
+    if (!root || !cv || !ctx) return;
+    const L: Labels = JSON.parse(root.dataset.labels || '{"stages":[],"names":{}}');
+    const name = (k: string, fallback: string) => L.names[k] ?? fallback;
+    const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+    // Colours come from the map's own tokens, read again when the theme flips.
+    const palette = new Map<string, string>();
+    const readPalette = () => {
+      palette.clear();
+      const cs = getComputedStyle(root);
+      for (const k of ['--panel', '--panel-2', '--line', '--line-2', '--fg', '--muted', '--dim', '--ground', '--human', '--a-cc', '--a-local', '--a-agy', '--a-gpt', '--a-gem', '--a-copilot', '--a-grok', '--agents', '--mcp', '--skills', '--langs', '--infra', '--outputs', '--users'])
+        palette.set(k, cs.getPropertyValue(k).trim());
+    };
+    const css = (k: string) => palette.get(k) || '#888';
+    const light = () => document.documentElement.dataset.theme === 'light';
+
+    const icons: Record<string, HTMLImageElement> = {};
+    const iconsLight: Record<string, HTMLImageElement> = {};
+    for (const k in ICON_SRC) { const i = new Image(); i.src = ICON_SRC[k]; icons[k] = i; }
+    for (const k in ICON_LIGHT) { const i = new Image(); i.src = ICON_LIGHT[k]; iconsLight[k] = i; }
+    const iconFor = (n: Node) => {
+      const k = NODE_ICON[n.id];
+      const img = k && ((light() && iconsLight[k]) || icons[k]);
+      return img && img.complete && img.naturalWidth ? img : null;
+    };
+
+    // ---------- model ----------
+    const nodes: Node[] = NODES.map(([id, g, label, c]) => ({ id, g, label: name(id, label), c, x: 0, y: 0, tx: 0, ty: 0, a: 0 }));
+    const byId: Record<string, Node> = Object.fromEntries(nodes.map((n) => [n.id, n]));
+    const hubs: Record<string, Node> = {};
+    for (const g of Object.keys(GROUPS)) if (GROUPS[g].hub) {
+      const h: Node = { id: 'hub-' + g, g, hub: true, label: name('hub-' + g, GROUPS[g].name), x: 0, y: 0, tx: 0, ty: 0, a: 0 };
+      hubs[g] = h; nodes.push(h); byId[h.id] = h;
+    }
+    const members = (g: string) => nodes.filter((n) => n.g === g && !n.hub);
+    const agents = members('ai');
+    const edges: Edge[] = [];
+    let seed = 7;
+    const rnd = () => ((seed = (seed * 16807) % 2147483647) / 2147483647);
+    const addEdge = (a: string, b: string, kind: Edge['kind']) => { if (byId[a] && byId[b]) edges.push({ a: byId[a], b: byId[b], kind, bend: (rnd() - 0.5) * 0.3 }); };
+    for (const ag of agents) addEdge('kaan', ag.id, 'agent');
+    for (const g in hubs) {
+      if (g === 'users') { for (const m of members(g)) addEdge(m.id, hubs[g].id, 'hub'); continue; }
+      const from = HUB_FROM[g];
+      if (from) addEdge(from, hubs[g].id, 'hub');
+      for (const m of members(g)) addEdge(hubs[g].id, m.id, 'member');
+    }
+    for (const ag of agents) { addEdge('hub-mcp', ag.id, 'extra'); addEdge('hub-skills', ag.id, 'extra'); }
+    for (const [a, b] of EXTRA) addEdge(a, b, 'extra');
+    for (const ag of agents) addEdge(ag.id, 'hub-infra', 'hub');
+    for (const m of members('outputs')) addEdge(m.id, 'hub-users', 'hub');
+
+    let openAgent: string | null = null, openLinger = 0;
+    const armOpen = (n: Node) => !ARM_OF[n.id] || openAgent === ARM_OF[n.id];
+    const colorOf = (n: Node) => css(n.c || GROUPS[n.g].color);
+
+    // ---------- layouts ----------
+    let W = 800, H = 600, view: 'flow' | 'layers' = 'flow';
+    const narrow = () => W < 720;
+    const deg = (d: number) => (d * Math.PI) / 180;
+    const at = (id: string, x: number, y: number) => { byId[id].tx = x; byId[id].ty = y; };
+    const kaanW = () => (view === 'flow' ? Math.max(150, Math.min(176, W * 0.13)) : Math.min(230, W * 0.6));
+
+    // Layers (phones): one band per layer, top to bottom, members spread in rows.
+    function layoutLayers() {
+      const rects: Record<string, number[]> = {
+        human: [0.25, 0.012, 0.75, 0.072], mcp: [0.02, 0.06, 0.98, 0.21], skills: [0.02, 0.22, 0.98, 0.3],
+        ai: [0.02, 0.31, 0.98, 0.41], cl: [0.02, 0.415, 0.98, 0.445], ccx: [0.02, 0.45, 0.98, 0.47], gx: [0.02, 0.475, 0.98, 0.5], lx: [0.02, 0.505, 0.98, 0.555],
+        langs: [0.02, 0.57, 0.98, 0.65], infra: [0.02, 0.665, 0.98, 0.735], outputs: [0.02, 0.75, 0.98, 0.84], users: [0.02, 0.86, 0.98, 0.92],
+      };
+      for (const g in rects) {
+        let [x0, y0, x1, y1] = rects[g]; x0 *= W; x1 *= W; y0 *= H; y1 *= H;
+        if (g === 'human') { at('kaan', (x0 + x1) / 2, (y0 + y1) / 2); continue; }
+        const ms = members(g), k = ms.length;
+        if (g === 'ai' || g === 'cl' || g === 'gx') {
+          const per = g === 'cl' ? 2 : g === 'gx' ? 3 : 3, rows = Math.ceil(k / per);
+          ms.forEach((m, i) => { const r = Math.floor(i / per), inRow = Math.min(per, k - r * per), c = i % per; m.tx = x0 + ((x1 - x0) * (c + 0.5)) / inRow; m.ty = y0 + ((y1 - y0) * (r + 0.5)) / rows; });
+          continue;
+        }
+        if (hubs[g]) { hubs[g].tx = x0 + 72; hubs[g].ty = y0 + 8; }
+        const per = Math.max(1, Math.floor((x1 - x0) / 96)), rows = Math.ceil(k / per), rh = (y1 - y0 - 22) / Math.max(rows, 1);
+        ms.forEach((m, i) => { const r = Math.floor(i / per), c = i % per, inRow = Math.min(per, k - r * per), cw = (x1 - x0) / inRow; m.tx = x0 + cw * c + cw / 2; m.ty = y0 + 22 + rh * r + rh / 2 - 6; });
+      }
+      hubs.users.tx = W / 2; hubs.users.ty = H * 0.965;
+    }
+    function layoutCols(rects: Record<string, number[]>) {
+      for (const g in rects) {
+        let [x0, y0, x1, y1] = rects[g]; x0 *= W; x1 *= W; y0 *= H; y1 *= H;
+        if (g === 'human') { at('kaan', (x0 + x1) / 2, (y0 + y1) / 2); continue; }
+        const ms = members(g), k = ms.length;
+        if (g === 'ai') { ms.forEach((m, i) => { m.tx = (x0 + x1) / 2; m.ty = y0 + ((y1 - y0) * (i + 0.5)) / k; }); continue; }
+        if (hubs[g]) { hubs[g].tx = (x0 + x1) / 2; hubs[g].ty = y0 + 4; }
+        const top = hubs[g] ? 34 : 6, fit = Math.max(1, Math.floor((y1 - y0 - top) / 21)), cols = rects[g][5] || Math.max(1, Math.ceil(k / fit));
+        const rows = Math.ceil(k / cols), cw = (x1 - x0) / cols, rh = Math.min(rects[g][4] || 34, (y1 - y0 - top) / rows);
+        ms.forEach((m, i) => { const c = Math.floor(i / rows), r = i % rows; m.tx = x0 + cw * c + 12; m.ty = y0 + top + rh * r + rh / 2; });
+      }
+    }
+    // Left to right: me, the shared MCP and skills, the agents, their modes, code, projects, the end user.
+    function layoutFlow() {
+      layoutCols({
+        human: [0, 0.42, 0.116, 0.58],
+        mcp: [0.135, 0.1, 0.385, 0.58, 34, 2], skills: [0.135, 0.63, 0.385, 0.97, 34, 2],
+        ai: [0.45, 0.06, 0.55, 0.94],
+        infra: [0.655, 0.27, 0.78, 0.55, 24, 1], langs: [0.655, 0.56, 0.755, 0.92, 26], outputs: [0.78, 0.56, 0.84, 0.92, 26],
+      });
+      const mx = W * 0.625, cy = byId.claude.ty, gy = byId.chatgpt.ty, ly = byId.local.ty;
+      at('cc', mx, cy - 24); at('cagents', mx, cy + 24);
+      at('teams', mx - 30, cy + 56); at('sub', mx - 30, cy + 82);
+      at('codex', mx, gy - 22); at('gptwork', mx, gy + 22);
+      ['ollama', 'qwen', 'llama', 'deepseek'].forEach((id, i) => at(id, mx - 30, ly - 51 + i * 34));
+      ctx!.font = `700 17px ${FONT.display}`;
+      const uw = ctx!.measureText(hubs.users.label).width + 64;
+      hubs.users.tx = W - uw / 2 - 16; hubs.users.ty = H / 2;
+      members('users').forEach((m, i) => at(m.id, hubs.users.tx - uw / 2 + 22, H / 2 + 46 + i * 24));
+      byId.kaan.tx = Math.max(byId.kaan.tx, kaanW() / 2 + 14);
+    }
+
+    let DPR = 1;
+    function resize() {
+      const r = cv!.getBoundingClientRect();
+      DPR = Math.min(2, devicePixelRatio || 1);
+      W = r.width; H = r.height;
+      cv!.width = W * DPR; cv!.height = H * DPR;
+      ctx!.setTransform(DPR, 0, 0, DPR, 0, 0);
+      view = W >= 860 ? 'flow' : 'layers';
+      (view === 'flow' ? layoutFlow : layoutLayers)();
+      for (const n of nodes) if (!n.placed) { n.x = n.tx; n.y = n.ty; n.placed = true; }
+    }
+
+    // ---------- drawing ----------
+    const ctrl = (e: { a: Node; b: Node; bend: number }) => { const mx = (e.a.x + e.b.x) / 2, my = (e.a.y + e.b.y) / 2, dx = e.b.x - e.a.x, dy = e.b.y - e.a.y; return [mx - dy * e.bend, my + dx * e.bend]; };
+    const qpt = (e: Edge, t: number) => { const [qx, qy] = ctrl(e), u = 1 - t; return [u * u * e.a.x + 2 * u * t * qx + t * t * e.b.x, u * u * e.a.y + 2 * u * t * qy + t * t * e.b.y]; };
+    const packets: { e: Edge; t: number; back: boolean; v: number }[] = [];
+    const spawn = (dt: number) => {
+      for (const e of edges) {
+        if (!armOpen(e.a) || !armOpen(e.b)) continue;
+        const rate = e.kind === 'agent' ? 0.9 : e.kind === 'hub' ? 0.5 : e.kind === 'extra' ? 0.3 : 0.12;
+        if (Math.random() < rate * dt) packets.push({ e, t: 0, back: Math.random() < (e.kind === 'agent' ? 0.5 : 0.3), v: 0.35 + Math.random() * 0.35 });
+      }
+    };
+    // An agent (or one of its arms) lights its whole road: me in, then everything downstream to the end user.
+    const pathFrom = (ag: Node) => {
+      const s = new Set([byId.kaan, byId['hub-mcp'], byId['hub-skills'], ag]), q = [ag];
+      while (q.length) {
+        const cur = q.shift()!;
+        for (const e of edges) if (e.a === cur && !s.has(e.b)) { s.add(e.b); q.push(e.b); }
+        if (cur.id === 'hub-users') for (const m of members('users')) s.add(m);
+      }
+      return s;
+    };
+    let hover: Node | null = null, selected: Node | null = null;
+    const focusSet = () => {
+      const f = selected || hover;
+      if (!f) return null;
+      const ag = f.g === 'ai' ? f : ARM_OF[f.id] ? byId[ARM_OF[f.id]] : null;
+      if (ag) return pathFrom(ag);
+      const s = new Set([f]);
+      for (const e of edges) { if (e.a === f) s.add(e.b); if (e.b === f) s.add(e.a); }
+      return s;
+    };
+    const roundRect = (x: number, y: number, w: number, h: number, r: number) => {
+      ctx!.beginPath(); ctx!.moveTo(x + r, y); ctx!.arcTo(x + w, y, x + w, y + h, r); ctx!.arcTo(x + w, y + h, x, y + h, r); ctx!.arcTo(x, y + h, x, y, r); ctx!.arcTo(x, y, x + w, y, r); ctx!.closePath();
+    };
+    // The site's mark: three linked nodes on a navy tile.
+    const drawLogo = (cx: number, cy: number, size: number) => {
+      const k = size / 32; ctx!.save(); ctx!.translate(cx - size / 2, cy - size / 2); ctx!.scale(k, k);
+      roundRect(0, 0, 32, 32, 7); ctx!.fillStyle = '#050912'; ctx!.fill();
+      ctx!.strokeStyle = '#7d8bab'; ctx!.lineWidth = 1.8; ctx!.beginPath(); ctx!.moveTo(10.5, 15); ctx!.lineTo(21, 10.5); ctx!.moveTo(10.5, 17); ctx!.lineTo(21, 21.5); ctx!.stroke();
+      ([[8.5, 16, '#22d3ee'], [23, 9.5, '#3d7bff'], [23, 22.5, '#3d7bff']] as [number, number, string][]).forEach(([x, y, c]) => { ctx!.beginPath(); ctx!.arc(x, y, 3.4, 0, 7); ctx!.fillStyle = c; ctx!.fill(); });
+      ctx!.restore();
+    };
+    const pillSize = (n: Node): [number, number] => {
+      const tiny = n.g === 'gx', small = n.g === 'cl' || tiny;
+      ctx!.font = `700 ${tiny ? 11.5 : small || narrow() ? 13 : 15}px ${FONT.display}`;
+      return [ctx!.measureText(n.label).width + (tiny ? 32 : small ? 38 : narrow() ? 40 : 48), tiny ? 24 : small ? 30 : narrow() ? 34 : 40];
+    };
+
+    let last = performance.now(), clock = 0, raf = 0, visible = false;
+    function frame(now: number) {
+      raf = 0;
+      if (!visible) return;
+      const dt = Math.min(0.05, (now - last) / 1000); last = now; clock += dt;
+      const ease = 1 - Math.pow(0.0015, dt);
+      const f = selected || hover, fo = f && (ARM_OF[f.id] || (Object.values(ARM_OF).includes(f.id) ? f.id : null));
+      if (fo) { openAgent = fo; openLinger = 0.5; } else if ((openLinger -= dt) <= 0) openAgent = null;
+      for (const n of nodes) {
+        const home = armOpen(n) ? n : byId[ARM_OF[n.id]];
+        n.x += (home.tx - n.x) * ease; n.y += (home.ty - n.y) * ease; n.a += ((armOpen(n) ? 1 : 0) - n.a) * ease;
+      }
+      const c = ctx!;
+      c.clearRect(0, 0, W, H);
+      if (view === 'flow') {
+        c.textBaseline = 'middle'; c.textAlign = 'center'; c.font = `500 11px ${FONT.mono}`;
+        STAGE_X.forEach((x, i) => {
+          c.globalAlpha = 0.9; c.fillStyle = css('--muted'); c.fillText((L.stages[i] || '').toLocaleUpperCase(), x * W, 22);
+          if (i < STAGE_X.length - 1) { c.globalAlpha = 0.5; c.fillStyle = css('--dim'); c.fillText('→', ((x + STAGE_X[i + 1]) * W) / 2, 22); }
+        });
+        c.globalAlpha = 1;
+      }
+      const fs = focusSet();
+      const dimOf = (n: Node) => (fs ? (fs.has(n) || (ARM_OF[n.id] && ARM_OF[n.id] === openAgent) ? 1 : 0.18) : 1);
+
+      for (const e of edges) {
+        const al = Math.min(e.a.a, e.b.a) * Math.min(dimOf(e.a), dimOf(e.b)); if (al < 0.02) continue;
+        const [qx, qy] = ctrl(e);
+        c.strokeStyle = e.kind === 'member' ? css('--line-2') : colorOf(e.b);
+        c.globalAlpha = al * (e.kind === 'agent' ? 0.6 : e.kind === 'member' ? 0.5 : 0.32);
+        c.lineWidth = e.kind === 'agent' ? 2.2 : e.kind === 'hub' ? 1.3 : 1; c.setLineDash(e.kind === 'extra' ? [3, 5] : []);
+        c.beginPath(); c.moveTo(e.a.x, e.a.y); c.quadraticCurveTo(qx, qy, e.b.x, e.b.y); c.stroke();
+      }
+      c.setLineDash([]);
+
+      if (!reduce) spawn(dt);
+      for (let i = packets.length - 1; i >= 0; i--) {
+        const p = packets[i]; p.t += dt * p.v;
+        if (p.t >= 1) { packets.splice(i, 1); continue; }
+        const al = Math.min(p.e.a.a, p.e.b.a) * Math.min(dimOf(p.e.a), dimOf(p.e.b)); if (al < 0.05) continue;
+        const [x, y] = qpt(p.e, p.back ? 1 - p.t : p.t), col = colorOf(p.back ? p.e.a : p.e.b);
+        c.globalAlpha = al * Math.sin(p.t * Math.PI); c.fillStyle = col; c.shadowColor = col; c.shadowBlur = 10;
+        c.beginPath(); c.arc(x, y, p.e.kind === 'agent' ? 2.8 : 2.1, 0, 7); c.fill(); c.shadowBlur = 0;
+      }
+
+      c.textBaseline = 'middle';
+      for (const n of nodes) {
+        const al = n.a * dimOf(n); if (al < 0.02) continue; c.globalAlpha = al;
+        const col = colorOf(n), isF = n === hover || n === selected;
+        if (n.id === 'kaan') {
+          const w = kaanW(), h = 66, x = n.x - w / 2, y = n.y - h / 2;
+          c.shadowColor = col; c.shadowBlur = 30 + Math.sin(clock * 2) * 10;
+          roundRect(x, y, w, h, 20); c.fillStyle = css('--panel-2'); c.fill(); c.shadowBlur = 0;
+          c.strokeStyle = col; c.lineWidth = isF ? 2.4 : 1.8; c.stroke();
+          const ir = 17, ix = x + ir + 10;
+          drawLogo(ix, n.y, ir * 2);
+          c.textAlign = 'left'; c.fillStyle = css('--fg'); c.font = `700 15px ${FONT.display}`;
+          c.fillText('Kaan Usta', ix + ir + 9, n.y - 9);
+          c.fillStyle = col; c.font = `500 9.5px ${FONT.mono}`; c.fillText('Developer', ix + ir + 9, n.y + 12);
+          continue;
+        }
+        if (n.g === 'ai' || n.g === 'cl' || n.g === 'gx') {
+          const [w, h] = pillSize(n), x = n.x - w / 2, y = n.y - h / 2;
+          c.shadowColor = col; c.shadowBlur = isF ? 26 : 14 + Math.sin(clock * 2 + n.x * 0.02) * 4;
+          roundRect(x, y, w, h, h / 2); c.fillStyle = css('--panel-2'); c.fill(); c.shadowBlur = 0;
+          c.strokeStyle = col; c.lineWidth = isF ? 2.2 : 1.5; c.stroke();
+          const tiny = n.g === 'gx', small = n.g === 'cl' || tiny, ic = iconFor(n), is = tiny ? 12 : small ? 14 : 18;
+          if (ic) c.drawImage(ic, x + (tiny ? 16 : 20) - is / 2, n.y - is / 2, is, is);
+          else { c.fillStyle = col; c.beginPath(); c.arc(x + 20, n.y, 5, 0, 7); c.fill(); }
+          c.fillStyle = css('--fg'); c.textAlign = 'left'; c.font = `700 ${tiny ? 11.5 : small || narrow() ? 13 : 15}px ${FONT.display}`;
+          c.fillText(n.label, x + (tiny ? 26 : small ? 30 : 34), n.y + 1);
+          continue;
+        }
+        if (n.id === 'hub-users') {
+          c.font = `700 ${narrow() ? 15 : 17}px ${FONT.display}`;
+          const w = c.measureText(n.label).width + 64, h = 52, x = n.x - w / 2, y = n.y - h / 2;
+          c.shadowColor = col; c.shadowBlur = 22 + Math.sin(clock * 2) * 6;
+          roundRect(x, y, w, h, h / 2); c.fillStyle = css('--panel-2'); c.fill(); c.shadowBlur = 0;
+          c.strokeStyle = col; c.lineWidth = isF ? 2.4 : 1.8; c.stroke();
+          const px = x + 26, py = n.y; c.fillStyle = col;
+          c.beginPath(); c.arc(px, py - 7, 5.5, 0, 7); c.fill();
+          c.beginPath(); c.arc(px, py + 12, 10, Math.PI, 0); c.closePath(); c.fill();
+          c.fillStyle = css('--fg'); c.textAlign = 'left'; c.fillText(n.label, x + 46, n.y + 1);
+          continue;
+        }
+        if (n.hub) {
+          c.font = `600 12px ${FONT.body}`;
+          const w = c.measureText(n.label).width + 24, h = 26;
+          roundRect(n.x - w / 2, n.y - h / 2, w, h, h / 2); c.fillStyle = css('--ground'); c.fill();
+          c.strokeStyle = col; c.lineWidth = isF ? 2 : 1.2; c.stroke();
+          c.fillStyle = col; c.textAlign = 'center'; c.fillText(n.label, n.x, n.y);
+          continue;
+        }
+        const r = isF ? 6.5 : 4.4 + Math.sin(clock * 1.7 + n.x * 0.01) * 0.5;
+        const mic = iconFor(n);
+        if (mic) {
+          const s = isF ? 18 : 15;
+          c.fillStyle = css('--panel-2'); c.strokeStyle = col; c.lineWidth = 1; c.beginPath(); c.arc(n.x, n.y, s * 0.72, 0, 7); c.fill(); c.stroke();
+          c.drawImage(mic, n.x - s / 2, n.y - s / 2, s, s);
+        } else { c.fillStyle = col; c.shadowColor = col; c.shadowBlur = isF ? 18 : 8; c.beginPath(); c.arc(n.x, n.y, r, 0, 7); c.fill(); c.shadowBlur = 0; }
+        if (isF) { c.strokeStyle = col; c.globalAlpha = al * 0.6; c.beginPath(); c.arc(n.x, n.y, r + 5 + Math.sin(clock * 4) * 1.5, 0, 7); c.stroke(); c.globalAlpha = al; }
+        c.font = `${isF ? 600 : 500} ${narrow() ? 11 : 12}px ${FONT.body}`; c.fillStyle = isF ? css('--fg') : css('--muted');
+        const off = mic ? 17 : 10;
+        let lx = n.x + off, ly = n.y, align: CanvasTextAlign = 'left';
+        if (view === 'layers') { align = 'center'; lx = n.x; ly = n.y + off + 5; }
+        c.textAlign = align; c.fillText(n.label, lx, ly);
+      }
+      c.globalAlpha = 1;
+      if (!reduce) raf = requestAnimationFrame(frame);
+    }
+    const kick = () => { if (!raf && visible) { last = performance.now(); raf = requestAnimationFrame(frame); } };
+
+    // ---------- interaction: hover lights a road, a tap pins it ----------
+    const pick = (ev: PointerEvent | MouseEvent) => {
+      const r = cv.getBoundingClientRect(), x = ev.clientX - r.left, y = ev.clientY - r.top;
+      let best: { n: Node; d: number } | null = null;
+      for (const n of nodes) {
+        if (n.a < 0.5) continue;
+        const d = (n.x - x) ** 2 + (n.y - y) ** 2;
+        const lim = n.id === 'kaan' ? 110 ** 2 : n.g === 'ai' ? 60 ** 2 : n.g === 'cl' || n.g === 'gx' ? 50 ** 2 : n.id === 'hub-users' ? 70 ** 2 : n.hub ? 40 ** 2 : 22 ** 2;
+        if (d < lim && (!best || d < best.d)) best = { n, d };
+      }
+      return best && best.n;
+    };
+    const onMove = (e: PointerEvent) => { hover = pick(e); cv.style.cursor = hover ? 'pointer' : 'default'; kick(); };
+    const onLeave = () => { hover = null; kick(); };
+    const onClick = (e: MouseEvent) => { const n = pick(e); selected = n === selected ? null : n; kick(); };
+    cv.addEventListener('pointermove', onMove);
+    cv.addEventListener('pointerleave', onLeave);
+    cv.addEventListener('click', onClick);
+
+    readPalette();
+    const ro = new ResizeObserver(() => { resize(); kick(); if (reduce) { visible = true; frame(performance.now()); } });
+    ro.observe(cv);
+    const io = new IntersectionObserver(([e]) => { visible = e.isIntersecting; kick(); });
+    io.observe(cv);
+    const mo = new MutationObserver(() => { readPalette(); kick(); if (reduce) frame(performance.now()); });
+    mo.observe(document.documentElement, { attributes: true, attributeFilter: ['data-theme'] });
+    for (const k in icons) icons[k].addEventListener('load', kick);
+
+    stop = () => {
+      ro.disconnect(); io.disconnect(); mo.disconnect();
+      cancelAnimationFrame(raf); raf = 0; visible = false;
+      cv.removeEventListener('pointermove', onMove);
+      cv.removeEventListener('pointerleave', onLeave);
+      cv.removeEventListener('click', onClick);
+      stop = null;
+    };
+  }
+
+  document.addEventListener('astro:page-load', init);
+  document.addEventListener('astro:before-swap', () => stop?.());
+</script>

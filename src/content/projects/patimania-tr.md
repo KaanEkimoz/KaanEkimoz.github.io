@@ -4,8 +4,8 @@ platform: Web
 genres: ["Marketplace", "SaaS", "Pet-tech"]
 year: 2026
 duration: "Haziran 2026'dan beri"
-role: "Tek geliştirici"
-description: "Pet otel, kuaför ve taksi hizmetlerini tek platformda toplayan, Ödeme Güvenceli çok taraflı bir pazaryeri. Web + iOS + Android; tek geliştirici, ön yayında."
+role: "Full-stack geliştirici"
+description: "Pet otel, kuaför ve taksi hizmetlerini tek platformda toplayan, Ödeme Güvenceli çok taraflı bir pazaryeri. Web + iOS + Android; ön yayında."
 techStack:
   - "Next.js 15"
   - "React 19"
@@ -39,7 +39,7 @@ lang: tr
 
 Patimania, pet otel · kuaför · taksi hizmetlerini tek platformda toplayan, ödeme güvenceli çok taraflı bir pazaryeri. Müşteri güvenli ödeme yapıyor, para hizmet tamamlanana kadar iyzico Alt Üye İşyeri modelinde güvencede bekliyor; sonra komisyon kesilerek işletmeye aktarılıyor.
 
-Projeyi sıfırdan tek başıma geliştiriyorum; veri modelinden altyapıya, backend'den mobil uygulamaya kadar her katman bende. İlk commit 2 Temmuz 2026'da atıldı.
+Projeyi sıfırdan geliştiriyorum; veri modelinden altyapıya, backend'den mobil uygulamaya kadar her katman bende. İlk commit 2 Temmuz 2026'da atıldı.
 
 Şu an patimania.com'da ön yayında: vitrin, arama ve işletme kaydı açık; şimdilik listelenen işletmeler demo kaydı. Ödeme sağlayıcısı bağlanana kadar gerçek ödeme kapalı, akışın kendisi test edildi. Mobil uygulama Google Play kapalı testinde ve TestFlight dış testinde.
 

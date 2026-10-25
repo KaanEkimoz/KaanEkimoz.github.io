@@ -1,10 +1,6 @@
 ---
-/**
- * How I use AI: the paragraph beside a small animated flow of how a change
- * moves through my setup (me → Claude Code → skills / MCP / agents / Ollama
- * → back to me for review), with a log line for each step.
- */
-import { siClaude, siModelcontextprotocol, siOllama } from 'simple-icons';
+/** How I use AI: the paragraph beside the heading, then the animated map of my AI studio across the full width. */
+import AIStudio from '@components/home/AIStudio.astro';
 import { copy, pick } from '@lib/home';
 import type { Lang } from '@lib/i18n';
 
@@ -13,11 +9,6 @@ interface Props {
 }
 const { lang } = Astro.props;
 const c = copy.method;
-const f = c.flow;
-const log = f.log.map((l) => pick(l, lang));
-
-// Node boxes in the 400×320 viewBox: centre x/y, width, height.
-const agents = [80, 160, 240].map((y, i) => ({ id: `a${i + 1}`, x: 345, y, label: `${pick(f.agent, lang)} ${i + 1}` }));
 ---
 
 <section class="sec" id="method">
@@ -26,73 +17,20 @@ const agents = [80, 160, 240].map((y, i) => ({ id: `a${i + 1}`, x: 345, y, label
       <h2>{pick(c.title, lang)}</h2>
       {c.body.map((p) => <p>{pick(p, lang)}</p>)}
     </div>
-
-    <div class="flow" data-flow data-fade-in aria-hidden="true">
-      <svg viewBox="0 0 400 320" role="presentation">
-        <g class="edges">
-          <path id="e-me" d="M98,160 L129,160" />
-          <path id="e-sk" d="M98,62 C128,62 150,98 162,137" />
-          <path id="e-mcp" d="M195,137 L195,57" />
-          <path id="e-oll" d="M195,183 L195,263" />
-          <path id="e-a1" d="M261,160 C286,160 278,80 302,80" />
-          <path id="e-a2" d="M261,160 L302,160" />
-          <path id="e-a3" d="M261,160 C286,160 278,240 302,240" />
-        </g>
-
-        <g class="node" data-node="sk" transform="translate(52 62)">
-          <rect x="-46" y="-17" width="92" height="34" rx="9" />
-          <text class="mono" x="-35" y="4">{'{ }'}</text>
-          <text x="-6" y="4">skills</text>
-        </g>
-        <g class="node me" data-node="me" transform="translate(52 160)">
-          <rect x="-46" y="-24" width="92" height="48" rx="11" />
-          <text class="lbl" x="0" y="-3" text-anchor="middle">{pick(f.me, lang)}</text>
-          <text class="sub" x="0" y="13" text-anchor="middle">{pick(f.meSub, lang)}</text>
-          <circle class="ok" cx="40" cy="-20" r="7" />
-          <path class="ok-tick" d="M36.5,-20 l2.4,2.4 l4.2,-4.6" />
-        </g>
-        <g class="node hub" data-node="hub" transform="translate(195 160)">
-          <rect x="-66" y="-23" width="132" height="46" rx="11" />
-          <g transform="translate(-54 -8) scale(0.667)"><path d={siClaude.path} fill={`#${siClaude.hex}`} /></g>
-          <text class="lbl" x="-31" y="5">Claude Code</text>
-        </g>
-        <g class="node" data-node="mcp" transform="translate(195 40)">
-          <rect x="-44" y="-17" width="88" height="34" rx="9" />
-          <g transform="translate(-30 -7) scale(0.584)"><path class="ink" d={siModelcontextprotocol.path} /></g>
-          <text x="-8" y="4">MCP</text>
-        </g>
-        <g class="node" data-node="oll" transform="translate(195 280)">
-          <rect x="-48" y="-17" width="96" height="34" rx="9" />
-          <g transform="translate(-34 -7) scale(0.584)"><path class="ink" d={siOllama.path} /></g>
-          <text x="-12" y="4">Ollama</text>
-        </g>
-        {agents.map((a) => (
-          <g class="node" data-node={a.id} transform={`translate(${a.x} ${a.y})`}>
-            <rect x="-43" y="-17" width="86" height="34" rx="9" />
-            <circle class="dot" cx="-29" cy="0" r="3.5" />
-            <text x="-19" y="4">{a.label}</text>
-          </g>
-        ))}
-
-        <g class="packets" data-packets></g>
-      </svg>
-      <ol class="log" data-log data-lines={JSON.stringify(log)}>
-        <li class="now">{log[0]}</li>
-      </ol>
-    </div>
+    <AIStudio lang={lang} />
   </div>
 </section>
 
 <style>
   .method {
     display: grid;
-    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
-    gap: 56px;
-    align-items: center;
+    gap: 36px;
   }
   .copy {
     display: grid;
-    gap: 22px;
+    grid-template-columns: minmax(0, 0.8fr) minmax(0, 1.2fr);
+    gap: 48px;
+    align-items: start;
   }
   h2 {
     font-size: clamp(1.9rem, 3.8vw, 2.9rem);
@@ -104,255 +42,15 @@ const agents = [80, 160, 240].map((y, i) => ({ id: `a${i + 1}`, x: 345, y, label
     color: rgb(var(--text-100));
     font-size: clamp(1.05rem, 1.5vw, 1.22rem);
     line-height: 1.6;
-    max-width: 36rem;
+    max-width: 40rem;
   }
-
-  .flow {
-    border: 1px solid rgb(var(--border));
-    border-radius: 16px;
-    background: rgb(var(--bg-elev) / 0.7);
-    padding: 18px 18px 14px;
-    display: grid;
-    gap: 12px;
-  }
-  svg {
-    width: 100%;
-    height: auto;
-    display: block;
-    overflow: visible;
-    font-family: Geist, ui-sans-serif, system-ui, sans-serif;
-  }
-  .edges path {
-    fill: none;
-    stroke: rgb(var(--border));
-    stroke-width: 1.4;
-    stroke-dasharray: 3 5;
-    animation: flow-dash 1.6s linear infinite;
-  }
-  @keyframes flow-dash {
-    to {
-      stroke-dashoffset: -16;
-    }
-  }
-  .node rect {
-    fill: rgb(var(--bg-base));
-    stroke: rgb(var(--border));
-    stroke-width: 1.2;
-    transition: stroke 0.35s, fill 0.35s;
-  }
-  .node text {
-    fill: rgb(var(--text-200));
-    font-size: 12.5px;
-    transition: fill 0.35s;
-  }
-  .node .lbl {
-    fill: rgb(var(--text-100));
-    font-size: 13.5px;
-    font-weight: 500;
-  }
-  .node .sub {
-    font-size: 10.5px;
-    fill: rgb(var(--text-300));
-  }
-  .node .mono {
-    font-family: 'JetBrains Mono', ui-monospace, monospace;
-    font-size: 11.5px;
-    fill: rgb(var(--accent-2));
-  }
-  .node .ink {
-    fill: rgb(var(--text-100));
-  }
-  .node .dot {
-    fill: rgb(var(--text-300));
-    transition: fill 0.35s;
-  }
-  .node.on rect {
-    stroke: rgb(var(--accent-1));
-    fill: rgb(var(--accent-1) / 0.1);
-  }
-  .node.on text {
-    fill: rgb(var(--text-100));
-  }
-  .node.on .dot {
-    fill: rgb(var(--accent-2));
-  }
-  .ok,
-  .ok-tick {
-    opacity: 0;
-    transition: opacity 0.3s;
-  }
-  .ok {
-    fill: rgb(var(--accent-2));
-  }
-  .ok-tick {
-    fill: none;
-    stroke: rgb(var(--bg-base));
-    stroke-width: 1.8;
-    stroke-linecap: round;
-    stroke-linejoin: round;
-  }
-  .me.done .ok,
-  .me.done .ok-tick {
-    opacity: 1;
-  }
-  .packets :global(circle) {
-    fill: rgb(var(--accent-1));
-  }
-  .packets :global(circle.back) {
-    fill: rgb(var(--accent-2));
-  }
-
-  .log {
-    border-top: 1px solid rgb(var(--border));
-    padding-top: 10px;
-    display: grid;
-    align-content: start;
-    gap: 3px;
-    min-height: calc(3 * 1.55em + 6px);
-    font: 0.8rem/1.55 'JetBrains Mono', ui-monospace, monospace;
-    color: rgb(var(--text-300));
-  }
-  .log :global(li) {
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-  }
-  .log :global(li)::before {
-    content: '› ';
-    color: rgb(var(--text-300));
-  }
-  .log :global(li.now) {
-    color: rgb(var(--accent-2));
-  }
-
   @media (max-width: 860px) {
-    .method {
+    .copy {
       grid-template-columns: minmax(0, 1fr);
+      gap: 20px;
+    }
+    .method {
       gap: 28px;
-    }
-    .flow {
-      padding: 14px 12px 12px;
-    }
-  }
-  @media (prefers-reduced-motion: reduce) {
-    .edges path {
-      animation: none;
     }
   }
 </style>
-
-<script>
-  // Walks a change through the diagram on a loop: packets travel along the
-  // edges, the nodes they reach light up and the log prints each step.
-  // Runs only while the panel is on screen; static for reduced motion.
-  type Move = { e: string; back?: boolean; bounce?: boolean };
-  type Step = { moves: Move[]; on: string[] };
-
-  const STEPS: Step[] = [
-    { moves: [{ e: 'e-me' }], on: ['me', 'hub'] },
-    { moves: [{ e: 'e-sk' }], on: ['sk', 'hub'] },
-    { moves: [{ e: 'e-mcp', bounce: true }], on: ['mcp', 'hub'] },
-    { moves: [{ e: 'e-a1' }, { e: 'e-a2' }, { e: 'e-a3' }], on: ['hub', 'a1', 'a2', 'a3'] },
-    { moves: [{ e: 'e-oll', bounce: true }], on: ['oll', 'hub'] },
-    { moves: [{ e: 'e-a1', back: true }, { e: 'e-a2', back: true }, { e: 'e-a3', back: true }], on: ['a1', 'a2', 'a3', 'hub'] },
-    { moves: [{ e: 'e-me', back: true }], on: ['hub', 'me'] },
-  ];
-  const MOVE_MS = 900;
-  const HOLD_MS = 450;
-
-  let stopFlow: (() => void) | null = null;
-
-  function initFlow() {
-    stopFlow?.();
-    const root = document.querySelector<HTMLElement>('[data-flow]');
-    if (!root) return;
-    const svg = root.querySelector('svg')!;
-    const layer = root.querySelector<SVGGElement>('[data-packets]')!;
-    const logEl = root.querySelector<HTMLOListElement>('[data-log]')!;
-    const lines: string[] = JSON.parse(logEl.dataset.lines || '[]');
-    const nodes = new Map([...svg.querySelectorAll<SVGGElement>('[data-node]')].map((n) => [n.dataset.node!, n]));
-    const me = nodes.get('me')!;
-
-    if (matchMedia('(prefers-reduced-motion: reduce)').matches) {
-      logEl.innerHTML = lines.slice(-3).map((l, i, a) => `<li class="${i === a.length - 1 ? 'now' : ''}">${l}</li>`).join('');
-      me.classList.add('done');
-      return;
-    }
-
-    let step = 0, t0 = 0, raf = 0, visible = false, waitUntil = 0;
-    let packets: { el: SVGCircleElement; path: SVGPathElement; len: number; m: Move }[] = [];
-    const shown: string[] = [];
-
-    const printLog = (i: number) => {
-      shown.push(lines[i]);
-      if (shown.length > 3) shown.shift();
-      logEl.replaceChildren(...shown.map((l, k) => {
-        const li = document.createElement('li');
-        li.textContent = l;
-        if (k === shown.length - 1) li.className = 'now';
-        return li;
-      }));
-    };
-
-    const begin = (now: number) => {
-      const s = STEPS[step];
-      nodes.forEach((n, id) => n.classList.toggle('on', s.on.includes(id)));
-      if (step === 0) me.classList.remove('done');
-      printLog(step);
-      layer.replaceChildren();
-      packets = s.moves.map((m) => {
-        const path = svg.querySelector<SVGPathElement>(`#${m.e}`)!;
-        const el = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
-        el.setAttribute('r', '4');
-        if (m.back) el.classList.add('back');
-        layer.appendChild(el);
-        return { el, path, len: path.getTotalLength(), m };
-      });
-      t0 = now;
-    };
-
-    const tick = (now: number) => {
-      raf = 0;
-      if (!visible) return;
-      if (waitUntil) {
-        if (now < waitUntil) { raf = requestAnimationFrame(tick); return; }
-        waitUntil = 0;
-        begin(now);
-      }
-      const k = Math.min(1, (now - t0) / MOVE_MS);
-      const ease = k < 0.5 ? 2 * k * k : 1 - (-2 * k + 2) ** 2 / 2;
-      for (const p of packets) {
-        let u = p.m.bounce ? (ease < 0.5 ? ease * 2 : 2 - ease * 2) : ease;
-        if (p.m.back) u = 1 - u;
-        const pt = p.path.getPointAtLength(u * p.len);
-        p.el.setAttribute('cx', pt.x.toFixed(1));
-        p.el.setAttribute('cy', pt.y.toFixed(1));
-      }
-      if (k >= 1) {
-        layer.replaceChildren();
-        if (step === STEPS.length - 1) me.classList.add('done');
-        step = (step + 1) % STEPS.length;
-        waitUntil = now + (step === 0 ? HOLD_MS * 4 : HOLD_MS);
-      }
-      raf = requestAnimationFrame(tick);
-    };
-
-    const io = new IntersectionObserver(([e]) => {
-      visible = e.isIntersecting;
-      if (visible && !raf) {
-        if (!packets.length && !waitUntil) begin(performance.now());
-        raf = requestAnimationFrame(tick);
-      }
-    });
-    io.observe(root);
-
-    stopFlow = () => {
-      io.disconnect();
-      cancelAnimationFrame(raf);
-      stopFlow = null;
-    };
-  }
-
-  document.addEventListener('astro:page-load', initFlow);
-  document.addEventListener('astro:before-swap', () => stopFlow?.());
-</script>
