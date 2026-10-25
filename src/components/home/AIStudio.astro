@@ -5,6 +5,9 @@
  * then code, projects and the people who use them. Signals run along the
  * wires; hovering an agent opens its arms and lights its road to the end
  * user. Wide screens get the left-to-right flow, phones the top-to-bottom layers.
+ * On phones there is no hover, so the map tours the agents by itself until
+ * someone taps one. It runs even with reduced motion on: Kaan wants this map
+ * shown on every device.
  */
 import { copy, pick } from '@lib/home';
 import type { Lang } from '@lib/i18n';
@@ -15,6 +18,7 @@ interface Props {
 const { lang } = Astro.props;
 const s = copy.method.studio;
 const labels = {
+  hint: pick(s.hint, lang),
   stages: s.stages.map((x) => pick(x, lang)),
   names: Object.fromEntries(Object.entries(s.names).map(([k, v]) => [k, pick(v, lang)])),
 };
@@ -112,7 +116,7 @@ const labels = {
 
   type Node = { id: string; g: string; label: string; c?: string; hub?: boolean; x: number; y: number; tx: number; ty: number; a: number; placed?: boolean };
   type Edge = { a: Node; b: Node; kind: 'agent' | 'hub' | 'member' | 'extra'; bend: number };
-  type Labels = { stages: string[]; names: Record<string, string> };
+  type Labels = { hint: string; stages: string[]; names: Record<string, string> };
 
   // Agent arms stay folded into their agent until it is hovered.
   const ARM_OF: Record<string, string> = { cc: 'claude', cagents: 'claude', teams: 'claude', sub: 'claude', codex: 'chatgpt', gptwork: 'chatgpt', ollama: 'local', qwen: 'local', llama: 'local', deepseek: 'local' };
@@ -127,9 +131,8 @@ const labels = {
     const cv = root?.querySelector('canvas');
     const ctx = cv?.getContext('2d');
     if (!root || !cv || !ctx) return;
-    const L: Labels = JSON.parse(root.dataset.labels || '{"stages":[],"names":{}}');
+    const L: Labels = JSON.parse(root.dataset.labels || '{"hint":"","stages":[],"names":{}}');
     const name = (k: string, fallback: string) => L.names[k] ?? fallback;
-    const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
 
     // Colours come from the map's own tokens, read again when the theme flips.
     const palette = new Map<string, string>();
@@ -189,27 +192,37 @@ const labels = {
     const at = (id: string, x: number, y: number) => { byId[id].tx = x; byId[id].ty = y; };
     const kaanW = () => (view === 'flow' ? Math.max(150, Math.min(176, W * 0.13)) : Math.min(230, W * 0.6));
 
-    // Layers (phones): one band per layer, top to bottom, members spread in rows.
+    // Layers (phones): a top-to-bottom pipeline in two columns. Me, the agents,
+    // one band where the open agent's arms unfold, then MCP, skills, engines,
+    // languages, projects and the end user. Labels sit right of their dots.
+    let bandY = 0, contentH = 0;
     function layoutLayers() {
-      const rects: Record<string, number[]> = {
-        human: [0.25, 0.012, 0.75, 0.072], mcp: [0.02, 0.06, 0.98, 0.21], skills: [0.02, 0.22, 0.98, 0.3],
-        ai: [0.02, 0.31, 0.98, 0.41], cl: [0.02, 0.415, 0.98, 0.445], ccx: [0.02, 0.45, 0.98, 0.47], gx: [0.02, 0.475, 0.98, 0.5], lx: [0.02, 0.505, 0.98, 0.555],
-        langs: [0.02, 0.57, 0.98, 0.65], infra: [0.02, 0.665, 0.98, 0.735], outputs: [0.02, 0.75, 0.98, 0.84], users: [0.02, 0.86, 0.98, 0.92],
-      };
-      for (const g in rects) {
-        let [x0, y0, x1, y1] = rects[g]; x0 *= W; x1 *= W; y0 *= H; y1 *= H;
-        if (g === 'human') { at('kaan', (x0 + x1) / 2, (y0 + y1) / 2); continue; }
-        const ms = members(g), k = ms.length;
-        if (g === 'ai' || g === 'cl' || g === 'gx') {
-          const per = g === 'cl' ? 2 : g === 'gx' ? 3 : 3, rows = Math.ceil(k / per);
-          ms.forEach((m, i) => { const r = Math.floor(i / per), inRow = Math.min(per, k - r * per), c = i % per; m.tx = x0 + ((x1 - x0) * (c + 0.5)) / inRow; m.ty = y0 + ((y1 - y0) * (r + 0.5)) / rows; });
-          continue;
-        }
-        if (hubs[g]) { hubs[g].tx = x0 + 72; hubs[g].ty = y0 + 8; }
-        const per = Math.max(1, Math.floor((x1 - x0) / 96)), rows = Math.ceil(k / per), rh = (y1 - y0 - 22) / Math.max(rows, 1);
-        ms.forEach((m, i) => { const r = Math.floor(i / per), c = i % per, inRow = Math.min(per, k - r * per), cw = (x1 - x0) / inRow; m.tx = x0 + cw * c + cw / 2; m.ty = y0 + 22 + rh * r + rh / 2 - 6; });
+      const P = 14, cw = (W - P * 2) / 2;
+      let y = 14;
+      at('kaan', W / 2, y + 33); y += 66 + 34;
+      agents.forEach((m, i) => {
+        const lone = i === agents.length - 1 && agents.length % 2 === 1;
+        m.tx = lone ? W / 2 : P + cw * ((i % 2) + 0.5); m.ty = y + 20 + Math.floor(i / 2) * 50;
+      });
+      y += Math.ceil(agents.length / 2) * 50 + 6;
+      bandY = y;
+      for (const a of agents) nodes.filter((n) => ARM_OF[n.id] === a.id).forEach((m, i) => {
+        const pill = m.g === 'cl' || m.g === 'gx';
+        m.tx = pill ? P + cw * ((i % 2) + 0.5) : P + 12 + cw * (i % 2); m.ty = y + 18 + Math.floor(i / 2) * 38;
+      });
+      y += 2 * 38 + 22;
+      for (const g of ['mcp', 'skills', 'infra', 'langs', 'outputs']) {
+        ctx!.font = `600 12px ${FONT.body}`;
+        hubs[g].tx = P + (ctx!.measureText(hubs[g].label).width + 24) / 2; hubs[g].ty = y + 13; y += 40;
+        const ms = members(g);
+        ms.forEach((m, i) => { m.tx = P + 12 + cw * (i % 2); m.ty = y + 8 + Math.floor(i / 2) * 27; });
+        y += Math.ceil(ms.length / 2) * 27 + 24;
       }
-      hubs.users.tx = W / 2; hubs.users.ty = H * 0.965;
+      const us = members('users'), uw = (W - P * 2) / us.length;
+      us.forEach((m, i) => { m.tx = P + 12 + uw * i; m.ty = y + 8; });
+      y += 30 + 24;
+      hubs.users.tx = W / 2; hubs.users.ty = y + 21; y += 42 + 22;
+      contentH = Math.ceil(y);
     }
     function layoutCols(rects: Record<string, number[]>) {
       for (const g in rects) {
@@ -257,11 +270,22 @@ const labels = {
       // Same breakpoint as the canvas height in the CSS above.
       view = matchMedia('(min-width: 900px)').matches ? 'flow' : 'layers';
       (view === 'flow' ? layoutFlow : layoutLayers)();
+      // Phones: the canvas takes the height the layers need (the observer lays out again).
+      const want = view === 'layers' ? `${contentH}px` : '';
+      if (cv!.style.height !== want) { cv!.style.height = want; if (view === 'layers' && Math.abs(H - contentH) > 1) return; }
       for (const n of nodes) if (!n.placed) { n.x = n.tx; n.y = n.ty; n.placed = true; }
     }
 
     // ---------- drawing ----------
-    const ctrl = (e: { a: Node; b: Node; bend: number }) => { const mx = (e.a.x + e.b.x) / 2, my = (e.a.y + e.b.y) / 2, dx = e.b.x - e.a.x, dy = e.b.y - e.a.y; return [mx - dy * e.bend, my + dx * e.bend]; };
+    // On phones long wires leave the text columns: they bow out to the side
+    // margin (left for MCP and skills, right for the rest).
+    const ctrl = (e: { a: Node; b: Node; bend: number; kind?: string }) => {
+      if (view === 'layers' && e.kind !== 'agent' && Math.abs(e.b.y - e.a.y) > 120) {
+        const left = [e.a, e.b].some((n) => n.g === 'mcp' || n.g === 'skills'), sx = left ? 4 : W - 4;
+        return [2 * sx - (e.a.x + e.b.x) / 2, (e.a.y + e.b.y) / 2];
+      }
+      const mx = (e.a.x + e.b.x) / 2, my = (e.a.y + e.b.y) / 2, dx = e.b.x - e.a.x, dy = e.b.y - e.a.y; return [mx - dy * e.bend, my + dx * e.bend];
+    };
     const qpt = (e: Edge, t: number) => { const [qx, qy] = ctrl(e), u = 1 - t; return [u * u * e.a.x + 2 * u * t * qx + t * t * e.b.x, u * u * e.a.y + 2 * u * t * qy + t * t * e.b.y]; };
     const packets: { e: Edge; t: number; back: boolean; v: number }[] = [];
     const spawn = (dt: number) => {
@@ -309,10 +333,25 @@ const labels = {
     };
 
     let last = performance.now(), clock = 0, raf = 0, visible = false;
+    // Phones have no hover: until someone taps, the map opens one agent after another.
+    let userAt = -99, tourAt = 0, tourIdx = -1, touring = false;
+    const tour = () => {
+      if (view !== 'layers' || clock - userAt < 8 || clock - tourAt < (touring ? 3.4 : 1.4)) return;
+      tourAt = clock;
+      if (touring) { selected = null; touring = false; return; }
+      tourIdx = (tourIdx + 1) % agents.length; selected = agents[tourIdx]; touring = true;
+    };
+    // Labels on phones get a halo in the ground colour so wires never cut through them.
+    const label = (t: string, x: number, y: number) => {
+      if (view === 'layers') { ctx!.lineJoin = 'round'; ctx!.lineWidth = 4; ctx!.strokeStyle = css('--ground'); ctx!.strokeText(t, x, y); }
+      ctx!.fillText(t, x, y);
+    };
     function frame(now: number) {
       raf = 0;
       if (!visible) return;
       const dt = Math.min(0.05, (now - last) / 1000); last = now; clock += dt;
+      tour();
+      const phone = view === 'layers';
       const ease = 1 - Math.pow(0.0015, dt);
       const f = selected || hover, fo = f && (ARM_OF[f.id] || (Object.values(ARM_OF).includes(f.id) ? f.id : null));
       if (fo) { openAgent = fo; openLinger = 0.5; } else if ((openLinger -= dt) <= 0) openAgent = null;
@@ -331,26 +370,35 @@ const labels = {
         c.globalAlpha = 1;
       }
       const fs = focusSet();
-      const dimOf = (n: Node) => (fs ? (fs.has(n) || (ARM_OF[n.id] && ARM_OF[n.id] === openAgent) ? 1 : 0.18) : 1);
+      // Off the lit road things fade; less on phones, where the tour keeps something lit most of the time.
+      const dimOf = (n: Node) => (fs ? (fs.has(n) || (ARM_OF[n.id] && ARM_OF[n.id] === openAgent) ? 1 : phone ? 0.4 : 0.18) : 1);
 
       for (const e of edges) {
         const al = Math.min(e.a.a, e.b.a) * Math.min(dimOf(e.a), dimOf(e.b)); if (al < 0.02) continue;
         const [qx, qy] = ctrl(e);
         c.strokeStyle = e.kind === 'member' ? css('--line-2') : colorOf(e.b);
-        c.globalAlpha = al * (e.kind === 'agent' ? 0.6 : e.kind === 'member' ? 0.5 : 0.32);
+        c.globalAlpha = al * (e.kind === 'agent' ? 0.6 : e.kind === 'member' ? (phone ? 0.3 : 0.5) : phone ? 0.26 : 0.32);
         c.lineWidth = e.kind === 'agent' ? 2.2 : e.kind === 'hub' ? 1.3 : 1; c.setLineDash(e.kind === 'extra' ? [3, 5] : []);
         c.beginPath(); c.moveTo(e.a.x, e.a.y); c.quadraticCurveTo(qx, qy, e.b.x, e.b.y); c.stroke();
       }
       c.setLineDash([]);
 
-      if (!reduce) spawn(dt);
+      spawn(dt);
       for (let i = packets.length - 1; i >= 0; i--) {
         const p = packets[i]; p.t += dt * p.v;
         if (p.t >= 1) { packets.splice(i, 1); continue; }
         const al = Math.min(p.e.a.a, p.e.b.a) * Math.min(dimOf(p.e.a), dimOf(p.e.b)); if (al < 0.05) continue;
         const [x, y] = qpt(p.e, p.back ? 1 - p.t : p.t), col = colorOf(p.back ? p.e.a : p.e.b);
-        c.globalAlpha = al * Math.sin(p.t * Math.PI); c.fillStyle = col; c.shadowColor = col; c.shadowBlur = 10;
-        c.beginPath(); c.arc(x, y, p.e.kind === 'agent' ? 2.8 : 2.1, 0, 7); c.fill(); c.shadowBlur = 0;
+        const pr = p.e.kind === 'agent' ? 2.8 : 2.1, pa = al * Math.sin(p.t * Math.PI);
+        c.fillStyle = col;
+        if (phone) {
+          // A soft halo instead of shadowBlur, which is slow on phones.
+          c.globalAlpha = pa * 0.28; c.beginPath(); c.arc(x, y, pr * 2.6, 0, 7); c.fill();
+          c.globalAlpha = pa; c.beginPath(); c.arc(x, y, pr, 0, 7); c.fill();
+        } else {
+          c.globalAlpha = pa; c.shadowColor = col; c.shadowBlur = 10;
+          c.beginPath(); c.arc(x, y, pr, 0, 7); c.fill(); c.shadowBlur = 0;
+        }
       }
 
       c.textBaseline = 'middle';
@@ -371,7 +419,7 @@ const labels = {
         }
         if (n.g === 'ai' || n.g === 'cl' || n.g === 'gx') {
           const [w, h] = pillSize(n), x = n.x - w / 2, y = n.y - h / 2;
-          c.shadowColor = col; c.shadowBlur = isF ? 26 : 14 + Math.sin(clock * 2 + n.x * 0.02) * 4;
+          c.shadowColor = col; c.shadowBlur = phone ? (isF ? 14 : 6) : isF ? 26 : 14 + Math.sin(clock * 2 + n.x * 0.02) * 4;
           roundRect(x, y, w, h, h / 2); c.fillStyle = css('--panel-2'); c.fill(); c.shadowBlur = 0;
           c.strokeStyle = col; c.lineWidth = isF ? 2.2 : 1.5; c.stroke();
           const tiny = n.g === 'gx', small = n.g === 'cl' || tiny, ic = iconFor(n), is = tiny ? 12 : small ? 14 : 18;
@@ -407,16 +455,20 @@ const labels = {
           const s = isF ? 18 : 15;
           c.fillStyle = css('--panel-2'); c.strokeStyle = col; c.lineWidth = 1; c.beginPath(); c.arc(n.x, n.y, s * 0.72, 0, 7); c.fill(); c.stroke();
           c.drawImage(mic, n.x - s / 2, n.y - s / 2, s, s);
+        } else if (phone) {
+          c.fillStyle = col; c.globalAlpha = al * 0.25; c.beginPath(); c.arc(n.x, n.y, r * 2.1, 0, 7); c.fill();
+          c.globalAlpha = al; c.beginPath(); c.arc(n.x, n.y, r, 0, 7); c.fill();
         } else { c.fillStyle = col; c.shadowColor = col; c.shadowBlur = isF ? 18 : 8; c.beginPath(); c.arc(n.x, n.y, r, 0, 7); c.fill(); c.shadowBlur = 0; }
         if (isF) { c.strokeStyle = col; c.globalAlpha = al * 0.6; c.beginPath(); c.arc(n.x, n.y, r + 5 + Math.sin(clock * 4) * 1.5, 0, 7); c.stroke(); c.globalAlpha = al; }
         c.font = `${isF ? 600 : 500} ${narrow() ? 11 : 12}px ${FONT.body}`; c.fillStyle = isF ? css('--fg') : css('--muted');
-        const off = mic ? 17 : 10;
-        let lx = n.x + off, ly = n.y, align: CanvasTextAlign = 'left';
-        if (view === 'layers') { align = 'center'; lx = n.x; ly = n.y + off + 5; }
-        c.textAlign = align; c.fillText(n.label, lx, ly);
+        c.textAlign = 'left'; label(n.label, n.x + (mic ? 17 : 10), n.y + (phone ? 1 : 0));
+      }
+      if (phone && !openAgent && L.hint) {
+        c.globalAlpha = 0.55 + Math.sin(clock * 2.2) * 0.25; c.fillStyle = css('--muted'); c.textAlign = 'center';
+        c.font = `500 11.5px ${FONT.mono}`; c.fillText(L.hint, W / 2, bandY + 38);
       }
       c.globalAlpha = 1;
-      if (!reduce) raf = requestAnimationFrame(frame);
+      raf = requestAnimationFrame(frame);
     }
     const kick = () => { if (!raf && visible) { last = performance.now(); raf = requestAnimationFrame(frame); } };
 
@@ -434,17 +486,17 @@ const labels = {
     };
     const onMove = (e: PointerEvent) => { hover = pick(e); cv.style.cursor = hover ? 'pointer' : 'default'; kick(); };
     const onLeave = () => { hover = null; kick(); };
-    const onClick = (e: MouseEvent) => { const n = pick(e); selected = n === selected ? null : n; kick(); };
+    const onClick = (e: MouseEvent) => { const n = pick(e); userAt = clock; touring = false; selected = n === selected ? null : n; kick(); };
     cv.addEventListener('pointermove', onMove);
     cv.addEventListener('pointerleave', onLeave);
     cv.addEventListener('click', onClick);
 
     readPalette();
-    const ro = new ResizeObserver(() => { resize(); kick(); if (reduce) { visible = true; frame(performance.now()); } });
+    const ro = new ResizeObserver(() => { resize(); kick(); });
     ro.observe(cv);
     const io = new IntersectionObserver(([e]) => { visible = e.isIntersecting; kick(); });
     io.observe(cv);
-    const mo = new MutationObserver(() => { readPalette(); kick(); if (reduce) frame(performance.now()); });
+    const mo = new MutationObserver(() => { readPalette(); kick(); });
     mo.observe(document.documentElement, { attributes: true, attributeFilter: ['data-theme'] });
     for (const k in icons) icons[k].addEventListener('load', kick);
 
