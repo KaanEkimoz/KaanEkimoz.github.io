@@ -44,9 +44,9 @@ src/
     blog/         # blog posts
   assets/
     projects/     # per-project cover + gallery images
-    portrait.png
+    portrait-*    # hero photo layers (bg + cut-out) and square / wide crops
   components/     # Header, Footer, ProjectCard, ProjectModal, ...
-    home/         # home page sections (hero canvas, Q&A, Patimania, career, skills, ...)
+    home/         # home page sections (hero canvas, Q&A, AI studio, career, skills, ...)
   layouts/        # BaseLayout (head, nav, footer)
   views/          # page bodies shared by the EN and TR routes (take a `lang` prop)
   pages/          # EN routes — thin wrappers around views/ (+ chat, privacy pages)

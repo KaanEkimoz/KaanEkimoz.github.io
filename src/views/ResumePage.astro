@@ -2,12 +2,16 @@
 /**
  * Resume: one page built from the same facts as the home page
  * (career nodes, skills, evals in home.ts). Prints cleanly to A4.
+ * Section icons, the tool tiles of each job (shared with My Journey) and
+ * brand marks in the tech stack keep it scannable.
  */
 import BaseLayout from '@layouts/BaseLayout.astro';
+import BrandIcon from '@components/BrandIcon.astro';
 import { Image } from 'astro:assets';
-import portrait from '@/assets/portrait.png';
+import portrait from '@/assets/portrait-square.jpg';
 import { SOCIAL } from '@lib/constants';
 import { CAREER, EVALS, SKILL_GROUPS, copy, pick } from '@lib/home';
+import { SKILL_ICONS, TOOLS, iconSvg } from '@lib/tools';
 import { localizedPath, type Lang } from '@lib/i18n';
 
 interface Props {
@@ -18,23 +22,40 @@ const { lang } = Astro.props;
 const r = copy.resume;
 const jobs = CAREER.filter((n) => n.lane !== 2).sort((a, b) => b.s - a.s);
 const school = CAREER.filter((n) => n.lane === 2);
+// Line icons (24×24, stroked) for the section headings and contact links.
+const ICON = {
+  work: '<rect x="3" y="7" width="18" height="13" rx="2"/><path d="M8 7V5a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2M3 13h18"/>',
+  school: '<path d="M12 4 2 9l10 5 10-5z"/><path d="M6 11v5c0 1.5 2.7 3 6 3s6-1.5 6-3v-5M22 9v6"/>',
+  stack: '<path d="m12 3 9 5-9 5-9-5z"/><path d="m3 12.5 9 5 9-5"/><path d="m3 16.5 9 5 9-5"/>',
+  tests: '<path d="M4 20V11M10 20V5M16 20v-6M2 20h20"/>',
+  lang: '<circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3c2.5 2.5 3.5 5.5 3.5 9s-1 6.5-3.5 9c-2.5-2.5-3.5-5.5-3.5-9s1-6.5 3.5-9z"/>',
+  mail: '<rect x="3" y="5" width="18" height="14" rx="2"/><path d="m3 7 9 6 9-6"/>',
+};
+const line = (d: string) => `<svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">${d}</svg>`;
 const links = [
-  { label: SOCIAL.email, href: `mailto:${SOCIAL.email}` },
-  { label: 'linkedin.com/in/yusufkaanusta', href: SOCIAL.linkedin },
-  { label: 'github.com/KaanEkimoz', href: SOCIAL.github },
-  { label: 'kaanusta.dev', href: localizedPath('/', lang) },
+  { label: SOCIAL.email, href: `mailto:${SOCIAL.email}`, svg: line(ICON.mail) },
+  { label: 'linkedin.com/in/yusufkaanusta', href: SOCIAL.linkedin, brand: 'linkedin' },
+  { label: 'github.com/KaanEkimoz', href: SOCIAL.github, brand: 'siGithub' },
+  { label: 'kaanusta.dev', href: localizedPath('/', lang), svg: line(ICON.lang) },
 ];
 ---
 
 <BaseLayout lang={lang} title={pick(r.title, lang)} description={pick(r.metaDescription, lang)}>
   <article class="wrap cv">
     <header class="top">
-      <Image class="me" src={portrait} alt="" width={176} height={176} />
+      <Image class="me" src={portrait} alt="" width={240} height={240} />
       <div class="who">
         <h1>Kaan Usta</h1>
         <p class="role">{pick(copy.hero.title, lang)} · {lang === 'tr' ? 'İstanbul' : 'Istanbul'}</p>
         <ul class="links">
-          {links.map((l) => <li><a href={l.href}>{l.label}</a></li>)}
+          {links.map((l) => (
+            <li>
+              <a href={l.href}>
+                {l.brand ? <BrandIcon name={l.brand} size={14} color={false} /> : <Fragment set:html={l.svg} />}
+                {l.label}
+              </a>
+            </li>
+          ))}
         </ul>
       </div>
       <button class="btn btn-ghost print" type="button" data-print>{pick(r.print, lang)}</button>
@@ -43,7 +64,7 @@ const links = [
     <p class="summary">{pick(r.summary, lang)}</p>
 
     <section>
-      <h2>{pick(r.experience, lang)}</h2>
+      <h2><i set:html={line(ICON.work)} />{pick(r.experience, lang)}</h2>
       <ol class="jobs">
         {jobs.map((j) => (
           <li>
@@ -55,6 +76,11 @@ const links = [
               ) : (
                 <p>{pick(j.d, lang)}</p>
               )}
+              <ul class="tools">
+                {[...j.tools, ...(j.more ?? [])].map((t) => (
+                  <li><i style={`--tb:${TOOLS[t].tile}`} set:html={iconSvg(t)} />{pick(TOOLS[t].name, lang)}</li>
+                ))}
+              </ul>
             </div>
           </li>
         ))}
@@ -62,7 +88,7 @@ const links = [
     </section>
 
     <section>
-      <h2>{pick(r.education, lang)}</h2>
+      <h2><i set:html={line(ICON.school)} />{pick(r.education, lang)}</h2>
       <ol class="jobs">
         {school.map((j) => (
           <li>
@@ -70,6 +96,11 @@ const links = [
             <div>
               <h3>{pick(j.title, lang)} <span>· {j.at}</span></h3>
               <p>{pick(j.d, lang)}</p>
+              <ul class="tools">
+                {[...j.tools, ...(j.more ?? [])].map((t) => (
+                  <li><i style={`--tb:${TOOLS[t].tile}`} set:html={iconSvg(t)} />{pick(TOOLS[t].name, lang)}</li>
+                ))}
+              </ul>
             </div>
           </li>
         ))}
@@ -78,22 +109,35 @@ const links = [
 
     <div class="cols">
       <section>
-        <h2>{pick(r.skills, lang)}</h2>
+        <h2><i set:html={line(ICON.stack)} />{pick(r.skills, lang)}</h2>
         <dl class="skills">
           {SKILL_GROUPS.map((g) => (
-            <div><dt>{pick(g.label, lang)}</dt><dd>{g.items.join(' · ')}</dd></div>
+            <div style={`--c:${g.color}`}>
+              <dt>{pick(g.label, lang)}</dt>
+              <dd>
+                {g.items.map((n) => (
+                  <span class="sk">{SKILL_ICONS[n] ? <BrandIcon name={SKILL_ICONS[n]} size={14} /> : <b class="dot" />}{n}</span>
+                ))}
+              </dd>
+            </div>
           ))}
         </dl>
       </section>
       <section>
-        <h2>{pick(r.tests, lang)}</h2>
+        <h2><i set:html={line(ICON.tests)} />{pick(r.tests, lang)}</h2>
         <dl class="skills">
           {EVALS.map((e) => (
-            <div><dt>{pick(e.name, lang)}</dt><dd>{lang === 'tr' ? `${e.value}. yüzdelik` : `${e.value}th percentile`}</dd></div>
+            <div>
+              <dt>{pick(e.name, lang)}</dt>
+              <dd class="pct">
+                <span class="bar"><span style={`width:${e.value}%`} /></span>
+                {lang === 'tr' ? `${e.value}. yüzdelik` : `${e.value}th percentile`}
+              </dd>
+            </div>
           ))}
         </dl>
         <p class="small">{pick(r.tests_note, lang)}</p>
-        <h2 class="mt">{pick(r.languages, lang)}</h2>
+        <h2 class="mt"><i set:html={line(ICON.lang)} />{pick(r.languages, lang)}</h2>
         <p>{pick(r.languagesValue, lang)}</p>
       </section>
     </div>
@@ -113,11 +157,12 @@ const links = [
     align-items: center;
   }
   .top :global(.me) {
-    width: 88px;
-    height: 88px;
-    border-radius: 20px;
+    width: 104px;
+    height: 104px;
+    border-radius: 22px;
     object-fit: cover;
     border: 1px solid rgb(var(--border));
+    flex: none;
   }
   .who {
     flex: 1;
@@ -142,7 +187,15 @@ const links = [
     font-size: 0.88rem;
   }
   .links a {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
     color: rgb(var(--accent-2));
+  }
+  .links a :global(svg) {
+    width: 14px;
+    height: 14px;
+    flex: none;
   }
   .links a:hover {
     text-decoration: underline;
@@ -164,6 +217,22 @@ const links = [
     padding-bottom: 8px;
     margin-bottom: 14px;
     border-bottom: 1px solid rgb(var(--border));
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  h2 i {
+    width: 26px;
+    height: 26px;
+    border-radius: 8px;
+    display: grid;
+    place-items: center;
+    background: rgb(var(--accent-1) / 0.12);
+    border: 1px solid rgb(var(--accent-1) / 0.28);
+  }
+  h2 i :global(svg) {
+    width: 15px;
+    height: 15px;
   }
   .mt {
     margin-top: 24px;
@@ -208,6 +277,49 @@ const links = [
   .points li::marker {
     color: rgb(var(--accent-1));
   }
+  /* Tool tiles: the same marks as My Journey, smaller. */
+  .tools {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    margin-top: 10px;
+  }
+  .tools li {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font: 500 0.72rem 'JetBrains Mono', ui-monospace, monospace;
+    color: rgb(var(--text-100));
+    background: rgb(var(--bg-elev-2));
+    border: 1px solid rgb(var(--border));
+    border-radius: 8px;
+    padding: 2px 9px 2px 2px;
+  }
+  .tools i {
+    width: 20px;
+    height: 20px;
+    border-radius: 6px;
+    background: var(--tb);
+    display: grid;
+    place-items: center;
+    box-shadow: inset 0 1px 0 rgb(255 255 255 / 0.25);
+  }
+  .tools i :global(svg) {
+    width: 12px;
+    height: 12px;
+  }
+  .tools i :global(.bdg) {
+    font: 800 8.5px/1 'JetBrains Mono', ui-monospace, monospace;
+    color: #fff;
+    letter-spacing: -0.04em;
+  }
+  .tools i :global(.glyph) {
+    fill: none;
+    stroke: #fff;
+    stroke-width: 2.4;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+  }
   .cols {
     display: grid;
     grid-template-columns: minmax(0, 1.3fr) minmax(0, 1fr);
@@ -221,6 +333,42 @@ const links = [
     display: grid;
     grid-template-columns: 7.5rem minmax(0, 1fr);
     gap: 12px;
+  }
+  .skills dd {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px 12px;
+  }
+  .sk {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    white-space: nowrap;
+  }
+  .dot {
+    width: 7px;
+    height: 7px;
+    margin: 0 3.5px;
+    border-radius: 50%;
+    background: var(--c);
+  }
+  .skills dd.pct {
+    flex-wrap: nowrap;
+    align-items: center;
+    gap: 10px;
+  }
+  .bar {
+    flex: 0 0 64px;
+    height: 6px;
+    border-radius: 3px;
+    background: rgb(var(--border));
+    overflow: hidden;
+  }
+  .bar span {
+    display: block;
+    height: 100%;
+    border-radius: inherit;
+    background: linear-gradient(90deg, rgb(var(--accent-1)), rgb(var(--accent-2)));
   }
   dt {
     font-size: 0.88rem;
@@ -270,6 +418,13 @@ const links = [
       --accent-1: 36 89 232;
       --accent-2: 14 116 144;
       --border: 213 221 240;
+    }
+    :global(html) {
+      -webkit-print-color-adjust: exact;
+      print-color-adjust: exact;
+    }
+    .tools li {
+      background: #f4f6fb;
     }
     .cv {
       padding-top: 0;
