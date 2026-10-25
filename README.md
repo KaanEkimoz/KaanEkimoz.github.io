@@ -44,7 +44,7 @@ src/
     blog/         # blog posts
   assets/
     projects/     # per-project cover + gallery images
-    portrait-*    # hero photo layers (bg + cut-out) and square / wide crops
+    portrait-*    # hero photo layers (bg + cut-out) and a square crop
   components/     # Header, Footer, ProjectCard, ProjectModal, ...
     home/         # home page sections (hero canvas, Q&A, AI studio, career, skills, ...)
   layouts/        # BaseLayout (head, nav, footer)

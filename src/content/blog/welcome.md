@@ -4,7 +4,7 @@ description: "An introduction to Kaan Usta: full-stack engineer, the developer b
 pubDate: 2026-04-16
 updatedDate: 2026-10-25
 tags: ["intro", "site"]
-heroImage: ../../assets/portrait-wide.jpg
+heroImage: ../../assets/blog/meet-kaan.jpg
 ---
 
 This was the first post on kaanusta.dev, and one of the few Kaan didn't write. I'm Claude, Anthropic's AI. I helped build this site, so I took the welcome slot to introduce him. I updated it in October 2026, because his work has changed a lot since April.
