@@ -1,6 +1,8 @@
 ---
 import HeroField from '@components/home/HeroField.astro';
+import { Image } from 'astro:assets';
 import Mark from '@components/Mark.astro';
+import portrait from '@/assets/portrait.png';
 import { SOCIAL } from '@lib/constants';
 import { copy, pick, QA } from '@lib/home';
 import type { Lang } from '@lib/i18n';
@@ -28,14 +30,17 @@ const first = data.qa[0];
 
 <section class="hero">
   <HeroField />
+  <div class="wrap hero-in">
+    <p class="name"><Mark size={22} /><span>Kaan Usta</span></p>
+    <h1>{pick(c.title, lang)}</h1>
+  </div>
+</section>
+
+<section class="about">
   <div class="wrap grid">
     <div class="intro">
-      <span class="eyebrow">{pick(c.eyebrow, lang)}</span>
-      <h1 class="grad-em" set:html={pick(c.title, lang)} />
+      <Image class="me" src={portrait} alt="Kaan Usta" width={224} height={224} />
       <p class="lede">{pick(c.lede, lang)}</p>
-      <ul class="facts">
-        {c.facts.map((f) => <li>{pick(f, lang)}</li>)}
-      </ul>
       <div class="cta">
         <a class="btn" href={`mailto:${SOCIAL.email}`}>{pick(c.email, lang)}</a>
         <a class="btn btn-ghost" href={SOCIAL.linkedin} target="_blank" rel="noopener">LinkedIn ↗</a>
@@ -50,7 +55,6 @@ const first = data.qa[0];
       <div class="ask" data-ask>
         <div class="ask-head">
           <b><Mark size={16} /><span>{pick(a.title, lang)}</span></b>
-          <span class="mode">{pick(a.mode, lang)}</span>
         </div>
         <div class="convo" aria-live="polite" aria-busy="false" data-convo>
           <div class="q" data-q>{first.q}</div>
@@ -69,7 +73,6 @@ const first = data.qa[0];
           </button>
         </form>
       </div>
-      <p class="disclaim">{pick(a.disclaimer, lang)}</p>
     </div>
   </div>
   <script type="application/json" data-ask-data set:html={JSON.stringify(data)} />
@@ -85,48 +88,56 @@ const first = data.qa[0];
       linear-gradient(rgb(var(--grid-line) / var(--grid-alpha, 0.06)) 1px, transparent 1px) 0 0 / 48px 48px,
       linear-gradient(90deg, rgb(var(--grid-line) / var(--grid-alpha, 0.06)) 1px, transparent 1px) 0 0 / 48px 48px;
   }
-  .grid {
+  /* Just the name and the title, sized so the bars at the bottom of the
+     canvas stay on the first screen. */
+  .hero-in {
     position: relative;
+    display: grid;
+    align-content: center;
+    gap: 22px;
+    min-height: clamp(400px, calc(100svh - 58px), 620px);
+    padding-block: 48px 120px;
+  }
+  .name {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    font: 500 clamp(1.1rem, 1.6vw, 1.35rem) Sora, ui-sans-serif, sans-serif;
+    letter-spacing: -0.02em;
+    color: rgb(var(--text-100));
+  }
+  h1 {
+    max-width: 17ch;
+    font-size: clamp(2.6rem, 6.4vw, 5.2rem);
+    line-height: 1.02;
+    letter-spacing: -0.05em;
+    font-weight: 500;
+  }
+
+  .grid {
     display: grid;
     grid-template-columns: minmax(0, 0.95fr) minmax(0, 1.05fr);
     gap: 48px;
     align-items: center;
-    padding-block: clamp(56px, 8vw, 96px) clamp(150px, 15vw, 200px);
+    padding-top: clamp(56px, 7vw, 88px);
   }
   .intro {
     display: grid;
     gap: 22px;
     align-content: center;
   }
-  h1 {
-    font-size: clamp(2.2rem, 4.1vw, 3.5rem);
-    line-height: 1.06;
-    letter-spacing: -0.045em;
-    font-weight: 500;
-  }
   .lede {
-    color: rgb(var(--text-200));
-    font-size: 1.12rem;
+    color: rgb(var(--text-100));
+    font-size: clamp(1.15rem, 1.7vw, 1.4rem);
+    line-height: 1.5;
     max-width: 30rem;
   }
-  .facts {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 8px 18px;
-    color: rgb(var(--text-200));
-    font-size: 0.9rem;
-  }
-  .facts li {
-    display: inline-flex;
-    align-items: center;
-    gap: 7px;
-  }
-  .facts li::before {
-    content: '';
-    width: 6px;
-    height: 6px;
-    border-radius: 50%;
-    background: rgb(var(--accent-2));
+  .intro :global(.me) {
+    width: 112px;
+    height: 112px;
+    border-radius: 24px;
+    object-fit: cover;
+    border: 1px solid rgb(var(--border));
   }
   .cta {
     display: flex;
@@ -161,10 +172,6 @@ const first = data.qa[0];
     font-weight: 600;
     font-size: 0.92rem;
     color: rgb(var(--text-100));
-  }
-  .mode {
-    font: 500 0.72rem 'JetBrains Mono', ui-monospace, monospace;
-    color: rgb(var(--text-300));
   }
   .convo {
     padding: 20px 20px 8px;
@@ -346,23 +353,17 @@ const first = data.qa[0];
     border-color: rgb(var(--accent-1));
     background: rgb(var(--accent-1) / 0.12);
   }
-  .disclaim {
-    margin-top: 10px;
-    font-size: 0.8rem;
-    color: rgb(var(--text-300));
-  }
 
   @media (max-width: 860px) {
+    .hero-in {
+      padding-block: 40px 100px;
+    }
     .grid {
-      grid-template-columns: 1fr;
+      grid-template-columns: minmax(0, 1fr);
       gap: 28px;
-      padding-block: 36px 130px;
     }
     .intro {
       gap: 16px;
-    }
-    .lede {
-      font-size: 1rem;
     }
     .cta .btn {
       flex: 1 1 auto;

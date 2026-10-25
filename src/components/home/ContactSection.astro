@@ -13,8 +13,8 @@ const c = copy.contact;
 <section class="contact" id="contact">
   <div class="wrap grid">
     <div>
-      <span class="eyebrow">{pick(c.eyebrow, lang)}</span>
-      <h2 class="grad-em" set:html={pick(c.title, lang)} />
+      <h2>{pick(c.title, lang)}</h2>
+      <p class="lede">{pick(c.lede, lang)}</p>
       <div class="mail">
         <a href={`mailto:${SOCIAL.email}`} data-email>{SOCIAL.email}</a>
         <button class="btn btn-ghost" type="button" data-copy data-copied={pick(c.copied, lang)} data-selected={pick(c.selected, lang)}>{pick(c.copy, lang)}</button>
@@ -46,8 +46,12 @@ const c = copy.contact;
     gap: 48px;
     align-items: end;
   }
+  .lede {
+    margin-top: 14px;
+    color: rgb(var(--text-200));
+    font-size: 1.1rem;
+  }
   h2 {
-    margin-top: 16px;
     font-size: clamp(2.2rem, 5.6vw, 4.2rem);
     line-height: 1.04;
     letter-spacing: -0.045em;
@@ -64,7 +68,6 @@ const c = copy.contact;
     border-radius: 12px;
     border: 1px solid rgb(var(--border));
     background: rgb(var(--bg-elev));
-    box-shadow: var(--glow);
   }
   .mail a {
     flex: 1;

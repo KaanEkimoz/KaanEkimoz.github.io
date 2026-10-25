@@ -8,7 +8,7 @@ Personal site and blog for **Kaan Usta** — full-stack engineer (NestJS, Next.j
 
 ## Highlights
 
-- 📈 Hero with a live data canvas (streaming bars, node network) and a pre-written "Ask about Kaan" Q&A box
+- 📈 Hero with a live data canvas (streaming bars, node network) and a pre-written Q&A box
 - 🧭 Scroll-driven sections: Patimania dataset card, career pipeline graph, skills map, evals
 - 🎮 Seven projects (Patimania + six games) with cover + gallery + lazy-embedded YouTube trailers
 - 🪟 Project modal that fetches and injects detail pages over the current page, with full deep-link + View Transitions support

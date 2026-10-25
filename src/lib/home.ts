@@ -13,41 +13,29 @@ export const pick = (v: L10n | string, lang: Lang): string => (typeof v === 'str
 
 export const copy = {
   hero: {
-    eyebrow: { en: 'Kaan Usta · Istanbul', tr: 'Kaan Usta · İstanbul' },
-    title: { en: 'Full-stack engineer shipping products <em>end to end</em>.', tr: 'Ürünleri <em>uçtan uca</em> geliştiren <span style="white-space:nowrap">full-stack</span> mühendis.' },
+    title: { en: 'I build web and mobile products.', tr: 'Web ve mobil ürünler geliştiriyorum.' },
     lede: {
-      en: "I'm Kaan. I build the backend, the web and mobile apps, and the pipeline that deploys them. Right now that's Patimania, as its only engineer.",
-      tr: "Ben Kaan. Arka ucu, web ve mobil uygulamaları ve bunları yayına alan altyapıyı ben kuruyorum. Şu sıralar tek mühendisi olduğum Patimania'yı geliştiriyorum.",
+      en: "Hi, I'm Kaan, a full-stack engineer in Istanbul. Since June 2026 I've been building Patimania on my own: the NestJS backend, the Next.js site, the React Native app and the servers they run on. Before that I spent six years making games in Unity.",
+      tr: "Merhaba, ben Kaan; İstanbul'da full-stack yazılım mühendisiyim. Haziran 2026'dan beri Patimania'yı tek başıma geliştiriyorum: NestJS arka ucu, Next.js sitesi, React Native uygulaması ve hepsinin çalıştığı sunucular. Öncesinde altı yıl Unity ile oyun yaptım.",
     },
-    facts: [
-      { en: 'Web + iOS + Android', tr: 'Web + iOS + Android' },
-      { en: '74 end-to-end test files', tr: '74 uçtan uca test dosyası' },
-      { en: '6 years of C# and Unity before', tr: 'Öncesinde 6 yıl C# ve Unity' },
-    ],
     email: { en: 'Email me', tr: 'E-posta gönder' },
     seeWork: { en: 'See Patimania', tr: "Patimania'ya bak" },
   },
   ask: {
-    title: { en: 'Ask about Kaan', tr: 'Kaan hakkında sor' },
-    mode: { en: 'About Kaan', tr: 'Kaan Hakkında' },
-    placeholder: { en: 'Ask about his work…', tr: 'İşleri hakkında bir şey sor…' },
-    inputLabel: { en: 'Ask a question about Kaan', tr: 'Kaan hakkında bir soru sor' },
+    title: { en: 'About me', tr: 'Hakkımda' },
+    placeholder: { en: 'Ask about my work…', tr: 'İşlerim hakkında bir şey sor…' },
+    inputLabel: { en: 'Ask me a question', tr: 'Bana bir soru sor' },
     send: { en: 'Send', tr: 'Gönder' },
-    disclaimer: {
-      en: "Answers are written in advance from Kaan's CV. No model runs on this page.",
-      tr: 'Cevaplar Kaan’ın özgeçmişinden önceden yazıldı. Bu sayfada çalışan bir model yok.',
-    },
     fallback: {
-      en: "That one isn't covered here. Try a question below, or email Kaan at kaanekimoz@gmail.com.",
-      tr: 'Bu soru burada yok. Aşağıdaki sorulardan birini dene ya da Kaan’a yaz: kaanekimoz@gmail.com.',
+      en: "That one isn't covered here. Try one of the questions above, or email me at kaanekimoz@gmail.com.",
+      tr: 'Bu soru burada yok. Yukarıdaki sorulardan birini dene ya da bana yaz: kaanekimoz@gmail.com.',
     },
   },
   work: {
-    eyebrow: { en: 'Flagship · Jun 2026 — now', tr: 'Ana proje · Haz 2026 — devam' },
-    title: { en: 'Patimania, <em>built by one engineer</em>.', tr: 'Patimania, <em>tek mühendisin elinden</em>.' },
+    title: { en: 'Patimania', tr: 'Patimania' },
     lede: {
-      en: 'A marketplace that connects pet hotels, groomers and pet taxis with pet owners across Türkiye. I designed the system and built every part of it.',
-      tr: 'Türkiye genelinde pet otelleri, kuaförleri ve pet taksileri hayvan sahipleriyle buluşturan bir pazaryeri. Sistemi tasarladım ve her parçasını ben geliştirdim.',
+      en: "A marketplace that connects pet hotels, groomers and pet taxis with pet owners across Türkiye. I'm the only engineer on it, so every screen and every table you see here is mine.",
+      tr: "Türkiye'de pet otellerini, kuaförleri ve pet taksileri hayvan sahipleriyle buluşturan bir pazaryeri. Projenin tek mühendisi benim; burada gördüğün her ekranı ve her tabloyu ben yazdım.",
     },
     status: { en: 'soft launch · payments off', tr: 'ön yayında · ödeme kapalı' },
     tabs: { en: ['Home', 'Search', 'Business', 'Mobile', 'Panel', 'Calendar'], tr: ['Ana sayfa', 'Arama', 'İşletme', 'Mobil', 'Panel', 'Takvim'] },
@@ -67,50 +55,64 @@ export const copy = {
     },
     visit: { en: 'Visit patimania.com ↗', tr: "patimania.com'u ziyaret et ↗" },
   },
-  method: {
-    eyebrow: { en: 'How I work', tr: 'Nasıl çalışıyorum' },
-    title: { en: 'AI in the loop, <em>me on the hook</em>.', tr: 'Yapay zekâ yardımcı, <em>sorumluluk bende</em>.' },
+  notes: {
+    title: { en: 'Notes from the build', tr: 'Yapım notları' },
+    lede: { en: 'A few problems I ran into on Patimania, and what I did about them.', tr: "Patimania'da karşılaştığım birkaç sorun ve onları nasıl çözdüğüm." },
     items: [
       {
-        k: { en: 'Daily', tr: 'Her gün' },
-        h: { en: 'Agents speed up the routine work', tr: 'Rutin işi ajanlara bırakıyorum' },
+        h: { en: 'Two customers, one room', tr: 'Aynı oda, iki müşteri' },
         p: {
-          en: 'Claude Code and MCP every day, multi-agent orchestration for bigger changes, local models with Ollama when they fit. Two years of building this way.',
-          tr: 'Her gün Claude Code ve MCP; büyük değişikliklerde çok ajanlı orkestrasyon, uygun olduğunda Ollama ile yerel modeller. İki yıldır böyle geliştiriyorum.',
+          en: "Two people could try to book the same room at the same moment. I didn't leave that to the app logic; I made it impossible in the database. A PostgreSQL EXCLUDE constraint rejects overlapping bookings, so only one of the two writes goes through.",
+          tr: 'İki kişi aynı odayı aynı anda ayırtmaya çalışabiliyordu. Bunu uygulama mantığına bırakmadım, veritabanında imkânsız hâle getirdim: PostgreSQL’deki bir EXCLUDE kısıtı çakışan rezervasyonları reddediyor, iki yazımdan yalnızca biri geçiyor.',
         },
       },
       {
-        k: { en: 'Tooling', tr: 'Araçlar' },
-        h: { en: 'I write my own skills', tr: "Kendi agent skill'lerimi yazıyorum" },
+        h: { en: 'Approved twice', tr: 'İki kez onaylanan işlem' },
         p: {
-          en: 'Agent skills that automate my own workflows, and LLM features shipped to real users.',
-          tr: 'Kendi iş akışlarımı otomatikleştiren ajan becerileri yazıyorum; gerçek kullanıcılara LLM özellikleri de sundum.',
+          en: "I tested what happens when two people press approve at the same time. Both requests succeeded and two accepted rows appeared. Now every status change only runs if the row is still in the state it expects, so the second request fails.",
+          tr: 'Aynı anda iki kişinin “onayla”ya basmasını denedim: iki istek de başarılı döndü, iki ayrı kabul kaydı oluştu. Artık her durum değişikliği yalnızca kayıt hâlâ beklenen durumdaysa çalışıyor; ikinci istek reddediliyor.',
         },
       },
       {
-        k: { en: 'Ownership', tr: 'Sorumluluk' },
-        h: { en: 'I own what ships', tr: 'Yayına çıkanın sorumlusu benim' },
+        h: { en: 'A permission I forgot', tr: 'Unutulan bir yetki' },
         p: {
-          en: "Architecture, review and tests stay with me. Patimania's 74 end-to-end test files run against a real database before anything deploys.",
-          tr: "Mimari, kod incelemesi ve testler bende. Patimania'nın 74 uçtan uca test dosyası, yayından önce gerçek bir veritabanına karşı çalışıyor.",
+          en: 'In the admin panel, forgetting a permission entry opened an endpoint instead of closing it. I added a CI check that fails the build when a new admin endpoint has no permission. It caught a real hole: support staff could close their own customers’ complaints.',
+          tr: 'Yönetim panelinde bir yetki satırını unutmak, ilgili ucu kapatmak yerine açıyordu. Yetkisi tanımlanmamış yeni bir uç eklenirse derlemeyi durduran bir CI kontrolü yazdım. Kontrol gerçek bir açık yakaladı: destek personeli kendi müşterilerinin şikâyetlerini tek başına kapatabiliyordu.',
+        },
+      },
+      {
+        h: { en: 'Quietly broken on iOS', tr: "iOS'ta sessiz bir arıza" },
+        p: {
+          en: 'A deep link stopped working on iOS while the plain smoke tests stayed green. What caught it was a check I had written to compare app.json, the iOS association file and the route table.',
+          tr: 'iOS’ta bir derin bağlantı çalışmayı bıraktı ama düz duman testleri yeşil kaldı. Sorunu, app.json, iOS ilişkilendirme dosyası ve rota tablosunu karşılaştırmak için yazdığım kontrol yakaladı.',
         },
       },
     ],
   },
+  method: {
+    title: { en: 'How I use AI', tr: 'Yapay zekâyı nasıl kullanıyorum' },
+    body: [
+      {
+        en: "I've been building with AI coding agents for two years. Every day I use Claude Code with MCP, split bigger changes across several agents, and run local models with Ollama when they're enough. I write my own agent skills for the parts of my work I keep repeating, and I've shipped LLM features to real users.",
+        tr: "İki yıldır yapay zekâ kodlama ajanlarıyla çalışıyorum. Her gün MCP ile Claude Code kullanıyorum; büyük değişiklikleri birkaç ajana bölüyorum, yeterli olduğunda Ollama ile yerel modeller çalıştırıyorum. Sık tekrarladığım işler için kendi agent skill'lerimi yazıyorum, gerçek kullanıcılara LLM özellikleri de sundum.",
+      },
+      {
+        en: "The agents write a lot of the routine code. The design, the review and the tests stay with me: Patimania's 74 end-to-end test files run against a real database before anything ships. If something breaks, it's on me.",
+        tr: "Rutin kodun büyük kısmını ajanlar yazıyor. Tasarım, kod incelemesi ve testler bende: Patimania'nın 74 uçtan uca test dosyası, yayına çıkmadan önce gerçek bir veritabanına karşı çalışıyor. Bir şey bozulursa sorumlusu benim.",
+      },
+    ],
+  },
   career: {
-    eyebrow: { en: 'Career · timeline', tr: 'Kariyer · zaman çizelgesi' },
-    title: { en: 'A pipeline from <em>games</em> to products.', tr: '<em>Oyunlardan</em> ürünlere uzanan bir hat.' },
-    lede: { en: 'Each step fed the next one. Hover or tap a node for details.', tr: 'Her adım bir sonrakini besledi. Ayrıntı için bir düğüme dokun ya da üzerine gel.' },
+    title: { en: 'How I got here', tr: 'Buraya nasıl geldim' },
+    lede: { en: 'Games first, then retail systems, now Patimania. Hover or tap a step for details.', tr: 'Önce oyunlar, sonra perakende sistemleri, şimdi Patimania. Ayrıntı için bir adıma dokun ya da üzerine gel.' },
     lanes: { en: ['Software', 'Games', 'Education'], tr: ['Yazılım', 'Oyun', 'Eğitim'] },
   },
   skills: {
-    eyebrow: { en: 'Skills', tr: 'Yetenekler' },
-    title: { en: 'A map of the <em>stack</em>.', tr: 'Teknolojilerin <em>haritası</em>.' },
-    lede: { en: 'The tools I use every day, grouped by where they sit in a product.', tr: 'Her gün kullandığım araçlar, üründe durdukları yere göre gruplanmış hâlde.' },
+    title: { en: 'What I work with', tr: 'Neyle çalışıyorum' },
+    lede: { en: 'Grouped by where each tool sits in a product.', tr: 'Her araç, üründe durduğu yere göre gruplandı.' },
   },
   evals: {
-    eyebrow: { en: 'Evals', tr: 'Değerlendirme' },
-    title: { en: 'Tested <em>by someone else</em>.', tr: '<em>Bağımsız</em> olarak test edildi.' },
+    title: { en: 'Test results', tr: 'Test sonuçları' },
     assessment: { en: 'Assessment', tr: 'Test' },
     percentile: { en: 'Percentile', tr: 'Yüzdelik dilim' },
     caption: {
@@ -119,21 +121,19 @@ export const copy = {
     },
   },
   games: {
-    eyebrow: { en: 'Where I started · since 2020', tr: "Başladığım yer · 2020'den beri" },
-    title: { en: 'Six years of <em>games</em>.', tr: 'Altı yıllık <em>oyun</em> deneyimi.' },
+    title: { en: 'Where I started', tr: 'Başladığım yer' },
     lede: {
-      en: 'B.Sc. Digital Game Design, İstinye University, 2024. Games taught me performance budgets and how software should feel.',
-      tr: "İstinye Üniversitesi'nde Dijital Oyun Tasarımı okudum, 2024'te mezun oldum. Performans bütçesini ve bir yazılımın nasıl hissettirmesi gerektiğini oyunlardan öğrendim.",
+      en: "I studied Digital Game Design at İstinye University (2020–2024) and made games for six years. That's where I learned to watch performance closely and to care how an app feels in the hand.",
+      tr: "İstinye Üniversitesi'nde Dijital Oyun Tasarımı okudum (2020–2024) ve altı yıl oyun geliştirdim. Performansı yakından takip etmeyi ve bir uygulamanın elde nasıl hissettirdiğini önemsemeyi orada öğrendim.",
     },
   },
   writing: {
-    eyebrow: { en: 'Writing', tr: 'Yazılar' },
-    title: { en: 'Latest posts', tr: 'Son yazılar' },
+    title: { en: 'Writing', tr: 'Yazılar' },
     all: { en: 'All posts →', tr: 'Tüm yazılar →' },
   },
   contact: {
-    eyebrow: { en: 'Contact', tr: 'İletişim' },
-    title: { en: 'Have a product <em>to build</em>?', tr: 'Birlikte bir <em>ürün</em> mü geliştirelim?' },
+    title: { en: 'Get in touch', tr: 'Bana yaz' },
+    lede: { en: 'Email is the easiest way to reach me.', tr: 'Bana ulaşmanın en kolay yolu e-posta.' },
     copy: { en: 'Copy', tr: 'Kopyala' },
     copied: { en: 'Copied', tr: 'Kopyalandı' },
     selected: { en: 'Selected', tr: 'Seçildi' },
@@ -146,7 +146,7 @@ export const copy = {
   },
   sources: {
     work: { en: 'Patimania', tr: 'Patimania' },
-    method: { en: 'How I work', tr: 'Çalışma şekli' },
+    method: { en: 'How I use AI', tr: 'Yapay zekâ' },
     career: { en: 'Career', tr: 'Kariyer' },
     skills: { en: 'Skills', tr: 'Yetenekler' },
     evals: { en: 'Evals', tr: 'Değerlendirme' },
@@ -161,21 +161,21 @@ export type SectionId = keyof typeof copy.sources;
 export const QA: { id: string; keys: string[]; q: L10n; a: L10n; stats?: Record<Lang, string[]>; src: SectionId[] }[] = [
   {
     id: 'what',
-    keys: ['build', 'builds', 'job', 'role', 'kim', 'yapıyor', 'iş', 'işi', 'meslek'],
-    q: { en: 'What does Kaan build?', tr: 'Kaan ne yapıyor?' },
+    keys: ['build', 'builds', 'do', 'job', 'role', 'kim', 'kimsin', 'yapıyor', 'iş', 'işi', 'işin', 'meslek'],
+    q: { en: 'What do I do?', tr: 'Ne yapıyorum?' },
     a: {
-      en: "Kaan is a full-stack engineer in Istanbul. He builds complete products on his own: the backend, the web app, the mobile app and the pipeline that deploys them. Right now that's Patimania, a pet-services marketplace where he is the only engineer.",
-      tr: "Kaan, İstanbul'da yaşayan bir full-stack yazılım mühendisi. Ürünleri baştan sona kendisi kuruyor: arka uç, web uygulaması, mobil uygulama ve hepsini yayına alan altyapı. Şu sıralar tek mühendisi olduğu Patimania üzerinde çalışıyor; evcil hayvan hizmetleri için bir pazaryeri.",
+      en: "I'm a full-stack engineer in Istanbul. I build complete products on my own: the backend, the web app, the mobile app and the pipeline that deploys them. Right now that's Patimania, a pet-services marketplace where I'm the only engineer.",
+      tr: "İstanbul'da full-stack yazılım mühendisiyim. Ürünleri baştan sona kendim kuruyorum: arka uç, web uygulaması, mobil uygulama ve hepsini yayına alan altyapı. Şu sıralar tek mühendisi olduğum Patimania üzerinde çalışıyorum; evcil hayvan hizmetleri için bir pazaryeri.",
     },
     src: ['work', 'career'],
   },
   {
     id: 'pm',
     keys: ['patimania', 'marketplace', 'pazaryeri', 'pet', 'payment', 'payments', 'escrow', 'ödeme', 'proje'],
-    q: { en: 'Tell me about Patimania', tr: 'Patimania nedir?' },
+    q: { en: 'What is Patimania?', tr: 'Patimania nedir?' },
     a: {
-      en: "Patimania connects pet hotels, groomers and pet taxis with pet owners in Türkiye. Kaan designed and built all of it: NestJS with PostgreSQL and PostGIS, Next.js, and React Native for iOS and Android. It's in a soft launch at patimania.com; the escrow payment flow is built and switches on with bookings after launch.",
-      tr: "Patimania, Türkiye'de pet otelleri, kuaförleri ve pet taksileri hayvan sahipleriyle buluşturuyor. Kaan sistemin tamamını tasarlayıp geliştirdi: PostgreSQL ve PostGIS ile NestJS, Next.js, iOS ve Android için React Native. Platform patimania.com'da ön yayında; Ödeme Güvencesi altyapısı hazır, rezervasyon ve ödeme lansmanla açılacak.",
+      en: "Patimania connects pet hotels, groomers and pet taxis with pet owners in Türkiye. I designed and built all of it: NestJS with PostgreSQL and PostGIS, Next.js, and React Native for iOS and Android. It's in a soft launch at patimania.com; the escrow payment flow is built and switches on with bookings after launch.",
+      tr: "Patimania, Türkiye'de pet otellerini, kuaförleri ve pet taksileri hayvan sahipleriyle buluşturuyor. Sistemin tamamını ben tasarlayıp geliştirdim: PostgreSQL ve PostGIS ile NestJS, Next.js, iOS ve Android için React Native. Platform patimania.com'da ön yayında; Ödeme Güvencesi altyapısı hazır, rezervasyon ve ödeme lansmanla açılacak.",
     },
     stats: { en: ['2,409 commits', '68 data models', '74 E2E test files'], tr: ['2.409 commit', '68 veri modeli', '74 uçtan uca test'] },
     src: ['work'],
@@ -183,50 +183,50 @@ export const QA: { id: string; keys: string[]; q: L10n; a: L10n; stats?: Record<
   {
     id: 'stack',
     keys: ['stack', 'tech', 'skill', 'skills', 'language', 'languages', 'teknoloji', 'yetenek', 'dil', 'typescript', 'react', 'next.js', 'nextjs', 'nestjs', 'node', 'docker', '.net', 'c#', 'postgres', 'postgresql', 'expo', 'mobile', 'mobil', 'biliyor'],
-    q: { en: "What's his stack?", tr: 'Hangi teknolojileri kullanıyor?' },
+    q: { en: "What's my stack?", tr: 'Hangi teknolojileri kullanıyorum?' },
     a: {
-      en: 'Mostly TypeScript: NestJS, Prisma and PostgreSQL on the backend, Next.js and React on the web, React Native with Expo on mobile, Docker and GitHub Actions to ship. He also works with C# and .NET, and spent six years in Unity before that.',
-      tr: 'Ağırlıklı olarak TypeScript: arka uçta NestJS, Prisma ve PostgreSQL; webde Next.js ve React; mobilde Expo ile React Native; yayın için Docker ve GitHub Actions. C# ve .NET ile de çalışıyor; öncesinde altı yıl Unity kullandı.',
+      en: 'Mostly TypeScript: NestJS, Prisma and PostgreSQL on the backend, Next.js and React on the web, React Native with Expo on mobile, Docker and GitHub Actions to ship. I also work with C# and .NET, and spent six years in Unity before that.',
+      tr: 'Ağırlıklı olarak TypeScript: arka uçta NestJS, Prisma ve PostgreSQL; webde Next.js ve React; mobilde Expo ile React Native; yayın için Docker ve GitHub Actions. C# ve .NET ile de çalışıyorum; öncesinde altı yıl Unity kullandım.',
     },
     src: ['skills', 'evals'],
   },
   {
     id: 'evals',
     keys: ['test', 'tests', 'tested', 'testgorilla', 'percentile', 'score', 'assessment', 'sınav', 'puan', 'yüzdelik', 'değerlendirme'],
-    q: { en: 'Has he been tested?', tr: 'Bağımsız olarak test edildi mi?' },
+    q: { en: 'My test results', tr: 'Test sonuçlarım' },
     a: {
-      en: 'Yes. In TestGorilla assessments in September 2026 he scored in the 99th percentile for .NET, React and artificial intelligence, the 98th for Microsoft Azure and the 97th for English.',
-      tr: 'Evet. Eylül 2026’daki TestGorilla değerlendirmelerinde .NET, React ve yapay zekâda 99., Microsoft Azure’da 98., İngilizcede 97. yüzdelik dilimde yer aldı.',
+      en: 'In TestGorilla assessments in September 2026 I scored in the 99th percentile for .NET, React and artificial intelligence, the 98th for Microsoft Azure and the 97th for English.',
+      tr: 'Eylül 2026’daki TestGorilla değerlendirmelerinde .NET, React ve yapay zekâda 99., Microsoft Azure’da 98., İngilizcede 97. yüzdelik dilimde yer aldım.',
     },
     src: ['evals'],
   },
   {
     id: 'ai',
     keys: ['ai', 'agent', 'agents', 'claude', 'llm', 'gpt', 'yapay', 'zeka', 'zekâ', 'ajan', 'ajanlar'],
-    q: { en: 'How does he use AI?', tr: 'Yapay zekâyı nasıl kullanıyor?' },
+    q: { en: 'How do I use AI?', tr: 'Yapay zekâyı nasıl kullanıyorum?' },
     a: {
-      en: "Every day. He works with coding agents like Claude Code and MCP, writes his own agent skills, and has shipped LLM features to real users. The architecture, the review and the tests stay his responsibility: Patimania's 74 end-to-end test files run against a real database.",
-      tr: "Her gün. Claude Code ve MCP gibi kodlama ajanlarıyla çalışıyor, kendi agent skill'lerini yazıyor ve gerçek kullanıcılara LLM özellikleri sundu. Mimari, kod incelemesi ve testler yine onun sorumluluğunda: Patimania'nın 74 uçtan uca test dosyası gerçek bir veritabanına karşı çalışıyor.",
+      en: "Every day. I work with coding agents like Claude Code and MCP, write my own agent skills, and have shipped LLM features to real users. The architecture, the review and the tests stay my responsibility: Patimania's 74 end-to-end test files run against a real database.",
+      tr: "Her gün. Claude Code ve MCP gibi kodlama ajanlarıyla çalışıyorum, kendi agent skill'lerimi yazıyorum ve gerçek kullanıcılara LLM özellikleri sundum. Mimari, kod incelemesi ve testler yine benim sorumluluğumda: Patimania'nın 74 uçtan uca test dosyası gerçek bir veritabanına karşı çalışıyor.",
     },
     src: ['method', 'work'],
   },
   {
     id: 'start',
     keys: ['start', 'started', 'game', 'games', 'unity', 'background', 'school', 'university', 'education', 'experience', 'years', 'oyun', 'oyunlar', 'başladı', 'okul', 'üniversite', 'eğitim', 'deneyim', 'tecrübe', 'yıl', 'yıllık'],
-    q: { en: 'Where did he start?', tr: 'Nereden başladı?' },
+    q: { en: 'Where did I start?', tr: 'Nereden başladım?' },
     a: {
-      en: 'With games. He studied Digital Game Design at İstinye University and spent six years shipping Unity games: Brick Game on Google Play, the roguelike Orbs of The Power, VR and hyper-casual titles. Then retail systems at a grocery chain, and since June 2026 full-stack work on Patimania.',
-      tr: "Oyunlardan. İstinye Üniversitesi'nde Dijital Oyun Tasarımı okudu ve altı yıl boyunca Unity ile oyunlar yayımladı: Google Play'deki Brick Game, roguelike Orbs of The Power, VR ve hiper-casual oyunlar. Ardından bir market zincirinde perakende sistemleri, Haziran 2026'dan beri de Patimania'da full-stack geliştirme.",
+      en: 'With games. I studied Digital Game Design at İstinye University and spent six years shipping Unity games: Brick Game on Google Play, the roguelike Orbs of The Power, VR and hyper-casual titles. Then retail systems at a grocery chain, and since June 2026 full-stack work on Patimania.',
+      tr: "Oyunlardan. İstinye Üniversitesi'nde Dijital Oyun Tasarımı okudum ve altı yıl boyunca Unity ile oyunlar yayımladım: Google Play'deki Brick Game, roguelike Orbs of The Power, VR ve hiper-casual oyunlar. Ardından bir market zincirinde perakende sistemleri üzerinde çalıştım; Haziran 2026'dan beri de Patimania'yı geliştiriyorum.",
     },
     src: ['career', 'games'],
   },
   {
     id: 'contact',
     keys: ['contact', 'email', 'mail', 'hire', 'hiring', 'reach', 'available', 'availability', 'cv', 'resume', 'linkedin', 'where', 'based', 'location', 'remote', 'iletişim', 'ulaş', 'ulaşırım', 'eposta', 'e-posta', 'adres', 'nerede', 'konum', 'özgeçmiş', 'müsait', 'uzaktan'],
-    q: { en: 'How do I reach him?', tr: 'Ona nasıl ulaşırım?' },
+    q: { en: 'How to reach me', tr: 'Bana nasıl ulaşırsın?' },
     a: {
-      en: 'Email works best: kaanekimoz@gmail.com. He is based in Sarıyer, Istanbul (GMT+3). For his CV or availability, ask him directly; LinkedIn and GitHub are linked below.',
-      tr: 'En kolayı e-posta: kaanekimoz@gmail.com. Sarıyer, İstanbul’da yaşıyor (GMT+3). Özgeçmiş ya da müsaitlik için doğrudan ona yazabilirsin; LinkedIn ve GitHub aşağıda.',
+      en: "Email works best: kaanekimoz@gmail.com. I'm based in Sarıyer, Istanbul (GMT+3). For my CV or availability, just ask; LinkedIn and GitHub are linked below.",
+      tr: 'En kolayı e-posta: kaanekimoz@gmail.com. Sarıyer, İstanbul’da yaşıyorum (GMT+3). Özgeçmiş ya da müsaitlik için doğrudan bana yazabilirsin; LinkedIn ve GitHub aşağıda.',
     },
     src: ['contact'],
   },
