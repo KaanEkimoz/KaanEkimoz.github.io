@@ -33,13 +33,6 @@ export const copy = {
   },
   ask: {
     title: { en: 'About me', tr: 'Hakkımda' },
-    placeholder: { en: 'Ask about my work…', tr: 'İşlerim hakkında bir şey sor…' },
-    inputLabel: { en: 'Ask me a question', tr: 'Bana bir soru sor' },
-    send: { en: 'Send', tr: 'Gönder' },
-    fallback: {
-      en: "That one isn't covered here. Try one of the questions above, or email me at kaanekimoz@gmail.com.",
-      tr: 'Bu soru burada yok. Yukarıdaki sorulardan birini dene ya da bana yaz: kaanekimoz@gmail.com.',
-    },
   },
   work: {
     title: { en: 'Patimania', tr: 'Patimania' },
@@ -211,52 +204,48 @@ export const copy = {
 
 export type SectionId = keyof typeof copy.sources;
 
-/** Pre-written answers for the ask box. `keys` are matched as whole words (or word prefixes for keys longer than 3). */
-export const QA: { id: string; keys: string[]; q: L10n; a: L10n; stats?: Record<Lang, string[]>; src: SectionId[] }[] = [
+/** Pre-written questions and answers for the ask box. */
+export const QA: { id: string; q: L10n; a: L10n; stats?: Record<Lang, string[]>; src: SectionId[] }[] = [
   {
     id: 'what',
-    keys: ['build', 'builds', 'do', 'job', 'role', 'kim', 'kimsin', 'yapıyor', 'iş', 'işi', 'işin', 'meslek'],
     q: { en: 'What do I do?', tr: 'Ne yapıyorum?' },
     a: {
       en: "I'm a full-stack developer in Istanbul. I build products from start to finish: the backend, the web app, the mobile app and the pipeline that ships them. I work with AI coding agents, and the architecture, code review and testing stay with me.",
       tr: "İstanbul'da full-stack geliştiriciyim. Ürünleri baştan sona geliştiriyorum: arka uç, web uygulaması, mobil uygulama ve hepsini yayına alan altyapı. Yapay zekâ kodlama ajanlarıyla çalışıyorum; mimari, kod incelemesi ve testler bende.",
     },
+    stats: { en: ['30+ projects', '5,000+ commits', '6+ yrs experience'], tr: ['30+ proje', '5.000+ commit', '6+ yıl deneyim'] },
     src: ['work', 'career'],
   },
   {
-    id: 'built',
-    keys: ['projects', 'project', 'portfolio', 'built', 'made', 'work', 'works', 'patimania', 'proje', 'projeler', 'projelerin', 'portfolyo', 'neler', 'geliştirdin', 'yaptın'],
-    q: { en: 'What have I built?', tr: 'Neler geliştirdim?' },
+    id: 'now',
+    q: { en: 'What am I working on?', tr: 'Şu an ne üzerinde çalışıyorum?' },
     a: {
-      en: "More than 30 projects over six-plus years: web platforms, iOS and Android apps, admin panels, and Unity games from VR to hyper-casual. Not all of them are in this portfolio; what you see here is a selection.",
-      tr: "Altı yılı aşkın sürede 30'dan fazla proje: web platformları, iOS ve Android uygulamaları, yönetim panelleri ve VR'dan hiper-casual'a Unity oyunları. Hepsi bu portfolyoda yok; burada gördüklerin bir seçki.",
+      en: "Patimania, a marketplace that connects pet hotels, groomers and pet taxis with pet owners across Türkiye. I'm its only engineer and built every part of it: the NestJS and PostgreSQL backend, the Next.js website, the iOS and Android app in React Native, and the business and admin panels. Payments are held in escrow until the service is done, and double bookings are blocked by the database itself. It's in a soft launch at patimania.com: the listed businesses are demo records for now, real payments switch on once the payment provider is connected, and the app is in Google Play closed testing and on TestFlight.",
+      tr: "Patimania: Türkiye genelinde pet otellerini, kuaförleri ve pet taksileri hayvan sahipleriyle buluşturan bir pazaryeri. Tek mühendisi benim ve her parçasını ben geliştirdim: NestJS ve PostgreSQL ile arka uç, Next.js ile web sitesi, React Native ile iOS ve Android uygulaması, işletme ve yönetim panelleri. Ödeme, hizmet tamamlanana kadar Ödeme Güvencesi ile bekletiliyor; çift rezervasyonu doğrudan veritabanı engelliyor. Platform patimania.com'da ön yayında: listelenen işletmeler şimdilik demo kayıtlar, gerçek ödemeler ödeme sağlayıcısı bağlanınca açılacak, uygulama da Google Play kapalı testinde ve TestFlight'ta.",
     },
-    stats: { en: ['30+ projects', '5,000+ commits', '6+ yrs experience'], tr: ['30+ proje', '5.000+ commit', '6+ yıl deneyim'] },
-    src: ['work', 'games'],
+    stats: { en: ['2,441 commits', '68 tables', '76 E2E test suites'], tr: ['2.441 commit', '68 tablo', '76 uçtan uca test paketi'] },
+    src: ['work'],
+  },
+  {
+    id: 'skills',
+    q: { en: 'What are my skills?', tr: 'Yeteneklerim neler?' },
+    a: {
+      en: 'Taking a product from idea to release: data modelling and backend APIs, web and mobile interfaces, CI and deployment, and working with AI agents under checks I set up. In TestGorilla assessments in September 2026 I scored in the 99th percentile for .NET, React and artificial intelligence, the 98th for Microsoft Azure and the 97th for English.',
+      tr: 'Bir ürünü fikirden yayına taşımak: veri modeli ve arka uç API’leri, web ve mobil arayüzler, CI ve yayın süreci, yapay zekâ ajanlarıyla kendi kurduğum denetimler altında çalışmak. Eylül 2026’daki TestGorilla değerlendirmelerinde .NET, React ve yapay zekâda 99., Microsoft Azure’da 98., İngilizcede 97. yüzdelik dilimde yer aldım.',
+    },
+    src: ['skills', 'evals'],
   },
   {
     id: 'stack',
-    keys: ['stack', 'tech', 'skill', 'skills', 'language', 'languages', 'teknoloji', 'yetenek', 'dil', 'typescript', 'react', 'next.js', 'nextjs', 'nestjs', 'node', 'docker', '.net', 'c#', 'postgres', 'postgresql', 'expo', 'mobile', 'mobil', 'biliyor'],
     q: { en: "What's my stack?", tr: 'Hangi teknolojileri kullanıyorum?' },
     a: {
       en: 'Mostly TypeScript: NestJS, Prisma and PostgreSQL on the backend, Next.js and React on the web, React Native with Expo on mobile, Docker and GitHub Actions to ship. I also work with C# and .NET, and spent six years in Unity before that.',
       tr: 'Ağırlıklı olarak TypeScript: arka uçta NestJS, Prisma ve PostgreSQL; webde Next.js ve React; mobilde Expo ile React Native; yayın için Docker ve GitHub Actions. C# ve .NET ile de çalışıyorum; öncesinde altı yıl Unity kullandım.',
     },
-    src: ['skills', 'evals'],
-  },
-  {
-    id: 'evals',
-    keys: ['test', 'tests', 'tested', 'testgorilla', 'percentile', 'score', 'assessment', 'sınav', 'puan', 'yüzdelik', 'değerlendirme'],
-    q: { en: 'My test results', tr: 'Test sonuçlarım' },
-    a: {
-      en: 'In TestGorilla assessments in September 2026 I scored in the 99th percentile for .NET, React and artificial intelligence, the 98th for Microsoft Azure and the 97th for English.',
-      tr: 'Eylül 2026’daki TestGorilla değerlendirmelerinde .NET, React ve yapay zekâda 99., Microsoft Azure’da 98., İngilizcede 97. yüzdelik dilimde yer aldım.',
-    },
-    src: ['evals'],
+    src: ['skills'],
   },
   {
     id: 'ai',
-    keys: ['ai', 'agent', 'agents', 'claude', 'llm', 'gpt', 'yapay', 'zeka', 'zekâ', 'ajan', 'ajanlar'],
     q: { en: 'How do I use AI?', tr: 'Yapay zekâyı nasıl kullanıyorum?' },
     a: {
       en: "Every day. I work with coding agents like Claude Code and MCP, write my own agent skills, and have shipped LLM features to real users. The architecture, the review and the tests stay with me: agents write code fast, but I decide what goes live.",
@@ -265,19 +254,17 @@ export const QA: { id: string; keys: string[]; q: L10n; a: L10n; stats?: Record<
     src: ['method', 'work'],
   },
   {
-    id: 'start',
-    keys: ['start', 'started', 'game', 'games', 'unity', 'background', 'school', 'university', 'education', 'experience', 'years', 'oyun', 'oyunlar', 'başladı', 'okul', 'üniversite', 'eğitim', 'deneyim', 'tecrübe', 'yıl', 'yıllık'],
-    q: { en: 'Where did I start?', tr: 'Nereden başladım?' },
+    id: 'story',
+    q: { en: "What's my story?", tr: 'Kısaca hikayem' },
     a: {
-      en: 'With games. I studied Digital Game Design at İstinye University and spent six years shipping Unity games: Brick Game on Google Play, the roguelike Orbs of The Power, VR and hyper-casual titles. Then retail systems at a grocery chain, and now full-stack web and mobile products.',
-      tr: "Oyunlardan. İstinye Üniversitesi'nde Dijital Oyun Tasarımı okudum ve altı yıl boyunca Unity ile oyunlar yayımladım: Google Play'deki Brick Game, roguelike Orbs of The Power, VR ve hiper-casual oyunlar. Ardından bir market zincirinde perakende sistemleri üzerinde çalıştım; şimdi de full-stack web ve mobil ürünler geliştiriyorum.",
+      en: 'I studied Digital Game Design at İstinye University and spent six years making Unity games: Brick Game on Google Play, the roguelike Orbs of The Power, VR and hyper-casual titles. Games taught me performance budgets and how software should feel. Then I worked on retail systems at a grocery chain, and now I build full-stack web and mobile products.',
+      tr: "İstinye Üniversitesi'nde Dijital Oyun Tasarımı okudum ve altı yıl boyunca Unity ile oyunlar geliştirdim: Google Play'deki Brick Game, roguelike Orbs of The Power, VR ve hiper-casual oyunlar. Performans bütçesini ve bir yazılımın nasıl hissettirmesi gerektiğini oyunlardan öğrendim. Ardından bir market zincirinde perakende sistemleri üzerinde çalıştım; şimdi de full-stack web ve mobil ürünler geliştiriyorum.",
     },
     src: ['career', 'games'],
   },
   {
     id: 'contact',
-    keys: ['contact', 'email', 'mail', 'hire', 'hiring', 'reach', 'available', 'availability', 'cv', 'resume', 'linkedin', 'where', 'based', 'location', 'remote', 'iletişim', 'ulaş', 'ulaşırım', 'eposta', 'e-posta', 'adres', 'nerede', 'konum', 'özgeçmiş', 'müsait', 'uzaktan'],
-    q: { en: 'How to reach me', tr: 'Bana nasıl ulaşırsın?' },
+    q: { en: 'How can you reach me?', tr: 'Bana nasıl ulaşabilirsin?' },
     a: {
       en: "Email works best: kaanekimoz@gmail.com. I'm based in Sarıyer, Istanbul (GMT+3). For my CV or availability, just ask; LinkedIn and GitHub are linked below.",
       tr: 'En kolayı e-posta: kaanekimoz@gmail.com. Sarıyer, İstanbul’da yaşıyorum (GMT+3). Özgeçmiş ya da müsaitlik için doğrudan bana yazabilirsin; LinkedIn ve GitHub aşağıda.',

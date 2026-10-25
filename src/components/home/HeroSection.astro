@@ -19,13 +19,11 @@ const a = copy.ask;
 // Everything the client script needs, already in the page's language.
 const data = {
   qa: QA.map((x) => ({
-    keys: x.keys,
     q: pick(x.q, lang),
     a: pick(x.a, lang),
     stats: x.stats?.[lang] ?? null,
     src: x.src.map((s) => ({ id: s, label: pick(copy.sources[s], lang) })),
   })),
-  fallback: pick(a.fallback, lang),
 };
 const first = data.qa[0];
 
@@ -87,12 +85,6 @@ const stack = [
             {first.src.map((s, i) => <a class="src in" href={`#${s.id}`}><b>{i + 1}</b>{s.label}</a>)}
           </div>
         </div>
-        <form class="composer" data-composer autocomplete="off">
-          <input type="text" maxlength="120" placeholder={pick(a.placeholder, lang)} aria-label={pick(a.inputLabel, lang)} data-input />
-          <button class="send" type="submit" aria-label={pick(a.send, lang)} disabled data-send>
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 19V5M5 12l7-7 7 7"></path></svg>
-          </button>
-        </form>
       </div>
     </div>
     <figure class="photo" data-parallax>
@@ -467,52 +459,6 @@ const stack = [
     color: rgb(var(--accent-1));
     font: 600 0.62rem 'JetBrains Mono', ui-monospace, monospace;
   }
-  .composer {
-    margin: 8px 12px 12px;
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    padding: 6px 6px 6px 14px;
-    border-radius: 12px;
-    border: 1px solid rgb(var(--border));
-    background: rgb(var(--bg-base));
-    transition: border-color 0.2s, box-shadow 0.2s;
-  }
-  .composer:focus-within {
-    border-color: rgb(var(--accent-1));
-    box-shadow: 0 0 0 4px rgb(var(--accent-1) / 0.14);
-  }
-  .composer input {
-    flex: 1;
-    min-width: 0;
-    border: 0;
-    background: none;
-    outline: none;
-    font-size: 0.96rem;
-    padding: 8px 0;
-    color: rgb(var(--text-100));
-  }
-  .composer input::placeholder {
-    color: rgb(var(--text-300));
-  }
-  .send {
-    width: 36px;
-    height: 36px;
-    border-radius: 9px;
-    display: grid;
-    place-items: center;
-    color: #fff;
-    background: linear-gradient(135deg, rgb(var(--accent-1)), rgb(var(--accent-2)));
-    transition: transform 0.1s ease-out, opacity 0.2s;
-  }
-  .send:disabled {
-    opacity: 0.4;
-    cursor: default;
-  }
-  .send svg {
-    width: 16px;
-    height: 16px;
-  }
   .chips {
     display: flex;
     flex-wrap: wrap;
@@ -533,8 +479,7 @@ const stack = [
     color: rgb(var(--text-100));
     border-color: rgb(var(--accent-1));
   }
-  .chip:active,
-  .send:active {
+  .chip:active {
     transform: scale(0.96);
   }
   .chip[aria-pressed='true'] {
@@ -598,8 +543,8 @@ const stack = [
 </style>
 
 <script>
-  type QAItem = { keys: string[]; q: string; a: string; stats: string[] | null; src: { id: string; label: string }[] };
-  type Data = { qa: QAItem[]; fallback: string };
+  type QAItem = { q: string; a: string; stats: string[] | null; src: { id: string; label: string }[] };
+  type Data = { qa: QAItem[] };
 
   const reduce = matchMedia('(prefers-reduced-motion: reduce)');
   const esc = (s: string) => s.replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' })[c]!);
@@ -616,9 +561,6 @@ const stack = [
     const qEl = root.querySelector<HTMLElement>('[data-q]')!;
     const aEl = root.querySelector<HTMLElement>('[data-a]')!;
     const srcEl = root.querySelector<HTMLElement>('[data-sources]')!;
-    const form = root.querySelector<HTMLFormElement>('[data-composer]')!;
-    const input = root.querySelector<HTMLInputElement>('[data-input]')!;
-    const send = root.querySelector<HTMLButtonElement>('[data-send]')!;
     const chips = [...document.querySelectorAll<HTMLButtonElement>('[data-chips] .chip')];
     let streamId = 0;
 
@@ -644,42 +586,20 @@ const stack = [
       setTimeout(tick, 320);
     }
 
-    function ask(i: number, typed?: string) {
+    function ask(i: number) {
       chips.forEach((c) => c.setAttribute('aria-pressed', String(+c.dataset.qa! === i)));
       const x = data.qa[i];
-      qEl.textContent = typed || (x ? x.q : '');
+      qEl.textContent = x.q;
       const finish = () => {
-        aEl.innerHTML = x ? mailLink(x.a) + statsHTML(x) : mailLink(data.fallback);
-        srcEl.innerHTML = x ? sourcesHTML(x) : '';
+        aEl.innerHTML = mailLink(x.a) + statsHTML(x);
+        srcEl.innerHTML = sourcesHTML(x);
         srcEl.querySelectorAll('.src').forEach((s, k) => setTimeout(() => s.classList.add('in'), reduce.matches ? 0 : 90 * k));
       };
       if (reduce.matches) return finish();
-      stream(x ? x.a : data.fallback, finish);
-    }
-
-    // Whole-word (or word-prefix) matching, normalised in both locales.
-    const norm = (t: string) =>
-      t.toLocaleLowerCase('tr').replace(/[^a-z0-9çğıöşüâîû.#+ ]+/g, ' ') + ' ' + t.toLocaleLowerCase('en').replace(/[^a-z0-9.#+ ]+/g, ' ');
-    function match(v: string) {
-      const n = norm(v), words = n.split(/\s+/).filter(Boolean);
-      let best = -1, score = 0;
-      data.qa.forEach((x, i) => {
-        const s = x.keys.reduce((acc, k) => acc + (words.some((w) => w === k || (k.length > 3 && w.startsWith(k))) ? 1 : 0), 0);
-        if (s > score) { score = s; best = i; }
-      });
-      return best;
+      stream(x.a, finish);
     }
 
     chips.forEach((c) => c.addEventListener('click', () => ask(+c.dataset.qa!)));
-    input.addEventListener('input', () => (send.disabled = !input.value.trim()));
-    form.addEventListener('submit', (e) => {
-      e.preventDefault();
-      const v = input.value.trim();
-      if (!v) return;
-      input.value = '';
-      send.disabled = true;
-      ask(match(v), v);
-    });
   }
 
   document.addEventListener('astro:page-load', init);
