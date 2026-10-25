@@ -53,6 +53,7 @@ export const copy = {
         { en: 'Projects', tr: 'Projeler' },
         { en: 'End User', tr: 'Son kullanıcı' },
       ],
+      hint: { en: 'Tap an agent to open its tools', tr: 'Araçlarını açmak için bir ajana dokun' },
       // Labels that change with the language (keyed by node id); names of tools stay as they are.
       names: {
         local: { en: 'Local LLMs', tr: "Yerel LLM'ler" },
