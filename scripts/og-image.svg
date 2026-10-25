@@ -1,38 +1,45 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 630" width="1200" height="630">
+  <!-- Source for public/og-image.jpg. Render with the sharp command in README.md;
+       Sora + Geist + JetBrains Mono must be installed as system fonts for librsvg. -->
   <defs>
-    <pattern id="grid" width="40" height="40" patternUnits="userSpaceOnUse">
-      <path d="M 40 0 L 0 0 0 40" fill="none" stroke="#1f1f2e" stroke-width="1"/>
+    <pattern id="grid" width="48" height="48" patternUnits="userSpaceOnUse">
+      <path d="M 48 0 L 0 0 0 48" fill="none" stroke="#78a0ff" stroke-opacity="0.07" stroke-width="1"/>
     </pattern>
-    <radialGradient id="glow" cx="85%" cy="85%" r="55%">
-      <stop offset="0%" stop-color="#ff4dff" stop-opacity="0.18"/>
-      <stop offset="100%" stop-color="#ff4dff" stop-opacity="0"/>
+    <radialGradient id="glow" cx="82%" cy="30%" r="55%">
+      <stop offset="0%" stop-color="#3d7bff" stop-opacity="0.22"/>
+      <stop offset="100%" stop-color="#3d7bff" stop-opacity="0"/>
     </radialGradient>
-    <radialGradient id="glow2" cx="15%" cy="15%" r="45%">
-      <stop offset="0%" stop-color="#00d9ff" stop-opacity="0.12"/>
-      <stop offset="100%" stop-color="#00d9ff" stop-opacity="0"/>
-    </radialGradient>
+    <linearGradient id="em" x1="0" x2="1" y1="0" y2="0">
+      <stop offset="0%" stop-color="#3d7bff"/>
+      <stop offset="100%" stop-color="#22d3ee"/>
+    </linearGradient>
+    <linearGradient id="bar" x1="0" x2="0" y1="0" y2="1">
+      <stop offset="0%" stop-color="#3d7bff" stop-opacity="0.55"/>
+      <stop offset="100%" stop-color="#3d7bff" stop-opacity="0.05"/>
+    </linearGradient>
   </defs>
 
-  <rect width="1200" height="630" fill="#0a0a14"/>
+  <rect width="1200" height="630" fill="#050912"/>
   <rect width="1200" height="630" fill="url(#grid)"/>
   <rect width="1200" height="630" fill="url(#glow)"/>
-  <rect width="1200" height="630" fill="url(#glow2)"/>
 
-  <g fill="none" stroke-width="2.5" opacity="0.55">
-    <polygon points="960,115 1040,255 880,255" stroke="#00d9ff"/>
-    <circle cx="1070" cy="450" r="62" stroke="#ff4dff"/>
-    <polygon points="865,395 920,395 947,442 920,490 865,490 838,442" stroke="#ffd60a"/>
+  <g stroke="#7d8bab" stroke-opacity="0.35" stroke-width="1.5"><line x1="860" y1="140" x2="985" y2="105"/><line x1="985" y1="105" x2="1100" y2="170"/><line x1="860" y1="140" x2="930" y2="250"/><line x1="930" y1="250" x2="1060" y2="285"/><line x1="1100" y1="170" x2="1060" y2="285"/><line x1="985" y1="105" x2="1140" y2="95"/><line x1="930" y1="250" x2="880" y2="360"/><line x1="1060" y1="285" x2="1010" y2="380"/><line x1="880" y1="360" x2="1010" y2="380"/></g>
+  <g><circle cx="860" cy="140" r="4.5" fill="#3d7bff" opacity="0.85"/><circle cx="985" cy="105" r="4.5" fill="#3d7bff" opacity="0.85"/><circle cx="1100" cy="170" r="4.5" fill="#3d7bff" opacity="0.85"/><circle cx="930" cy="250" r="7" fill="#22d3ee" opacity="1"/><circle cx="1060" cy="285" r="4.5" fill="#3d7bff" opacity="0.85"/><circle cx="1140" cy="95" r="4.5" fill="#3d7bff" opacity="0.85"/><circle cx="880" cy="360" r="4.5" fill="#3d7bff" opacity="0.85"/><circle cx="1010" cy="380" r="4.5" fill="#3d7bff" opacity="0.85"/></g>
+  <g><rect x="6" y="588" width="3" height="42" rx="1.5" fill="url(#bar)"/><rect x="18" y="580" width="3" height="50" rx="1.5" fill="url(#bar)"/><rect x="30" y="574" width="3" height="56" rx="1.5" fill="url(#bar)"/><rect x="42" y="569" width="3" height="61" rx="1.5" fill="url(#bar)"/><rect x="54" y="568" width="3" height="62" rx="1.5" fill="url(#bar)"/><rect x="66" y="570" width="3" height="60" rx="1.5" fill="url(#bar)"/><rect x="78" y="574" width="3" height="56" rx="1.5" fill="url(#bar)"/><rect x="90" y="579" width="3" height="51" rx="1.5" fill="url(#bar)"/><rect x="102" y="583" width="3" height="47" rx="1.5" fill="url(#bar)"/><rect x="114" y="586" width="3" height="44" rx="1.5" fill="url(#bar)"/><rect x="126" y="587" width="3" height="43" rx="1.5" fill="url(#bar)"/><rect x="138" y="586" width="3" height="44" rx="1.5" fill="url(#bar)"/><rect x="150" y="584" width="3" height="46" rx="1.5" fill="url(#bar)"/><rect x="162" y="582" width="3" height="48" rx="1.5" fill="url(#bar)"/><rect x="174" y="580" width="3" height="50" rx="1.5" fill="url(#bar)"/><rect x="186" y="581" width="3" height="49" rx="1.5" fill="url(#bar)"/><rect x="198" y="583" width="3" height="47" rx="1.5" fill="url(#bar)"/><rect x="210" y="588" width="3" height="42" rx="1.5" fill="url(#bar)"/><rect x="222" y="594" width="3" height="36" rx="1.5" fill="url(#bar)"/><rect x="234" y="601" width="3" height="29" rx="1.5" fill="url(#bar)"/><rect x="246" y="607" width="3" height="23" rx="1.5" fill="url(#bar)"/><rect x="258" y="610" width="3" height="20" rx="1.5" fill="url(#bar)"/><rect x="270" y="612" width="3" height="18" rx="1.5" fill="url(#bar)"/><rect x="282" y="611" width="3" height="19" rx="1.5" fill="url(#bar)"/><rect x="294" y="608" width="3" height="22" rx="1.5" fill="url(#bar)"/><rect x="306" y="604" width="3" height="26" rx="1.5" fill="url(#bar)"/><rect x="318" y="600" width="3" height="30" rx="1.5" fill="url(#bar)"/><rect x="330" y="596" width="3" height="34" rx="1.5" fill="url(#bar)"/><rect x="342" y="594" width="3" height="36" rx="1.5" fill="url(#bar)"/><rect x="354" y="592" width="3" height="38" rx="1.5" fill="url(#bar)"/><rect x="366" y="591" width="3" height="39" rx="1.5" fill="url(#bar)"/><rect x="378" y="591" width="3" height="39" rx="1.5" fill="url(#bar)"/><rect x="390" y="591" width="3" height="39" rx="1.5" fill="url(#bar)"/><rect x="402" y="590" width="3" height="40" rx="1.5" fill="url(#bar)"/><rect x="414" y="589" width="3" height="41" rx="1.5" fill="url(#bar)"/><rect x="426" y="588" width="3" height="42" rx="1.5" fill="url(#bar)"/><rect x="438" y="586" width="3" height="44" rx="1.5" fill="url(#bar)"/><rect x="450" y="585" width="3" height="45" rx="1.5" fill="url(#bar)"/><rect x="462" y="584" width="3" height="46" rx="1.5" fill="url(#bar)"/><rect x="474" y="584" width="3" height="46" rx="1.5" fill="url(#bar)"/><rect x="486" y="585" width="3" height="45" rx="1.5" fill="url(#bar)"/><rect x="498" y="587" width="3" height="43" rx="1.5" fill="url(#bar)"/><rect x="510" y="590" width="3" height="40" rx="1.5" fill="url(#bar)"/><rect x="522" y="593" width="3" height="37" rx="1.5" fill="url(#bar)"/><rect x="534" y="596" width="3" height="34" rx="1.5" fill="url(#bar)"/><rect x="546" y="599" width="3" height="31" rx="1.5" fill="url(#bar)"/><rect x="558" y="602" width="3" height="28" rx="1.5" fill="url(#bar)"/><rect x="570" y="605" width="3" height="25" rx="1.5" fill="url(#bar)"/><rect x="582" y="607" width="3" height="23" rx="1.5" fill="url(#bar)"/><rect x="594" y="609" width="3" height="21" rx="1.5" fill="url(#bar)"/><rect x="606" y="610" width="3" height="20" rx="1.5" fill="url(#bar)"/><rect x="618" y="611" width="3" height="19" rx="1.5" fill="url(#bar)"/><rect x="630" y="612" width="3" height="18" rx="1.5" fill="url(#bar)"/><rect x="642" y="612" width="3" height="18" rx="1.5" fill="url(#bar)"/><rect x="654" y="611" width="3" height="19" rx="1.5" fill="url(#bar)"/><rect x="666" y="610" width="3" height="20" rx="1.5" fill="url(#bar)"/><rect x="678" y="608" width="3" height="22" rx="1.5" fill="url(#bar)"/><rect x="690" y="606" width="3" height="24" rx="1.5" fill="url(#bar)"/><rect x="702" y="604" width="3" height="26" rx="1.5" fill="url(#bar)"/><rect x="714" y="601" width="3" height="29" rx="1.5" fill="url(#bar)"/><rect x="726" y="599" width="3" height="31" rx="1.5" fill="url(#bar)"/><rect x="738" y="596" width="3" height="34" rx="1.5" fill="url(#bar)"/><rect x="750" y="592" width="3" height="38" rx="1.5" fill="url(#bar)"/><rect x="762" y="589" width="3" height="41" rx="1.5" fill="url(#bar)"/><rect x="774" y="586" width="3" height="44" rx="1.5" fill="url(#bar)"/><rect x="786" y="583" width="3" height="47" rx="1.5" fill="url(#bar)"/><rect x="798" y="581" width="3" height="49" rx="1.5" fill="url(#bar)"/><rect x="810" y="581" width="3" height="49" rx="1.5" fill="url(#bar)"/><rect x="822" y="581" width="3" height="49" rx="1.5" fill="url(#bar)"/><rect x="834" y="583" width="3" height="47" rx="1.5" fill="url(#bar)"/><rect x="846" y="586" width="3" height="44" rx="1.5" fill="url(#bar)"/><rect x="858" y="589" width="3" height="41" rx="1.5" fill="url(#bar)"/><rect x="870" y="592" width="3" height="38" rx="1.5" fill="url(#bar)"/><rect x="882" y="594" width="3" height="36" rx="1.5" fill="url(#bar)"/><rect x="894" y="595" width="3" height="35" rx="1.5" fill="url(#bar)"/><rect x="906" y="595" width="3" height="35" rx="1.5" fill="url(#bar)"/><rect x="918" y="594" width="3" height="36" rx="1.5" fill="url(#bar)"/><rect x="930" y="594" width="3" height="36" rx="1.5" fill="url(#bar)"/><rect x="942" y="594" width="3" height="36" rx="1.5" fill="url(#bar)"/><rect x="954" y="595" width="3" height="35" rx="1.5" fill="url(#bar)"/><rect x="966" y="597" width="3" height="33" rx="1.5" fill="url(#bar)"/><rect x="978" y="601" width="3" height="29" rx="1.5" fill="url(#bar)"/><rect x="990" y="605" width="3" height="25" rx="1.5" fill="url(#bar)"/><rect x="1002" y="609" width="3" height="21" rx="1.5" fill="url(#bar)"/><rect x="1014" y="610" width="3" height="20" rx="1.5" fill="url(#bar)"/><rect x="1026" y="610" width="3" height="20" rx="1.5" fill="url(#bar)"/><rect x="1038" y="607" width="3" height="23" rx="1.5" fill="url(#bar)"/><rect x="1050" y="601" width="3" height="29" rx="1.5" fill="url(#bar)"/><rect x="1062" y="594" width="3" height="36" rx="1.5" fill="url(#bar)"/><rect x="1074" y="586" width="3" height="44" rx="1.5" fill="url(#bar)"/><rect x="1086" y="579" width="3" height="51" rx="1.5" fill="url(#bar)"/><rect x="1098" y="575" width="3" height="55" rx="1.5" fill="url(#bar)"/><rect x="1110" y="573" width="3" height="57" rx="1.5" fill="url(#bar)"/><rect x="1122" y="574" width="3" height="56" rx="1.5" fill="url(#bar)"/><rect x="1134" y="577" width="3" height="53" rx="1.5" fill="url(#bar)"/><rect x="1146" y="581" width="3" height="49" rx="1.5" fill="url(#bar)"/><rect x="1158" y="584" width="3" height="46" rx="1.5" fill="url(#bar)"/><rect x="1170" y="586" width="3" height="44" rx="1.5" fill="url(#bar)"/><rect x="1182" y="586" width="3" height="44" rx="1.5" fill="url(#bar)"/><rect x="1194" y="584" width="3" height="46" rx="1.5" fill="url(#bar)"/></g>
+
+  <g transform="translate(80 74) scale(1.6)">
+    <path d="M6 9 14 5.5M6 11l8 3.5" stroke="#7d8bab" stroke-width="1.3" fill="none"/>
+    <circle cx="4" cy="10" r="2.4" fill="#22d3ee"/>
+    <circle cx="16" cy="4.5" r="2.4" fill="#3d7bff"/>
+    <circle cx="16" cy="15.5" r="2.4" fill="#3d7bff"/>
   </g>
+  <text x="122" y="100" font-family="'JetBrains Mono', monospace" font-size="26" font-weight="500" fill="#e9efff">kaanusta<tspan fill="#3d7bff">.dev</tspan></text>
 
-  <rect x="80" y="148" width="56" height="4" fill="#00d9ff"/>
-  <text x="152" y="158" font-family="'JetBrains Mono', Menlo, Consolas, monospace" font-size="22" font-weight="500" fill="#6c6c80" letter-spacing="6">/// PORTFOLIO · BLOG</text>
-
-  <text x="80" y="300" font-family="'Inter', 'Helvetica Neue', Helvetica, Arial, sans-serif" font-size="140" font-weight="700" fill="#f0f0f5" letter-spacing="-3">KAAN USTA</text>
-
-  <text x="80" y="370" font-family="'JetBrains Mono', Menlo, monospace" font-size="32" font-weight="500" fill="#ff4dff" letter-spacing="8">GAME DEVELOPER</text>
-
-  <text x="80" y="450" font-family="'Inter', 'Helvetica Neue', Helvetica, Arial, sans-serif" font-size="26" fill="#b8b8c8">Building mobile games since 2020.</text>
-  <text x="80" y="488" font-family="'Inter', 'Helvetica Neue', Helvetica, Arial, sans-serif" font-size="26" fill="#b8b8c8">Unity · C# · roguelikes · hyper-casual.</text>
-
-  <text x="80" y="570" font-family="'JetBrains Mono', Menlo, monospace" font-size="30" font-weight="500" fill="#f0f0f5">kaanusta<tspan fill="#00d9ff">.dev</tspan></text>
+  <text x="80" y="222" font-family="'JetBrains Mono', monospace" font-size="20" font-weight="500" fill="#95a3c2" letter-spacing="4">KAAN USTA · ISTANBUL</text>
+  <text font-family="'Sora Medium', Sora, sans-serif" font-size="74" letter-spacing="-3" fill="#e9efff">
+    <tspan x="76" y="318">Full-stack engineer</tspan>
+    <tspan x="76" y="402">shipping products</tspan>
+    <tspan x="76" y="486" fill="url(#em)">end to end</tspan><tspan fill="#e9efff">.</tspan>
+  </text>
+  <text x="80" y="546" font-family="Geist, sans-serif" font-size="24" fill="#95a3c2">NestJS · Next.js · React Native · PostgreSQL</text>
 </svg>

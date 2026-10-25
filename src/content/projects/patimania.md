@@ -3,9 +3,9 @@ title: "Patimania"
 platform: Web
 genres: ["Marketplace", "SaaS", "Pet-tech"]
 year: 2026
-duration: "3 months (ongoing)"
+duration: "Jun 2026 — ongoing"
 role: "Solo engineer"
-description: "A multi-sided marketplace for pet-hotel, grooming, and pet-taxi services in Türkiye. Payments sit in escrow via iyzico and are only released when the service is confirmed complete. Web + iOS + Android — solo build."
+description: "A multi-sided marketplace for pet-hotel, grooming, and pet-taxi services in Türkiye. Payments are held in escrow via iyzico until the service is confirmed complete. Web + iOS + Android — solo build, in soft launch."
 techStack:
   - "Next.js 15"
   - "React 19"
@@ -21,6 +21,7 @@ techStack:
 links:
   website: "https://patimania.com"
 featured: true
+category: product
 published: false
 coverImage: "../../assets/projects/patimania/cover.jpg"
 gallery:
@@ -35,9 +36,11 @@ gallery:
 order: 0
 ---
 
-Patimania is a multi-sided marketplace for pet-hotel, grooming, and pet-taxi services in Türkiye. Payments sit in escrow via iyzico and are only released once the service is confirmed complete. I built the whole thing solo over three months — data model to devops, backend to mobile app — starting in July 2026. Web is live at patimania.com. Android is in Google Play closed testing; iOS is under App Store review.
+Patimania is a multi-sided marketplace for pet-hotel, grooming, and pet-taxi services in Türkiye. Payments are held in escrow via iyzico and only released once the service is confirmed complete. I'm building the whole thing solo — data model to devops, backend to mobile app — with the first commit on 2 July 2026.
 
-Three months of work in numbers: ~1,500 commits, ~145k lines of TypeScript across four codebases, 52 database tables, 84 migrations, 37 end-to-end test suites (~1,090 checks) running against real Postgres + MinIO, and 129 distinct screens across web + iOS + Android.
+It's in soft launch at patimania.com: the storefront, search and business onboarding are open. Bookings and payments switch on once the company's live payment account is ready; no code change needed.
+
+In numbers (counted from the repository in October 2026): 2,409 commits, 32 NestJS domain modules, 68 Prisma models, 132 migrations, 74 end-to-end test files running against real Postgres + MinIO, and 7 GitHub Actions workflows.
 
 ## Pieces I'm proud of
 

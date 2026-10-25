@@ -1,6 +1,6 @@
 ---
 import BaseLayout from '@layouts/BaseLayout.astro';
-import SectionHeading from '@components/SectionHeading.astro';
+import PageHeader from '@components/PageHeader.astro';
 import ProjectCard from '@components/ProjectCard.astro';
 import ProjectFilter from '@components/ProjectFilter.astro';
 import { getProjects } from '@lib/content';
@@ -13,41 +13,60 @@ interface Props {
 const { lang } = Astro.props;
 
 const projects = await getProjects(lang);
-
-// Only surface filter pills for platforms that actually have projects, and
-// keep a natural ordering so the row reads Mobile → PC → VR → Web.
-const PLATFORM_ORDER = ['Mobile', 'PC', 'VR', 'Web'] as const;
-const present = new Set(projects.map((p) => p.data.platform));
-const platforms = PLATFORM_ORDER.filter((p) => present.has(p));
-const hasPublished = projects.some((p) => p.data.published);
+const counts = {
+  all: projects.length,
+  product: projects.filter((p) => p.data.category === 'product').length,
+  game: projects.filter((p) => p.data.category === 'game').length,
+};
 ---
 
-<BaseLayout
-  lang={lang}
-  title={t('meta.projectsTitle', lang)}
-  description={t('meta.projectsDescription', lang)}
->
-  <div class="max-w-6xl mx-auto px-6 py-16">
-    <header class="mb-12">
-      <SectionHeading title={t('projectsIndex.title', lang)} as="h1" />
-      <p class="text-text-200 max-w-xl">
-        {t('projectsIndex.subtitle', lang)}
-      </p>
-    </header>
+<BaseLayout lang={lang} title={t('meta.projectsTitle', lang)} description={t('meta.projectsDescription', lang)}>
+  <div class="wrap page">
+    <PageHeader eyebrow={t('projectsIndex.eyebrow', lang)} title={t('projectsIndex.title', lang)} subtitle={t('projectsIndex.subtitle', lang)} />
 
-    <ProjectFilter platforms={platforms} showPublished={hasPublished} lang={lang} />
+    <ProjectFilter counts={counts} lang={lang} />
 
-    <div class="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
+    <div class="grid">
       {
-        projects.map((project) => (
-          <div
-            data-project-platform={project.data.platform}
-            data-project-published={project.data.published ? 'true' : undefined}
-          >
-            <ProjectCard project={project} lang={lang} />
-          </div>
-        ))
+        projects.map((project) => {
+          const wide = project.data.category === 'product';
+          return (
+            <div class:list={{ wide }} data-project-category={project.data.category}>
+              <ProjectCard project={project} lang={lang} wide={wide} />
+            </div>
+          );
+        })
       }
     </div>
   </div>
 </BaseLayout>
+
+<style>
+  .page {
+    padding-top: clamp(48px, 8vw, 88px);
+  }
+  .grid {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 16px;
+  }
+  .wide {
+    grid-column: span 3;
+  }
+  @media (max-width: 1023px) {
+    .grid {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+    .wide {
+      grid-column: span 2;
+    }
+  }
+  @media (max-width: 639px) {
+    .grid {
+      grid-template-columns: 1fr;
+    }
+    .wide {
+      grid-column: auto;
+    }
+  }
+</style>

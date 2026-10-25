@@ -24,7 +24,7 @@ const otherHref = alternateUrl(currentPath, lang);
 ---
 
 <div
-  class="lang-toggle inline-flex items-center border border-border h-7 overflow-hidden font-mono text-[10px] uppercase tracking-widest"
+  class="lang-toggle"
   role="group"
   aria-label={t('toggle.language', lang)}
 >
@@ -47,18 +47,31 @@ const otherHref = alternateUrl(currentPath, lang);
 </div>
 
 <style>
-  .lang-pill {
-    @apply inline-flex items-center justify-center px-2 h-full text-text-300 transition-colors;
-    min-width: 1.75rem;
+  .lang-toggle {
+    display: inline-flex;
+    padding: 3px;
+    border-radius: 10px;
+    background: rgb(var(--bg-elev-2));
+    font: 500 0.72rem/1 'JetBrains Mono', ui-monospace, monospace;
   }
-  .lang-pill + .lang-pill {
-    @apply border-l border-border;
+  .lang-pill {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 34px;
+    height: 28px;
+    padding: 0 8px;
+    border-radius: 7px;
+    color: rgb(var(--text-300));
+    transition: color 0.2s, background 0.2s;
   }
   .lang-pill:hover {
-    @apply text-text-100;
+    color: rgb(var(--text-100));
   }
   .lang-pill.is-active {
-    @apply text-accent-1 bg-bg-elev;
+    color: rgb(var(--text-100));
+    background: rgb(var(--bg-elev));
+    box-shadow: 0 1px 2px rgb(0 0 0 / 0.12);
   }
 </style>
 

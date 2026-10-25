@@ -14,9 +14,10 @@ export default {
           'elev-2': 'rgb(var(--bg-elev-2) / <alpha-value>)',
         },
         accent: {
-          1: 'rgb(var(--accent-1) / <alpha-value>)', // cyan
-          2: 'rgb(var(--accent-2) / <alpha-value>)', // magenta
-          3: 'rgb(var(--accent-3) / <alpha-value>)', // amber
+          1: 'rgb(var(--accent-1) / <alpha-value>)', // blue (brand)
+          2: 'rgb(var(--accent-2) / <alpha-value>)', // cyan (data)
+          3: 'rgb(var(--accent-3) / <alpha-value>)', // indigo
+          strong: 'rgb(var(--accent-strong) / <alpha-value>)', // blue behind white text
         },
         text: {
           100: 'rgb(var(--text-100) / <alpha-value>)', // headings
@@ -29,15 +30,18 @@ export default {
       },
       fontFamily: {
         mono: ['"JetBrains Mono"', 'ui-monospace', 'SFMono-Regular', 'Menlo', 'monospace'],
-        sans: ['Inter', 'ui-sans-serif', 'system-ui', 'sans-serif'],
+        sans: ['Geist', 'ui-sans-serif', 'system-ui', '-apple-system', 'sans-serif'],
+        display: ['Sora', 'ui-sans-serif', 'system-ui', 'sans-serif'],
       },
       letterSpacing: {
-        widest: '0.2em',
+        widest: '0.14em',
       },
       boxShadow: {
-        'glow-cyan': '0 0 20px rgba(0, 217, 255, 0.4)',
-        'glow-magenta': '0 0 20px rgba(255, 77, 255, 0.4)',
-        'glow-amber': '0 0 20px rgba(255, 214, 10, 0.4)',
+        glow: 'var(--glow)',
+        card: 'var(--shadow)',
+        'glow-cyan': '0 0 20px rgb(var(--accent-2) / 0.35)',
+        'glow-magenta': '0 0 20px rgb(var(--accent-1) / 0.35)',
+        'glow-amber': '0 0 20px rgb(var(--accent-3) / 0.35)',
       },
     },
   },

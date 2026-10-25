@@ -9,9 +9,9 @@
 
 export const SITE = {
   name: 'kaanusta.dev',
-  title: 'Kaan Usta — Game Developer',
+  title: 'Kaan Usta — Full-Stack Engineer',
   description:
-    'Building mobile games since 2020. Specialized in Unity, focused on lightweight, addictive experiences.',
+    'Full-stack engineer in Istanbul. I build and ship complete products: backend, web, mobile and the pipeline that deploys them.',
   url: 'https://kaanusta.dev',
   author: 'Kaan Usta',
   locale: 'en-US',
@@ -51,15 +51,4 @@ export const CHAT_EFFORTS = [
   { id: 'low', label: 'Düşük' },
   { id: 'medium', label: 'Orta' },
   { id: 'high', label: 'Yüksek' },
-] as const;
-
-// StatsCard rows. Labels render from i18n.ts (`stats.class`, etc.) so they
-// translate per locale; values are short proper-noun strings that stay
-// identical across languages ("Unity", "Mobile", "Türkiye", "6+ years").
-export const STATS = [
-  { key: 'class', value: 'Game Dev' },
-  { key: 'xp', value: '6+ years' },
-  { key: 'focus', value: 'Mobile' },
-  { key: 'engine', value: 'Unity' },
-  { key: 'location', value: 'Türkiye' },
 ] as const;

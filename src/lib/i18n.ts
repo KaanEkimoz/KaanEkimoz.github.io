@@ -19,21 +19,10 @@ export const BCP47: Record<Lang, string> = {
 };
 
 type Dict = {
-  nav: { projects: string; blog: string; home: string };
-  hero: {
-    eyebrow: string;
-    role: string;
-    description: string;
-    cta: { viewProjects: string; readBlog: string };
-    scroll: string;
-  };
-  heroCanvas: { score: string; best: string; timeIsUp: string; retry: string };
-  about: { title: string; p1: string; p2: string; p3: string };
-  featured: { title: string; seeAll: string };
-  latest: { title: string; allPosts: string; empty: string };
-  contact: { title: string };
-  blogIndex: { title: string; subtitle: string; empty: string; back: string; updated: string };
-  projectsIndex: { title: string; subtitle: string };
+  nav: { projects: string; blog: string; home: string; contact: string; skip: string; main: string };
+  footer: { links: string; location: string };
+  blogIndex: { eyebrow: string; title: string; subtitle: string; empty: string; back: string; updated: string };
+  projectsIndex: { eyebrow: string; title: string; subtitle: string };
   projectDetail: {
     back: string;
     role: string;
@@ -42,14 +31,13 @@ type Dict = {
     links: string;
     screenshots: string;
     visitSite: string;
+    trailer: string;
   };
-  projectFilter: { all: string; published: string; aria: string };
+  projectFilter: { all: string; products: string; games: string; aria: string };
   projectCard: { view: string };
-  blogCard: { read: string };
-  notFound: { errorTag: string; gameOver: string; body: string; restart: string; description: string };
+  blogCard: { read: string; watch: string };
+  notFound: { errorTag: string; title: string; body: string; restart: string; description: string };
   toggle: { theme: string; language: string };
-  stats: { class: string; xp: string; focus: string; engine: string; location: string };
-  social: { newTab: string };
   meta: {
     siteTitle: string;
     siteDescription: string;
@@ -61,155 +49,98 @@ type Dict = {
 };
 
 const en: Dict = {
-  nav: { projects: 'Projects', blog: 'Blog', home: 'home' },
-  hero: {
-    eyebrow: '/// PORTFOLIO · BLOG',
-    role: 'GAME DEVELOPER',
-    description:
-      'Building mobile games since 2020. Specialized in Unity, focused on lightweight, addictive experiences.',
-    cta: { viewProjects: '[ View Projects ]', readBlog: '[ Read Blog ]' },
-    scroll: 'SCROLL',
-  },
-  heroCanvas: { score: 'SCORE', best: 'BEST', timeIsUp: 'TIME IS UP', retry: 'RETRY' },
-  about: {
-    title: 'About',
-    p1: "I've been part of the software and game development world since 2020. My journey started with a degree in Digital Game Design — and what began as curiosity about programming and game engines became my primary focus.",
-    p2: `I've worked on projects spanning mobile, PC, and VR, but I've chosen to specialize in <span class="text-text-100">mobile game development</span>. From hyper-casual prototypes built in two weeks to roguelike systems developed over five months, I enjoy the full spectrum: gameplay programming, system design, and the small details that make a game feel alive.`,
-    p3: `Currently focused on <span class="text-accent-1">Unity</span> and <span class="text-accent-1">C#</span>, with side interests in custom engine work, VR physics, and ECS architecture.`,
-  },
-  featured: { title: 'Featured Projects', seeAll: '[ See All Projects → ]' },
-  latest: { title: 'Latest Posts', allPosts: '[ All Posts → ]', empty: 'Coming soon.' },
-  contact: { title: 'Contact' },
+  nav: { projects: 'Projects', blog: 'Blog', home: 'home', contact: 'Contact', skip: 'Skip to content', main: 'Main' },
+  footer: { links: 'Elsewhere', location: 'Sarıyer, İstanbul · GMT+3' },
   blogIndex: {
+    eyebrow: 'Writing',
     title: 'Blog',
-    subtitle: 'Devlogs, post-mortems, and notes on the craft.',
+    subtitle: 'Devlogs, build notes and things I learned shipping software.',
     empty: 'No posts yet. Coming soon.',
-    back: '← Back to Blog',
+    back: '← Blog',
     updated: 'updated',
   },
   projectsIndex: {
+    eyebrow: 'Work',
     title: 'Projects',
-    subtitle:
-      'A selection of games and prototypes — mobile, PC, and VR — spanning hyper-casual sprints, jam builds, and multi-month roguelike systems.',
+    subtitle: 'Products I build end to end, and the games where I learned how.',
   },
   projectDetail: {
-    back: '← Back to Projects',
+    back: '← Projects',
     role: 'Role',
     timeline: 'Timeline',
-    techStack: 'Tech Stack',
+    techStack: 'Stack',
     links: 'Links',
     screenshots: 'Screenshots',
-    visitSite: '[ Visit Site ]',
+    visitSite: 'Visit site ↗',
+    trailer: 'Trailer ↗',
   },
-  projectFilter: { all: 'All', published: 'Published', aria: 'Filter projects' },
-  projectCard: { view: 'View →' },
-  blogCard: { read: 'Read →' },
+  projectFilter: { all: 'All', products: 'Products & Web', games: 'Games', aria: 'Filter projects' },
+  projectCard: { view: 'Details →' },
+  blogCard: { read: 'Read →', watch: 'Watch →' },
   notFound: {
-    errorTag: 'ERROR · 404',
-    gameOver: 'GAME OVER',
-    body: "The page you're looking for doesn't exist — maybe a broken link, maybe a page that never shipped.",
-    restart: '[ RESTART ]',
-    description: 'Page not found. Restart from the home screen.',
+    errorTag: 'Error · 404',
+    title: 'No rows returned.',
+    body: "The page you're looking for doesn't exist. Maybe a broken link, maybe a page that never shipped.",
+    restart: 'Back to home',
+    description: 'Page not found.',
   },
   toggle: { theme: 'Toggle theme', language: 'Toggle language' },
-  stats: {
-    class: 'CLASS',
-    xp: 'XP',
-    focus: 'FOCUS',
-    engine: 'ENGINE',
-    location: 'LOCATION',
-  },
-  social: { newTab: 'opens in new tab' },
   meta: {
-    siteTitle: 'Kaan Usta — Game Developer',
+    siteTitle: 'Kaan Usta — Full-Stack Engineer',
     siteDescription:
-      'Building mobile games since 2020. Specialized in Unity, focused on lightweight, addictive experiences.',
+      'Full-stack engineer in Istanbul. I build and ship complete products: NestJS and PostgreSQL backends, Next.js web apps, React Native mobile apps and the pipelines that deploy them.',
     blogTitle: 'Blog',
-    blogDescription:
-      'Devlogs, post-mortems, and notes on game development from Kaan Usta.',
+    blogDescription: 'Devlogs, build notes and things Kaan Usta learned shipping software.',
     projectsTitle: 'Projects',
-    projectsDescription:
-      'Games and prototypes by Kaan Usta — mobile, PC, and VR.',
+    projectsDescription: 'Products and games by Kaan Usta: Patimania (web, iOS, Android) and six years of Unity games.',
   },
 };
 
 const tr: Dict = {
-  nav: { projects: 'Projeler', blog: 'Blog', home: 'ana sayfa' },
-  hero: {
-    eyebrow: '/// PORTFOLYO · BLOG',
-    role: 'OYUN GELİŞTİRİCİSİ',
-    description:
-      '2020’den beri mobil oyunlar çıkarıyor. Unity üzerine uzmanlaşmış; hafif ve kolay bağımlılık yapan deneyimlere odaklanıyor.',
-    cta: { viewProjects: '[ Projeleri Gör ]', readBlog: '[ Blogu Oku ]' },
-    scroll: 'KAYDIR',
-  },
-  heroCanvas: {
-    score: 'SKOR',
-    best: 'EN İYİ',
-    timeIsUp: 'SÜRE DOLDU',
-    retry: 'TEKRAR DENE',
-  },
-  about: {
-    title: 'Hakkında',
-    p1: '2020’den bu yana yazılım ve oyun geliştirme dünyasının içindeyim. Yolculuğum üniversitede Dijital Oyun Tasarımı okuyarak başladı — programlamaya ve oyun motorlarına duyduğum merak, zamanla asıl odağım haline geldi.',
-    p2: `Mobil, PC ve VR’a uzanan projelerde çalıştım; ama uzmanlığımı <span class="text-text-100">mobil oyun geliştirme</span> tarafında derinleştirmeyi tercih ettim. İki haftada yapılan hiper-casual prototiplerden beş ay boyunca geliştirdiğim roguelike sistemlere kadar bu işin tüm yelpazesini seviyorum: oynanış programlaması, sistem tasarımı ve bir oyunu yaşatan o küçük ayrıntılar.`,
-    p3: `Şu sıralar <span class="text-accent-1">Unity</span> ve <span class="text-accent-1">C#</span> üzerine yoğunlaşıyorum. Yan tarafta custom engine geliştirme, VR fizik ve ECS mimarisiyle ilgileniyorum.`,
-  },
-  featured: { title: 'Öne Çıkan Projeler', seeAll: '[ Tüm Projeler → ]' },
-  latest: { title: 'Son Yazılar', allPosts: '[ Tüm Yazılar → ]', empty: 'Yakında.' },
-  contact: { title: 'İletişim' },
+  nav: { projects: 'Projeler', blog: 'Blog', home: 'ana sayfa', contact: 'İletişim', skip: 'İçeriğe geç', main: 'Ana menü' },
+  footer: { links: 'Diğer hesaplar', location: 'Sarıyer, İstanbul · GMT+3' },
   blogIndex: {
+    eyebrow: 'Yazılar',
     title: 'Blog',
-    subtitle: 'Geliştirme günlükleri, post-mortem’ler ve zanaata dair notlar.',
+    subtitle: 'Geliştirme günlükleri, yapım notları ve yazılım yayımlarken öğrendiklerim.',
     empty: 'Henüz yazı yok. Yakında.',
-    back: '← Bloga Dön',
+    back: '← Blog',
     updated: 'güncellendi',
   },
   projectsIndex: {
+    eyebrow: 'İşler',
     title: 'Projeler',
-    subtitle:
-      'Mobil, PC ve VR’dan bir oyun ve prototip seçkisi — iki haftalık hiper-casual sprintlerden game jam yapımlarına, aylarca süren roguelike sistemlere kadar uzanıyor.',
+    subtitle: 'Uçtan uca kurduğum ürünler ve bu işi öğrendiğim oyunlar.',
   },
   projectDetail: {
-    back: '← Projelere Dön',
+    back: '← Projeler',
     role: 'Rol',
-    timeline: 'Zaman Çizelgesi',
+    timeline: 'Süre',
     techStack: 'Teknoloji',
     links: 'Bağlantılar',
-    screenshots: 'Ekran Görüntüleri',
-    visitSite: '[ Siteyi Ziyaret Et ]',
+    screenshots: 'Ekran görüntüleri',
+    visitSite: 'Siteyi aç ↗',
+    trailer: 'Fragman ↗',
   },
-  projectFilter: { all: 'Tümü', published: 'Yayında', aria: 'Projeleri filtrele' },
-  projectCard: { view: 'Aç →' },
-  blogCard: { read: 'Oku →' },
+  projectFilter: { all: 'Tümü', products: 'Ürün ve web', games: 'Oyunlar', aria: 'Projeleri filtrele' },
+  projectCard: { view: 'Detaylar →' },
+  blogCard: { read: 'Oku →', watch: 'İzle →' },
   notFound: {
-    errorTag: 'HATA · 404',
-    // "GAME OVER" stays as proper-noun gaming reference — Turkish gamers
-    // recognize it directly and the iconography is the point.
-    gameOver: 'GAME OVER',
-    body: 'Aradığın sayfa burada yok — kırık bir link ya da hiç yayımlanmamış bir sayfa olabilir.',
-    restart: '[ YENİDEN BAŞLA ]',
-    description: 'Sayfa bulunamadı. Ana ekrandan baştan başla.',
+    errorTag: 'Hata · 404',
+    title: 'Sonuç bulunamadı.',
+    body: 'Aradığın sayfa burada yok; kırık bir bağlantı ya da hiç yayımlanmamış bir sayfa olabilir.',
+    restart: 'Ana sayfaya dön',
+    description: 'Sayfa bulunamadı.',
   },
   toggle: { theme: 'Temayı değiştir', language: 'Dili değiştir' },
-  stats: {
-    class: 'SINIF',
-    xp: 'XP',
-    focus: 'ODAK',
-    engine: 'MOTOR',
-    location: 'KONUM',
-  },
-  social: { newTab: 'yeni sekmede açılır' },
   meta: {
-    siteTitle: 'Kaan Usta — Oyun Geliştirici',
+    siteTitle: 'Kaan Usta — Full-Stack Yazılım Mühendisi',
     siteDescription:
-      '2020’den beri mobil oyunlar çıkarıyor. Unity üzerine uzmanlaşmış; hafif ve kolay bağımlılık yapan deneyimlere odaklanıyor.',
+      "İstanbul'da full-stack yazılım mühendisi. Ürünleri uçtan uca kurup yayına alıyorum: NestJS ve PostgreSQL arka uçlar, Next.js web uygulamaları, React Native mobil uygulamalar ve bunları dağıtan altyapı.",
     blogTitle: 'Blog',
-    blogDescription:
-      'Kaan Usta’nın oyun geliştirme üzerine devlogları, post-mortem’leri ve notları.',
+    blogDescription: 'Kaan Usta’nın geliştirme günlükleri, yapım notları ve yazılım yayımlarken öğrendikleri.',
     projectsTitle: 'Projeler',
-    projectsDescription:
-      'Kaan Usta’nın oyun ve prototipleri — mobil, PC ve VR.',
+    projectsDescription: 'Kaan Usta’nın ürünleri ve oyunları: Patimania (web, iOS, Android) ve altı yıllık Unity oyunları.',
   },
 };
 

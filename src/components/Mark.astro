@@ -1,0 +1,23 @@
+---
+/**
+ * The site mark: three nodes and two edges — one source feeding two
+ * outputs. Colors come from the theme tokens, so it follows light/dark.
+ */
+interface Props {
+  size?: number;
+}
+const { size = 18 } = Astro.props;
+---
+
+<svg width={size} height={size} viewBox="0 0 20 20" aria-hidden="true" class="mark">
+  <path d="M6 9 14 5.5M6 11l8 3.5" stroke="rgb(var(--text-300))" stroke-width="1.3" fill="none"></path>
+  <circle cx="4" cy="10" r="2.4" fill="rgb(var(--accent-2))"></circle>
+  <circle cx="16" cy="4.5" r="2.4" fill="rgb(var(--accent-1))"></circle>
+  <circle cx="16" cy="15.5" r="2.4" fill="rgb(var(--accent-1))"></circle>
+</svg>
+
+<style>
+  .mark {
+    flex: none;
+  }
+</style>

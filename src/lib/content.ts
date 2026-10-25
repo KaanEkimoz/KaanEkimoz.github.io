@@ -26,7 +26,3 @@ export async function getPosts(lang: Lang): Promise<Post[]> {
   return posts.sort((a, b) => b.data.pubDate.getTime() - a.data.pubDate.getTime());
 }
 
-/** Tag color for a project's platform. */
-export function platformVariant(platform: Project['data']['platform']) {
-  return platform === 'Mobile' ? 'cyan' : platform === 'PC' ? 'magenta' : 'amber';
-}

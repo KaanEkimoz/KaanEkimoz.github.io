@@ -1,112 +1,81 @@
 ---
-import { Image } from 'astro:assets';
 import BaseLayout from '@layouts/BaseLayout.astro';
-import Hero from '@components/Hero.astro';
-import SectionHeading from '@components/SectionHeading.astro';
-import StatsCard from '@components/StatsCard.astro';
-import ProjectCard from '@components/ProjectCard.astro';
+import HeroSection from '@components/home/HeroSection.astro';
+import PatimaniaSection from '@components/home/PatimaniaSection.astro';
+import MethodSection from '@components/home/MethodSection.astro';
+import CareerSection from '@components/home/CareerSection.astro';
+import SkillsSection from '@components/home/SkillsSection.astro';
+import EvalsSection from '@components/home/EvalsSection.astro';
+import GamesSection from '@components/home/GamesSection.astro';
+import ContactSection from '@components/home/ContactSection.astro';
 import BlogCard from '@components/BlogCard.astro';
-import SocialLinks from '@components/SocialLinks.astro';
-import Button from '@components/ui/Button.astro';
-import portrait from '@/assets/portrait.png';
-import { SOCIAL } from '@lib/constants';
-import { getPosts, getProjects } from '@lib/content';
-import { localizedPath, t, type Lang } from '@lib/i18n';
+import { getPosts } from '@lib/content';
+import { copy, pick } from '@lib/home';
+import { localizedPath, type Lang } from '@lib/i18n';
 
 interface Props {
   lang: Lang;
 }
 
 const { lang } = Astro.props;
-
-const featuredProjects = (await getProjects(lang)).filter((p) => p.data.featured).slice(0, 3);
 const latestPosts = (await getPosts(lang)).slice(0, 3);
+const w = copy.writing;
 ---
 
 <BaseLayout lang={lang}>
-  <!-- ======== HERO ======== -->
-  <Hero lang={lang} />
+  <HeroSection lang={lang} />
+  <PatimaniaSection lang={lang} />
+  <MethodSection lang={lang} />
+  <CareerSection lang={lang} />
+  <SkillsSection lang={lang} />
+  <EvalsSection lang={lang} />
+  <GamesSection lang={lang} />
 
-  <!-- ======== ABOUT ======== -->
-  <section
-    id="about"
-    class="max-w-6xl mx-auto px-6 py-20 scroll-mt-20"
-    data-fade-in
-  >
-    <SectionHeading title={t('about.title', lang)} />
-    <div class="grid md:grid-cols-[1fr_auto] gap-10 items-start">
-      <div class="flex flex-col sm:flex-row gap-6 items-start">
-        <Image
-          src={portrait}
-          alt="Kaan Usta"
-          widths={[160, 240, 320]}
-          sizes="160px"
-          class="w-32 h-32 sm:w-40 sm:h-40 object-cover border-2 border-accent-1 shadow-glow-cyan shrink-0"
-          loading="eager"
-        />
-        <div class="space-y-4 text-text-200 leading-relaxed">
-          <p>{t('about.p1', lang)}</p>
-          <p set:html={t('about.p2', lang)}></p>
-          <p set:html={t('about.p3', lang)}></p>
-        </div>
-      </div>
-      <StatsCard lang={lang} />
-    </div>
-  </section>
-
-  <!-- ======== FEATURED PROJECTS ======== -->
-  <section
-    id="projects"
-    class="max-w-6xl mx-auto px-6 py-12 scroll-mt-20"
-    data-fade-in
-  >
-    <SectionHeading title={t('featured.title', lang)} />
-    <div class="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
-      {featuredProjects.map((project) => <ProjectCard project={project} lang={lang} />)}
-    </div>
-    <div class="mt-8">
-      <Button href={localizedPath('/projects', lang)} variant="ghost">{t('featured.seeAll', lang)}</Button>
-    </div>
-  </section>
-
-  <!-- ======== LATEST POSTS ======== -->
-  <section class="max-w-6xl mx-auto px-6 py-12" data-fade-in>
-    <SectionHeading title={t('latest.title', lang)} />
-    {
-      latestPosts.length > 0 ? (
-        <div class="space-y-6">
-          {latestPosts.map((post) => (
-            <BlogCard post={post} lang={lang} />
-          ))}
-          <div class="pt-2">
-            <Button href={localizedPath('/blog', lang)} variant="ghost">{t('latest.allPosts', lang)}</Button>
+  {
+    latestPosts.length > 0 && (
+      <section class="sec" id="writing">
+        <div class="wrap">
+          <div class="head" data-fade-in>
+            <div class="sec-head">
+              <span class="eyebrow">{pick(w.eyebrow, lang)}</span>
+              <h2>{pick(w.title, lang)}</h2>
+            </div>
+            <a class="link" href={localizedPath('/blog', lang)}>{pick(w.all, lang)}</a>
+          </div>
+          <div class="posts">
+            {latestPosts.map((post) => <BlogCard post={post} lang={lang} />)}
           </div>
         </div>
-      ) : (
-        <div class="border border-border bg-bg-elev p-8 text-center font-mono text-text-300">
-          {t('latest.empty', lang)}
-        </div>
-      )
-    }
-  </section>
+      </section>
+    )
+  }
 
-  <!-- ======== CONTACT ======== -->
-  <section
-    id="contact"
-    class="max-w-6xl mx-auto px-6 py-20 scroll-mt-20"
-    data-fade-in
-  >
-    <SectionHeading title={t('contact.title', lang)} />
-    <div class="border border-border bg-bg-elev p-8 sm:p-12">
-      <a
-        href={`mailto:${SOCIAL.email}`}
-        class="block font-mono text-base sm:text-2xl md:text-3xl text-text-100 hover:text-accent-1 transition-colors break-all"
-      >
-        {SOCIAL.email}
-      </a>
-      <div class="mt-8">
-        <SocialLinks lang={lang} />
-      </div>
-    </div>
-  </section>
+  <ContactSection lang={lang} />
 </BaseLayout>
+
+<style>
+  .head {
+    display: flex;
+    justify-content: space-between;
+    align-items: end;
+    gap: 16px;
+    margin-bottom: 44px;
+  }
+  .head .sec-head {
+    margin-bottom: 0;
+  }
+  .posts {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 18px;
+  }
+  @media (max-width: 860px) {
+    .head {
+      flex-direction: column;
+      align-items: start;
+    }
+    .posts {
+      grid-template-columns: 1fr;
+    }
+  }
+</style>

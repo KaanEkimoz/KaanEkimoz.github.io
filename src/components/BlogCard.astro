@@ -7,55 +7,104 @@ interface Props {
   post: Post;
   /** Locale of the surrounding page — drives date formatting + label + href. */
   lang?: Lang;
+  /** `card`: image on top (home grid). `row`: image left, text right (blog index). */
+  variant?: 'card' | 'row';
 }
 
-const { post, lang = DEFAULT_LOCALE } = Astro.props;
+const { post, lang = DEFAULT_LOCALE, variant = 'card' } = Astro.props;
 const { title, description, pubDate, tags, heroImage } = post.data;
-
 const href = localizedPath(`/blog/${slugOf(post.id)}`, lang);
-
+const isVideo = tags.includes('video');
 const dateStr = pubDate.toLocaleDateString(BCP47[lang], {
   year: 'numeric',
-  month: 'short',
+  month: variant === 'row' ? 'long' : 'short',
   day: 'numeric',
 });
 ---
 
-<a
-  href={href}
-  class="group flex gap-4 items-start border-l-2 border-border pl-4 py-2 transition-all duration-200 hover:border-accent-1"
->
-  {
-    heroImage && (
-      <div class="shrink-0 w-32 sm:w-40 overflow-hidden border border-border">
-        <Image
-          src={heroImage}
-          alt=""
-          width={320}
-          height={180}
-          loading="lazy"
-          class="w-full aspect-[16/9] object-cover transition-transform duration-300 group-hover:scale-[1.02]"
-        />
-      </div>
-    )
-  }
-  <div class="flex-1 min-w-0">
-    <div class="font-mono text-xs uppercase tracking-widest text-accent-1 mb-1">
-      {dateStr}
-    </div>
-    <h3 class="font-mono font-semibold text-text-100 text-base group-hover:text-accent-1 transition-colors">
-      {title}
-    </h3>
-    <p class="text-text-200 text-sm mt-1 line-clamp-2">{description}</p>
-    {
-      tags.length > 0 && (
-        <div class="mt-2 font-mono text-[10px] uppercase tracking-widest text-text-300">
-          {tags.join(' · ')}
-        </div>
-      )
-    }
-    <div class="mt-2 font-mono text-xs uppercase tracking-widest text-text-300 group-hover:text-accent-1 transition-colors">
-      {t('blogCard.read', lang)}
-    </div>
+<a href={href} class:list={['post', variant]}>
+  <div class="img">
+    {heroImage && <Image src={heroImage} alt="" widths={[400, 800]} sizes={variant === 'row' ? '260px' : '(min-width: 860px) 360px, 100vw'} loading="lazy" />}
+  </div>
+  <div class="body">
+    <span class="date">{dateStr}</span>
+    <h3>{title}</h3>
+    <p>{description}</p>
+    {variant === 'row' && <span class="go">{isVideo ? t('blogCard.watch', lang) : t('blogCard.read', lang)}</span>}
   </div>
 </a>
+
+<style>
+  .post {
+    display: grid;
+    gap: 12px;
+    align-content: start;
+  }
+  .img {
+    aspect-ratio: 16 / 9;
+    border-radius: 12px;
+    overflow: hidden;
+    border: 1px solid rgb(var(--border));
+    background: rgb(var(--bg-elev-2));
+  }
+  .img :global(img) {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    transition: transform 0.7s cubic-bezier(0.2, 0.8, 0.2, 1);
+  }
+  .post:hover .img :global(img) {
+    transform: scale(1.04);
+  }
+  .body {
+    display: grid;
+    gap: 8px;
+    max-width: 44rem;
+  }
+  .date {
+    font: 0.74rem 'JetBrains Mono', ui-monospace, monospace;
+    color: rgb(var(--text-300));
+  }
+  h3 {
+    font-size: 1.15rem;
+    line-height: 1.25;
+    font-weight: 500;
+  }
+  .post:hover h3 {
+    color: rgb(var(--accent-1));
+  }
+  p {
+    color: rgb(var(--text-200));
+    font-size: 0.94rem;
+  }
+  .go {
+    color: rgb(var(--accent-2));
+    font-weight: 500;
+    font-size: 0.92rem;
+  }
+  .row {
+    grid-template-columns: 260px minmax(0, 1fr);
+    gap: 28px;
+    align-items: center;
+    padding: 22px 0;
+    border-top: 1px solid rgb(var(--border));
+  }
+  .row .date {
+    color: rgb(var(--accent-1));
+  }
+  .row h3 {
+    font-size: clamp(1.25rem, 2.4vw, 1.7rem);
+    letter-spacing: -0.03em;
+  }
+  @media (max-width: 760px) {
+    .row {
+      grid-template-columns: 1fr;
+      gap: 12px;
+    }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .img :global(img) {
+      transition: none;
+    }
+  }
+</style>

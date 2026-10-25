@@ -1,6 +1,6 @@
 ---
 import BaseLayout from '@layouts/BaseLayout.astro';
-import SectionHeading from '@components/SectionHeading.astro';
+import PageHeader from '@components/PageHeader.astro';
 import BlogCard from '@components/BlogCard.astro';
 import { getPosts } from '@lib/content';
 import { t, type Lang } from '@lib/i18n';
@@ -14,29 +14,34 @@ const { lang } = Astro.props;
 const posts = await getPosts(lang);
 ---
 
-<BaseLayout
-  lang={lang}
-  title={t('meta.blogTitle', lang)}
-  description={t('meta.blogDescription', lang)}
->
-  <div class="max-w-3xl mx-auto px-6 py-16">
-    <header class="mb-12">
-      <SectionHeading title={t('blogIndex.title', lang)} as="h1" />
-      <p class="text-text-200">{t('blogIndex.subtitle', lang)}</p>
-    </header>
+<BaseLayout lang={lang} title={t('meta.blogTitle', lang)} description={t('meta.blogDescription', lang)}>
+  <div class="wrap page">
+    <PageHeader eyebrow={t('blogIndex.eyebrow', lang)} title={t('blogIndex.title', lang)} subtitle={t('blogIndex.subtitle', lang)} />
 
     {
       posts.length > 0 ? (
-        <div class="space-y-8">
+        <div class="list">
           {posts.map((post) => (
-            <BlogCard post={post} lang={lang} />
+            <BlogCard post={post} lang={lang} variant="row" />
           ))}
         </div>
       ) : (
-        <div class="border border-border bg-bg-elev p-8 text-center font-mono text-text-300">
-          {t('blogIndex.empty', lang)}
-        </div>
+        <p class="panel empty">{t('blogIndex.empty', lang)}</p>
       )
     }
   </div>
 </BaseLayout>
+
+<style>
+  .page {
+    padding-top: clamp(48px, 8vw, 88px);
+  }
+  .list {
+    border-bottom: 1px solid rgb(var(--border));
+  }
+  .empty {
+    padding: 32px;
+    text-align: center;
+    color: rgb(var(--text-300));
+  }
+</style>

@@ -29,9 +29,12 @@ const projects = defineCollection({
         })
         .default({}),
       featured: z.boolean().default(false),
-      // Published on a real storefront (Play / App Store / Steam …). Drives
-      // the "Published" filter pill on /projects so visitors can narrow
-      // straight to the shipped catalog.
+      // Products & Web vs Games: drives the filter on /projects and which
+      // entries the home page shows in the games strip.
+      category: z.enum(['product', 'game']).default('game'),
+      // Optional crop hint for the cover in tight tiles (CSS object-position).
+      coverPosition: z.string().optional(),
+      // Published on a real storefront (Play / App Store / Steam …).
       published: z.boolean().default(false),
       // Cover image — used as hero on detail page + thumbnail on cards.
       coverImage: image().optional(),

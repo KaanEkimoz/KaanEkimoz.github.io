@@ -3,9 +3,9 @@ title: "Patimania"
 platform: Web
 genres: ["Marketplace", "SaaS", "Pet-tech"]
 year: 2026
-duration: "3 ay (sürüyor)"
+duration: "Haziran 2026'dan beri"
 role: "Tek geliştirici"
-description: "Pet otel, kuaför ve taksi hizmetlerini tek platformda toplayan, ödeme güvenceli çok taraflı bir pazaryeri. Web + iOS + Android, tek geliştirici."
+description: "Pet otel, kuaför ve taksi hizmetlerini tek platformda toplayan, Ödeme Güvenceli çok taraflı bir pazaryeri. Web + iOS + Android; tek geliştirici, ön yayında."
 techStack:
   - "Next.js 15"
   - "React 19"
@@ -21,6 +21,7 @@ techStack:
 links:
   website: "https://patimania.com"
 featured: true
+category: product
 published: false
 coverImage: "../../assets/projects/patimania/cover.jpg"
 gallery:
@@ -38,9 +39,11 @@ lang: tr
 
 Patimania, pet otel · kuaför · taksi hizmetlerini tek platformda toplayan, ödeme güvenceli çok taraflı bir pazaryeri. Müşteri güvenli ödeme yapıyor, para hizmet tamamlanana kadar iyzico Alt Üye İşyeri modelinde güvencede bekliyor; sonra komisyon kesilerek işletmeye aktarılıyor.
 
-Projeyi tek başıma, üç ayda sıfırdan kurdum — veri modelinden altyapıya, backend'ten mobil uygulamaya kadar her katman. Temmuz 2026'da başladım. Web patimania.com'da yayında; Android Google Play kapalı testinde, iOS App Store incelemesinde.
+Projeyi sıfırdan tek başıma geliştiriyorum; veri modelinden altyapıya, backend'den mobil uygulamaya kadar her katman bende. İlk commit 2 Temmuz 2026'da atıldı.
 
-Üç ayın rakamları: ~1.500 commit, dört kod tabanında ~145 bin satır TypeScript, 52 tablo, 84 migration, gerçek Postgres + MinIO'ya karşı çalışan 37 uçtan uca test paketi (~1.090 kontrol) ve web + iOS + Android boyunca 129 farklı ekran.
+Şu an patimania.com'da ön yayında: vitrin, arama ve işletme kaydı açık. Rezervasyon ve ödeme, şirketin canlı ödeme hesabı açılınca devreye girecek; kodda değişiklik gerekmiyor.
+
+Rakamlarla (Ekim 2026'da kod deposundan sayıldı): 2.409 commit, 32 NestJS alan modülü, 68 Prisma modeli, 132 migration, gerçek Postgres + MinIO'ya karşı çalışan 74 uçtan uca test dosyası ve 7 GitHub Actions iş akışı.
 
 ## Gurur duyduğum yerler
 

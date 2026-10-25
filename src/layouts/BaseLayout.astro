@@ -3,7 +3,6 @@ import '../styles/global.css';
 import { ClientRouter } from 'astro:transitions';
 import Header from '@components/Header.astro';
 import Footer from '@components/Footer.astro';
-import CustomCursor from '@components/CustomCursor.astro';
 import ProjectModal from '@components/ProjectModal.astro';
 import { SITE } from '@lib/constants';
 import { BCP47, DEFAULT_LOCALE, alternateUrl, t, type Lang } from '@lib/i18n';
@@ -96,7 +95,7 @@ const ogLocaleAlt = BCP47[altLang];
                     : 'dark');
             document.documentElement.dataset.theme = theme;
             var meta = document.querySelector('meta[name="theme-color"]');
-            var color = theme === 'light' ? '#f5f4ef' : '#0a0a14';
+            var color = theme === 'light' ? '#f3f6ff' : '#050912';
             if (meta) meta.setAttribute('content', color);
           } catch (e) {}
         }
@@ -128,7 +127,7 @@ const ogLocaleAlt = BCP47[altLang];
     <meta property="og:image:type" content="image/jpeg" />
     <meta property="og:image:width" content="1200" />
     <meta property="og:image:height" content="630" />
-    <meta property="og:image:alt" content="kaanusta.dev — Kaan Usta, game developer" />
+    <meta property="og:image:alt" content="kaanusta.dev — Kaan Usta, full-stack engineer" />
     <meta property="og:locale" content={ogLocale} />
     <meta property="og:locale:alternate" content={ogLocaleAlt} />
     <meta property="og:site_name" content={SITE.name} />
@@ -140,14 +139,13 @@ const ogLocaleAlt = BCP47[altLang];
     <meta name="twitter:image" content={socialImage} />
 
     <!-- Theme color matches bg-base for mobile browser chrome -->
-    <meta name="theme-color" content="#0a0a14" />
+    <meta name="theme-color" content="#050912" />
 
     <ClientRouter />
   </head>
   <body class="min-h-screen flex flex-col">
-    <CustomCursor />
     <Header lang={lang} />
-    <main class="flex-1">
+    <main id="main" tabindex="-1" class="flex-1">
       <slot />
     </main>
     <Footer lang={lang} />

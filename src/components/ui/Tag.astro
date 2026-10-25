@@ -1,24 +1,20 @@
 ---
+/**
+ * Small mono chip. Utility classes only (no scoped CSS) so it still looks
+ * right when the project detail page is injected into the project modal.
+ */
 interface Props {
-  /** Color accent — defaults to cyan */
-  variant?: 'cyan' | 'magenta' | 'amber' | 'muted';
+  variant?: 'accent' | 'muted';
 }
 
-const { variant = 'cyan' } = Astro.props;
+const { variant = 'muted' } = Astro.props;
 
 const variants = {
-  cyan: 'border-accent-1/40 text-accent-1',
-  magenta: 'border-accent-2/40 text-accent-2',
-  amber: 'border-accent-3/40 text-accent-3',
-  muted: 'border-border text-text-300',
+  accent: 'border-accent-1/40 text-accent-1 bg-accent-1/10',
+  muted: 'border-border text-text-200',
 } as const;
 ---
 
-<span
-  class:list={[
-    'inline-block px-2 py-0.5 border font-mono text-[10px] uppercase tracking-widest',
-    variants[variant],
-  ]}
->
+<span class:list={['inline-block px-2 py-0.5 border rounded-md font-mono text-[11px]', variants[variant]]}>
   <slot />
 </span>

@@ -1,0 +1,214 @@
+---
+/**
+ * Hero background: a live data field drawn on a canvas.
+ * - bars along the bottom read like a streaming metric, with a scan light
+ * - nodes drift and link when close; packets travel along the links
+ * - the pointer lights up nearby nodes and links to them
+ * - `hero:pulse` events (fired by the ask box for each streamed word)
+ *   kick the bars under the box and send a packet from the nearest node
+ * Pauses when off screen or the tab is hidden; draws one still frame
+ * when reduced motion is on.
+ */
+---
+
+<canvas class="hero-field" data-hero-field aria-hidden="true"></canvas>
+
+<style>
+  .hero-field {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    display: block;
+    /* keep the field quiet behind the ask box */
+    -webkit-mask-image: radial-gradient(ellipse 30% 44% at 70% 44%, transparent 55%, #000 100%);
+    mask-image: radial-gradient(ellipse 30% 44% at 70% 44%, transparent 55%, #000 100%);
+  }
+  @media (max-width: 860px) {
+    .hero-field {
+      -webkit-mask-image: none;
+      mask-image: none;
+    }
+  }
+</style>
+
+<script>
+  type Node = { x: number; y: number; vx: number; vy: number; r: number; hub: boolean };
+  type Bar = { x: number; h: number; k: number; top: number };
+  type Packet = { a: Node; b: Node; t: number };
+
+  const reduce = matchMedia('(prefers-reduced-motion: reduce)');
+  let stop: (() => void) | null = null;
+
+  function rand(seed: number) {
+    return () => ((seed = (seed * 16807) % 2147483647) / 2147483647);
+  }
+  const clamp = (v: number, a = 0, b = 1) => Math.min(b, Math.max(a, v));
+  const lerp = (a: number, b: number, t: number) => a + (b - a) * t;
+  const wave = (i: number, t: number) =>
+    0.5 + 0.5 * (0.5 * Math.sin(i * 0.19 + t * 0.0012) + 0.32 * Math.sin(i * 0.051 - t * 0.0006 + 1.7) + 0.18 * Math.sin(i * 0.73 + t * 0.0031));
+
+  function start() {
+    stop?.();
+    const canvas = document.querySelector<HTMLCanvasElement>('[data-hero-field]');
+    if (!canvas) return;
+    const ctx = canvas.getContext('2d');
+    if (!ctx) return;
+    const host = canvas.parentElement!;
+
+    let W = 0, H = 0, DPR = 1;
+    let nodes: Node[] = [], bars: Bar[] = [], packets: Packet[] = [];
+    let ptr = { x: -999, y: -999 }, lastPacket = 0, visible = true, raf = 0;
+    let col = { faint: '', accent: '', cool: '' };
+
+    const readColors = () => {
+      const cs = getComputedStyle(document.documentElement);
+      col = { faint: cs.getPropertyValue('--text-300').trim(), accent: cs.getPropertyValue('--accent-1').trim(), cool: cs.getPropertyValue('--accent-2').trim() };
+    };
+    const rgba = (c: string, a: number) => `rgb(${c} / ${a.toFixed(3)})`;
+
+    const size = () => {
+      const r = canvas.getBoundingClientRect();
+      if (!r.width) return;
+      DPR = Math.min(2, devicePixelRatio || 1); W = r.width; H = r.height;
+      canvas.width = W * DPR; canvas.height = H * DPR;
+      const narrow = W < 600, rnd = rand(7);
+      nodes = Array.from({ length: narrow ? 22 : 40 }, () => ({
+        x: rnd() * W, y: rnd() * H * 0.8, vx: (rnd() - 0.5) * 0.22, vy: (rnd() - 0.5) * 0.14, r: 1 + rnd() * 1.6, hub: rnd() < 0.14,
+      }));
+      const step = narrow ? 7 : 9;
+      bars = [];
+      for (let x = step / 2; x < W; x += step) bars.push({ x, h: 0.3, k: 0, top: H });
+      packets = [];
+    };
+
+    const spawn = (from?: Node) => {
+      const a = from ?? nodes[(Math.random() * nodes.length) | 0];
+      if (!a) return;
+      let best: Node | null = null, bd = 1e9;
+      for (const b of nodes) {
+        if (b === a) continue;
+        const d = Math.hypot(a.x - b.x, a.y - b.y);
+        if (d < 150 && d < bd && Math.random() < 0.7) { bd = d; best = b; }
+      }
+      if (best) packets.push({ a, b: best, t: 0 });
+      if (packets.length > 24) packets.shift();
+    };
+
+    const onPulse = (e: Event) => {
+      const box = (e as CustomEvent<DOMRect>).detail, h = canvas.getBoundingClientRect();
+      if (!box || !W) return;
+      const cx = box.left - h.left + box.width * (0.15 + Math.random() * 0.7), cy = box.top - h.top + box.height * 0.5;
+      for (const b of bars) { const d = Math.abs(b.x - cx); if (d < 170) b.k = Math.min(1, b.k + (1 - d / 170) * 0.45); }
+      let near: Node | undefined, nd = 1e9;
+      for (const n of nodes) { const d = Math.hypot(n.x - cx, n.y - cy); if (d < nd) { nd = d; near = n; } }
+      spawn(near);
+    };
+    const onMove = (e: PointerEvent) => { const h = canvas.getBoundingClientRect(); ptr = { x: e.clientX - h.left, y: e.clientY - h.top }; };
+    const onLeave = () => (ptr = { x: -999, y: -999 });
+
+    const draw = (t: number) => {
+      if (!W) return;
+      const narrow = W < 600;
+      ctx.setTransform(DPR, 0, 0, DPR, 0, 0);
+      ctx.clearRect(0, 0, W, H);
+      const fade = (x: number) => (narrow ? 0.7 : 0.3 + 0.7 * clamp((x / W - 0.28) / 0.35));
+
+      // bars
+      const base = H - 1, maxH = narrow ? 70 : 96;
+      const grad = ctx.createLinearGradient(0, base - maxH, 0, base);
+      grad.addColorStop(0, rgba(col.cool, 0.5));
+      grad.addColorStop(1, rgba(col.accent, 0.04));
+      const scan = ((t * 0.09) % (W + 300)) - 150;
+      ctx.fillStyle = grad;
+      bars.forEach((b, i) => {
+        b.h += (0.08 + 0.92 * wave(i, t) - b.h) * 0.06;
+        b.k *= 0.94;
+        const hh = Math.min(1, b.h * 0.78 + b.k * 0.7) * maxH;
+        ctx.globalAlpha = 0.55 + 0.45 * fade(b.x);
+        ctx.fillRect(b.x - 1.25, base - hh, 2.5, hh);
+        b.top = base - hh;
+      });
+      ctx.globalAlpha = 1;
+      bars.forEach((b, i) => {
+        const s = Math.max(0, 1 - Math.abs(b.x - scan) / 60);
+        if (i % 3 && s < 0.05 && b.k < 0.1) return;
+        ctx.fillStyle = rgba(col.cool, Math.min(1, 0.35 + s * 0.65 + b.k));
+        ctx.beginPath(); ctx.arc(b.x, b.top, 1.3 + s * 1.2 + b.k * 1.5, 0, 6.283); ctx.fill();
+      });
+      ctx.fillStyle = rgba(col.faint, 0.35);
+      ctx.fillRect(0, base, W, 1);
+
+      // network
+      for (const n of nodes) {
+        if (!reduce.matches) { n.x += n.vx; n.y += n.vy; }
+        if (n.x < -20) n.x = W + 20; if (n.x > W + 20) n.x = -20;
+        if (n.y < -20) n.y = H * 0.8; if (n.y > H * 0.82) n.y = -10;
+      }
+      ctx.lineWidth = 1;
+      for (let i = 0; i < nodes.length; i++) {
+        const a = nodes[i];
+        for (let j = i + 1; j < nodes.length; j++) {
+          const b = nodes[j], d = Math.hypot(a.x - b.x, a.y - b.y);
+          if (d > 140) continue;
+          ctx.strokeStyle = rgba(col.accent, (1 - d / 140) * 0.28 * fade((a.x + b.x) / 2));
+          ctx.beginPath(); ctx.moveTo(a.x, a.y); ctx.lineTo(b.x, b.y); ctx.stroke();
+        }
+        const pd = Math.hypot(a.x - ptr.x, a.y - ptr.y);
+        if (pd < 170) {
+          ctx.strokeStyle = rgba(col.cool, (1 - pd / 170) * 0.5);
+          ctx.beginPath(); ctx.moveTo(a.x, a.y); ctx.lineTo(ptr.x, ptr.y); ctx.stroke();
+        }
+      }
+      for (const n of nodes) {
+        const pd = Math.hypot(n.x - ptr.x, n.y - ptr.y), lit = pd < 170 ? 1 - pd / 170 : 0, f = fade(n.x);
+        if (n.hub) {
+          ctx.fillStyle = rgba(col.accent, 0.12 * f + lit * 0.2);
+          ctx.beginPath(); ctx.arc(n.x, n.y, n.r * 4.5, 0, 6.283); ctx.fill();
+        }
+        ctx.fillStyle = rgba(lit > 0 ? col.cool : n.hub ? col.accent : col.faint, Math.min(1, (n.hub ? 0.9 : 0.55) * f + lit * 0.6));
+        ctx.beginPath(); ctx.arc(n.x, n.y, n.r + lit * 1.2, 0, 6.283); ctx.fill();
+      }
+
+      // packets
+      if (!reduce.matches && t - lastPacket > 320) { lastPacket = t; spawn(); }
+      packets = packets.filter((p) => (p.t += 0.018) < 1);
+      for (const p of packets) {
+        const x = lerp(p.a.x, p.b.x, p.t), y = lerp(p.a.y, p.b.y, p.t), al = Math.sin(p.t * Math.PI);
+        ctx.fillStyle = rgba(col.cool, 0.18 * al); ctx.beginPath(); ctx.arc(x, y, 6, 0, 6.283); ctx.fill();
+        ctx.fillStyle = rgba(col.cool, 0.95 * al); ctx.beginPath(); ctx.arc(x, y, 1.8, 0, 6.283); ctx.fill();
+      }
+    };
+
+    const loop = (t: number) => {
+      if (visible && !document.hidden) draw(t);
+      raf = requestAnimationFrame(loop);
+    };
+
+    readColors();
+    size();
+    const io = new IntersectionObserver((es) => (visible = es[0].isIntersecting));
+    io.observe(host);
+    const themeObs = new MutationObserver(readColors);
+    themeObs.observe(document.documentElement, { attributes: true, attributeFilter: ['data-theme'] });
+    const ro = new ResizeObserver(size);
+    ro.observe(canvas);
+    host.addEventListener('pointermove', onMove);
+    host.addEventListener('pointerleave', onLeave);
+    document.addEventListener('hero:pulse', onPulse);
+    if (reduce.matches) draw(0);
+    else raf = requestAnimationFrame(loop);
+
+    stop = () => {
+      cancelAnimationFrame(raf);
+      io.disconnect(); themeObs.disconnect(); ro.disconnect();
+      host.removeEventListener('pointermove', onMove);
+      host.removeEventListener('pointerleave', onLeave);
+      document.removeEventListener('hero:pulse', onPulse);
+      stop = null;
+    };
+  }
+
+  document.addEventListener('astro:page-load', start);
+  document.addEventListener('astro:before-swap', () => stop?.());
+</script>
