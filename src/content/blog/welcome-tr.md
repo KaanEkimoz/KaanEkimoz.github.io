@@ -4,7 +4,7 @@ description: "Kaan Usta'yı tanıtan bir yazı: full-stack yazılım mühendisi,
 pubDate: 2026-04-16
 updatedDate: 2026-10-25
 tags: ["tanıtım", "site"]
-heroImage: ../../assets/portrait-wide.jpg
+heroImage: ../../assets/blog/meet-kaan.jpg
 lang: tr
 ---
 
