@@ -8,7 +8,8 @@ role: "2 geliştirici + 1 sanatçı ekibi"
 description: "Bir game jam için 3 günde yapılmış mini bir bulmaca mobil oyunu. Birden fazla kısa bulmaca içeren, kompakt ve odaklı bir oynanış."
 techStack: ["Unity", "C#"]
 links: {}
-coverImage: "../../assets/projects/still/cover.png"
+coverImage: "../../assets/projects/still/cover-wide.webp"
+coverSquare: "../../assets/projects/still/cover-square.webp"
 gallery:
   - "../../assets/projects/still/cover.png"
   - "../../assets/projects/still/gallery/01.png"

@@ -8,7 +8,8 @@ role: "Solo developer (daily collaboration with experienced designer)"
 description: "A VR casual game where Unity Physics mastery was central to the gameplay feel. Designed for accessibility and quick play sessions."
 techStack: ["Unity", "Unity XR", "C#", "Unity Physics"]
 links: {}
-coverImage: "../../assets/projects/flex-hit/cover.png"
+coverImage: "../../assets/projects/flex-hit/cover-wide.webp"
+coverSquare: "../../assets/projects/flex-hit/cover-square.webp"
 gallery:
   - "../../assets/projects/flex-hit/cover.png"
   - "../../assets/projects/flex-hit/gallery/01.png"

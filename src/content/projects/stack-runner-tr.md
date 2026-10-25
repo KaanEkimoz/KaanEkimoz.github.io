@@ -9,7 +9,8 @@ description: "Stackball mekaniğini endless runner oynanışıyla birleştiren b
 techStack: ["Unity", "C#"]
 links:
   github: "https://github.com/KaanEkimoz/Stackball-Runner"
-coverImage: "../../assets/projects/stack-runner/cover.png"
+coverImage: "../../assets/projects/stack-runner/cover-wide.webp"
+coverSquare: "../../assets/projects/stack-runner/cover-square.webp"
 gallery:
   - "../../assets/projects/stack-runner/cover.png"
   - "../../assets/projects/stack-runner/gallery/01.png"

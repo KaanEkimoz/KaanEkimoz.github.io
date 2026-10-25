@@ -9,7 +9,8 @@ description: "A hyper-casual mobile drawing puzzle game developed at 208 Studios
 techStack: ["Unity", "C#"]
 links:
   github: "https://github.com/KaanEkimoz/DrawRush-HyperCasual"
-coverImage: "../../assets/projects/draw-rush/cover.png"
+coverImage: "../../assets/projects/draw-rush/cover-wide.webp"
+coverSquare: "../../assets/projects/draw-rush/cover-square.webp"
 gallery:
   - "../../assets/projects/draw-rush/cover.png"
   - "../../assets/projects/draw-rush/gallery/01.png"

@@ -9,7 +9,8 @@ description: "Combines Stackball mechanics with endless runner gameplay. Built a
 techStack: ["Unity", "C#"]
 links:
   github: "https://github.com/KaanEkimoz/Stackball-Runner"
-coverImage: "../../assets/projects/stack-runner/cover.png"
+coverImage: "../../assets/projects/stack-runner/cover-wide.webp"
+coverSquare: "../../assets/projects/stack-runner/cover-square.webp"
 gallery:
   - "../../assets/projects/stack-runner/cover.png"
   - "../../assets/projects/stack-runner/gallery/01.png"

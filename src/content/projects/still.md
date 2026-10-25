@@ -8,7 +8,8 @@ role: "Team of 2 developers + 1 artist"
 description: "A mini-puzzle mobile game built in 3 days for a game jam. Compact, focused gameplay with multiple short puzzles."
 techStack: ["Unity", "C#"]
 links: {}
-coverImage: "../../assets/projects/still/cover.png"
+coverImage: "../../assets/projects/still/cover-wide.webp"
+coverSquare: "../../assets/projects/still/cover-square.webp"
 gallery:
   - "../../assets/projects/still/cover.png"
   - "../../assets/projects/still/gallery/01.png"

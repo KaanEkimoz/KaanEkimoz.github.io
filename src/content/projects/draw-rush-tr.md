@@ -9,7 +9,8 @@ description: "208 Studios'ta geliştirilen, çizim tabanlı hiper-casual bir mob
 techStack: ["Unity", "C#"]
 links:
   github: "https://github.com/KaanEkimoz/DrawRush-HyperCasual"
-coverImage: "../../assets/projects/draw-rush/cover.png"
+coverImage: "../../assets/projects/draw-rush/cover-wide.webp"
+coverSquare: "../../assets/projects/draw-rush/cover-square.webp"
 gallery:
   - "../../assets/projects/draw-rush/cover.png"
   - "../../assets/projects/draw-rush/gallery/01.png"
