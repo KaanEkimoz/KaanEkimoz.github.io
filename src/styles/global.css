@@ -47,6 +47,7 @@
   /* Hero grid + glows */
   --grid-line: 120 160 255;
   --grid-alpha: 0.06;
+  --field-boost: 1; /* hero canvas alpha multiplier; light needs more to read on a pale ground */
   --glow: 0 0 0 1px rgb(61 123 255 / 0.18), 0 24px 60px -30px rgb(61 123 255 / 0.55);
   --shadow: 0 1px 0 rgb(255 255 255 / 0.04) inset, 0 20px 50px -30px rgb(0 0 0 / 0.9);
 
@@ -70,6 +71,7 @@ html[data-theme='light'] {
   --border: 213 221 240;
 
   --grid-line: 36 89 232;
+  --field-boost: 2;
   --glow: 0 0 0 1px rgb(36 89 232 / 0.14), 0 24px 60px -32px rgb(36 89 232 / 0.45);
   --shadow: 0 1px 2px rgb(10 19 48 / 0.05), 0 20px 50px -30px rgb(10 19 48 / 0.3);
 

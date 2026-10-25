@@ -21,8 +21,8 @@
     height: 100%;
     display: block;
     /* keep the field quiet behind the ask box */
-    -webkit-mask-image: radial-gradient(ellipse 30% 44% at 70% 44%, transparent 55%, #000 100%);
-    mask-image: radial-gradient(ellipse 30% 44% at 70% 44%, transparent 55%, #000 100%);
+    -webkit-mask-image: radial-gradient(ellipse 30% 44% at 71% 50%, transparent 55%, #000 100%);
+    mask-image: radial-gradient(ellipse 30% 44% at 71% 50%, transparent 55%, #000 100%);
   }
   @media (max-width: 860px) {
     .hero-field {
@@ -59,13 +59,15 @@
     let W = 0, H = 0, DPR = 1;
     let nodes: Node[] = [], bars: Bar[] = [], packets: Packet[] = [];
     let ptr = { x: -999, y: -999 }, lastPacket = 0, visible = true, raf = 0;
-    let col = { faint: '', accent: '', cool: '' };
+    let col = { faint: '', accent: '', cool: '' }, boost = 1;
 
     const readColors = () => {
       const cs = getComputedStyle(document.documentElement);
       col = { faint: cs.getPropertyValue('--text-300').trim(), accent: cs.getPropertyValue('--accent-1').trim(), cool: cs.getPropertyValue('--accent-2').trim() };
+      boost = parseFloat(cs.getPropertyValue('--field-boost')) || 1;
+      if (reduce.matches) draw(0); // no loop to pick up the new colors
     };
-    const rgba = (c: string, a: number) => `rgb(${c} / ${a.toFixed(3)})`;
+    const rgba = (c: string, a: number) => `rgb(${c} / ${Math.min(1, a * boost).toFixed(3)})`;
 
     const size = () => {
       const r = canvas.getBoundingClientRect();
@@ -125,7 +127,7 @@
         b.h += (0.08 + 0.92 * wave(i, t) - b.h) * 0.06;
         b.k *= 0.94;
         const hh = Math.min(1, b.h * 0.78 + b.k * 0.7) * maxH;
-        ctx.globalAlpha = 0.55 + 0.45 * fade(b.x);
+        ctx.globalAlpha = Math.min(1, (0.55 + 0.45 * fade(b.x)) * boost);
         ctx.fillRect(b.x - 1.25, base - hh, 2.5, hh);
         b.top = base - hh;
       });
