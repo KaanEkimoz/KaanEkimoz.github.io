@@ -90,6 +90,30 @@ const labels = {
     opacity: 1;
   }
 
+  /* Phones: the panel fills the screen (no margins showing the page behind),
+     so the video and text get the full width. */
+  @media (max-width: 639px) {
+    #project-modal-wrapper {
+      padding: 0;
+    }
+    #project-modal-panel {
+      min-height: 100%;
+      margin: 0;
+      border: 0;
+      border-radius: 0;
+    }
+    #project-modal-content {
+      padding: max(16px, env(safe-area-inset-top, 0px)) max(16px, env(safe-area-inset-right, 0px)) 96px max(16px, env(safe-area-inset-left, 0px));
+    }
+    #project-modal-close {
+      top: max(10px, env(safe-area-inset-top, 0px));
+    }
+    /* The panel opens from scale-95 (a transform), which `scale: 1` alone never undoes. */
+    #project-modal.is-open #project-modal-panel {
+      transform: none;
+    }
+  }
+
   /* Remove the "← Back to Projects" link when inside modal */
   #project-modal-content [data-back] {
     display: none;
