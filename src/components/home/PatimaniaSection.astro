@@ -9,6 +9,9 @@ import mobile from '@/assets/projects/patimania/gallery/07-mobile-home.png';
 import panel from '@/assets/projects/patimania/gallery/04-business-panel.png';
 import calendar from '@/assets/projects/patimania/gallery/05-room-calendar.png';
 
+const appShots = Object.values(import.meta.glob<{ default: ImageMetadata }>('@/assets/projects/patimania/app/*.jpg', { eager: true })).map((m) => m.default);
+const archImgs = Object.values(import.meta.glob<{ default: ImageMetadata }>('@/assets/projects/patimania/arch/*.png', { eager: true })).map((m) => m.default);
+
 interface Props {
   lang: Lang;
 }
@@ -78,10 +81,106 @@ const stack = ['TypeScript', 'NestJS 11', 'Prisma 6', 'PostgreSQL + PostGIS', 'N
         </div>
       </div>
     </div>
+
+    <div class="more" data-fade-in>
+      <div class="more-head">
+        <h3>{pick(c.appTitle, lang)}</h3>
+        <p>{pick(c.appLede, lang)}</p>
+      </div>
+      <div class="phones">
+        {appShots.map((img, i) => (
+          <Image src={img} alt={`Patimania app ${i + 1}`} widths={[220, 440]} sizes="200px" loading="lazy" />
+        ))}
+      </div>
+    </div>
+
+    <div class="more" data-fade-in>
+      <div class="more-head">
+        <h3>{pick(c.archTitle, lang)}</h3>
+        <p>{pick(c.archNote, lang)}</p>
+      </div>
+      <div class="arch">
+        {archImgs.map((img, i) => (
+          <a href={img.src} target="_blank" rel="noopener">
+            <Image src={img} alt={pick(c.arch[i], lang)} widths={[480, 960]} sizes="(min-width: 860px) 360px, 100vw" loading="lazy" />
+            <span>{pick(c.arch[i], lang)}</span>
+          </a>
+        ))}
+      </div>
+    </div>
   </div>
 </section>
 
 <style>
+  .more {
+    margin-top: 56px;
+  }
+  .more-head {
+    display: grid;
+    gap: 6px;
+    margin-bottom: 18px;
+    max-width: 44rem;
+  }
+  .more-head h3 {
+    font-size: 1.3rem;
+    font-weight: 500;
+    letter-spacing: -0.02em;
+  }
+  .more-head p {
+    color: rgb(var(--text-200));
+    font-size: 0.95rem;
+  }
+  .phones {
+    display: flex;
+    gap: 14px;
+    overflow-x: auto;
+    padding-bottom: 10px;
+    scroll-snap-type: x mandatory;
+    scrollbar-width: thin;
+  }
+  .phones :global(img) {
+    flex: none;
+    width: 200px;
+    height: auto;
+    border-radius: 18px;
+    border: 1px solid rgb(var(--border));
+    scroll-snap-align: start;
+  }
+  .arch {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 14px;
+  }
+  .arch a {
+    display: grid;
+    gap: 8px;
+  }
+  .arch :global(img) {
+    width: 100%;
+    aspect-ratio: 4 / 3;
+    object-fit: cover;
+    object-position: top left;
+    border-radius: 12px;
+    border: 1px solid rgb(var(--border));
+    background: #fff;
+    transition: border-color 0.2s;
+  }
+  .arch a:hover :global(img) {
+    border-color: rgb(var(--accent-1));
+  }
+  .arch span {
+    font-size: 0.9rem;
+    color: rgb(var(--text-100));
+  }
+  @media (max-width: 760px) {
+    .arch {
+      grid-template-columns: minmax(0, 1fr);
+    }
+    .phones :global(img) {
+      width: 160px;
+    }
+  }
+
   .dataset {
     display: grid;
     grid-template-columns: minmax(0, 1.15fr) minmax(0, 0.85fr);

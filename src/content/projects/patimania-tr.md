@@ -41,9 +41,11 @@ Patimania, pet otel · kuaför · taksi hizmetlerini tek platformda toplayan, ö
 
 Projeyi sıfırdan tek başıma geliştiriyorum; veri modelinden altyapıya, backend'den mobil uygulamaya kadar her katman bende. İlk commit 2 Temmuz 2026'da atıldı.
 
-Şu an patimania.com'da ön yayında: vitrin, arama ve işletme kaydı açık. Rezervasyon ve ödeme, şirketin canlı ödeme hesabı açılınca devreye girecek; kodda değişiklik gerekmiyor.
+Şu an patimania.com'da ön yayında: vitrin, arama ve işletme kaydı açık; şimdilik listelenen işletmeler demo kaydı. Ödeme sağlayıcısı bağlanana kadar gerçek ödeme kapalı, akışın kendisi test edildi. Mobil uygulama Google Play kapalı testinde ve TestFlight dış testinde.
 
-Rakamlarla (Ekim 2026'da kod deposundan sayıldı): 2.409 commit, 32 NestJS alan modülü, 68 Prisma modeli, 132 migration, gerçek Postgres + MinIO'ya karşı çalışan 74 uçtan uca test dosyası ve 7 GitHub Actions iş akışı.
+Rakamlarla (24 Ekim 2026'da ölçüldü): 115 günde 2.441 commit, 315.165 satır TypeScript, 32 NestJS modülü, 106 yabancı anahtarlı 68 tablo, canlıda 124 migration, 128 web sayfası, 45 uygulama ekranı, 3.900 doğrulamalı 76 uçtan uca test paketi, 7 CI nöbetçisi ve yazıya geçmiş 102 karar kaydı.
+
+Kod baştan sona Claude Code ile yazıldı. Kararlar, kod incelemesi ve bunları denetleyen düzen bana ait.
 
 ## Gurur duyduğum yerler
 

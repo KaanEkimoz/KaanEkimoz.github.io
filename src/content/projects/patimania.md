@@ -38,9 +38,11 @@ order: 0
 
 Patimania is a multi-sided marketplace for pet-hotel, grooming, and pet-taxi services in Türkiye. Payments are held in escrow via iyzico and only released once the service is confirmed complete. I'm building the whole thing solo — data model to devops, backend to mobile app — with the first commit on 2 July 2026.
 
-It's in soft launch at patimania.com: the storefront, search and business onboarding are open. Bookings and payments switch on once the company's live payment account is ready; no code change needed.
+It's in soft launch at patimania.com: the storefront, search and business onboarding are open, and the businesses listed so far are demo records. Real payments stay off until the payment provider is connected; the flow itself is tested. The mobile app is in Google Play closed testing and TestFlight external testing.
 
-In numbers (counted from the repository in October 2026): 2,409 commits, 32 NestJS domain modules, 68 Prisma models, 132 migrations, 74 end-to-end test files running against real Postgres + MinIO, and 7 GitHub Actions workflows.
+In numbers (measured on 24 October 2026): 2,441 commits in 115 days, 315,165 lines of TypeScript, 32 NestJS modules, 68 tables with 106 foreign keys, 124 migrations live, 128 web routes, 45 app screens, 76 end-to-end test suites with 3,900 assertions, 7 CI guard scripts and 102 written decision records.
+
+The code was written with Claude Code from start to finish. The decisions, the review and the checks around it are mine.
 
 ## Pieces I'm proud of
 

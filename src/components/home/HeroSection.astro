@@ -2,10 +2,12 @@
 import HeroField from '@components/home/HeroField.astro';
 import { Image } from 'astro:assets';
 import Mark from '@components/Mark.astro';
+import BrandIcon from '@components/BrandIcon.astro';
 import portrait from '@/assets/portrait.png';
+import pmIcon from '@/assets/projects/patimania/icon.png';
 import { SOCIAL } from '@lib/constants';
 import { copy, pick, QA } from '@lib/home';
-import type { Lang } from '@lib/i18n';
+import { localizedPath, type Lang } from '@lib/i18n';
 
 interface Props {
   lang: Lang;
@@ -26,27 +28,55 @@ const data = {
   fallback: pick(a.fallback, lang),
 };
 const first = data.qa[0];
+
+const stack = [
+  { icon: 'siNextdotjs', name: 'Next.js' },
+  { icon: 'siTypescript', name: 'TypeScript' },
+  { icon: 'siNestjs', name: 'NestJS' },
+  { icon: 'siPostgresql', name: 'PostgreSQL' },
+  { icon: 'siReact', name: 'React Native' },
+  { icon: 'siDocker', name: 'Docker' },
+  { icon: 'siClaude', name: 'Claude Code' },
+];
 ---
 
 <section class="hero">
   <HeroField />
   <div class="wrap hero-in">
-    <p class="name"><Mark size={22} /><span>Kaan Usta</span></p>
-    <h1>{pick(c.title, lang)}</h1>
+    <div class="main">
+      <p class="hi"><Mark size={18} /><span>{pick(c.hi, lang)}</span> <span aria-hidden="true">👋</span></p>
+      <h1>{pick(c.title, lang)}</h1>
+      <p class="lede">{pick(c.lede, lang)}</p>
+      <div class="cta">
+        <a class="btn" href={localizedPath('/projects', lang)}>{pick(c.projects, lang)} →</a>
+        <a class="btn btn-ghost" href={`mailto:${SOCIAL.email}`}>{pick(c.email, lang)}</a>
+      </div>
+      <dl class="stats">
+        {c.stats.map((x) => <div><dt>{pick(x.n, lang)}</dt><dd>{pick(x.l, lang)}</dd></div>)}
+      </dl>
+      <p class="hand note">{pick(c.note, lang)}</p>
+    </div>
+
+    <aside class="side">
+      <p class="label">{pick(c.now, lang)}</p>
+      <a class="now" href="#work">
+        <Image src={pmIcon} alt="" width={44} height={44} />
+        <span><b>Patimania</b><small>{pick(c.nowDesc, lang)}</small><em>{pick(c.nowLink, lang)} →</em></span>
+      </a>
+      <p class="label">{pick(c.stack, lang)}</p>
+      <ul class="stack">
+        {stack.map((t) => <li><span class="ic"><BrandIcon name={t.icon} size={16} /></span>{t.name}</li>)}
+      </ul>
+    </aside>
   </div>
 </section>
 
-<section class="about">
+<section class="about" id="about">
   <div class="wrap grid">
-    <div class="intro">
-      <Image class="me" src={portrait} alt="Kaan Usta" width={224} height={224} />
-      <p class="lede">{pick(c.lede, lang)}</p>
-      <div class="cta">
-        <a class="btn" href={`mailto:${SOCIAL.email}`}>{pick(c.email, lang)}</a>
-        <a class="btn btn-ghost" href={SOCIAL.linkedin} target="_blank" rel="noopener">LinkedIn ↗</a>
-        <a class="btn btn-ghost" href="#work">{pick(c.seeWork, lang)}</a>
-      </div>
-    </div>
+    <figure class="photo">
+      <Image src={portrait} alt="Kaan Usta" widths={[400, 720]} sizes="(min-width: 860px) 420px, 100vw" />
+      <figcaption class="hand">{pick(c.photoNote, lang)}</figcaption>
+    </figure>
 
     <div class="ask-col">
       <div class="chips" data-chips>
@@ -88,62 +118,170 @@ const first = data.qa[0];
       linear-gradient(rgb(var(--grid-line) / var(--grid-alpha, 0.06)) 1px, transparent 1px) 0 0 / 48px 48px,
       linear-gradient(90deg, rgb(var(--grid-line) / var(--grid-alpha, 0.06)) 1px, transparent 1px) 0 0 / 48px 48px;
   }
-  /* Just the name and the title, sized so the bars at the bottom of the
-     canvas stay on the first screen. */
+  /* Fills the first screen; the bottom padding keeps the canvas bars clear
+     of the content, so they sit along the bottom edge of the viewport. */
   .hero-in {
     position: relative;
     display: grid;
-    align-content: center;
-    gap: 22px;
-    min-height: clamp(400px, calc(100svh - 58px), 620px);
-    padding-block: 48px 120px;
+    grid-template-columns: minmax(0, 1fr) 300px;
+    gap: 56px;
+    align-items: center;
+    min-height: max(560px, calc(100svh - 58px));
+    padding-block: 40px 140px;
   }
-  .name {
+  .main {
+    position: relative;
+    display: grid;
+    gap: 22px;
+    align-content: center;
+  }
+  .hi {
     display: inline-flex;
     align-items: center;
-    gap: 10px;
-    font: 500 clamp(1.1rem, 1.6vw, 1.35rem) Sora, ui-sans-serif, sans-serif;
-    letter-spacing: -0.02em;
-    color: rgb(var(--text-100));
+    gap: 8px;
+    font-weight: 500;
+    color: rgb(var(--text-200));
   }
   h1 {
-    max-width: 17ch;
-    font-size: clamp(2.6rem, 6.4vw, 5.2rem);
-    line-height: 1.02;
+    font-size: clamp(2.7rem, 6.2vw, 5.4rem);
+    line-height: 1;
     letter-spacing: -0.05em;
     font-weight: 500;
-  }
-
-  .grid {
-    display: grid;
-    grid-template-columns: minmax(0, 0.95fr) minmax(0, 1.05fr);
-    gap: 48px;
-    align-items: center;
-    padding-top: clamp(56px, 7vw, 88px);
-  }
-  .intro {
-    display: grid;
-    gap: 22px;
-    align-content: center;
+    max-width: 12ch;
   }
   .lede {
-    color: rgb(var(--text-100));
-    font-size: clamp(1.15rem, 1.7vw, 1.4rem);
-    line-height: 1.5;
-    max-width: 30rem;
-  }
-  .intro :global(.me) {
-    width: 112px;
-    height: 112px;
-    border-radius: 24px;
-    object-fit: cover;
-    border: 1px solid rgb(var(--border));
+    color: rgb(var(--text-200));
+    font-size: clamp(1.05rem, 1.4vw, 1.2rem);
+    line-height: 1.6;
+    max-width: 34rem;
   }
   .cta {
     display: flex;
     flex-wrap: wrap;
     gap: 10px;
-    margin-top: 4px;
+  }
+  .stats {
+    display: flex;
+    flex-wrap: wrap;
+    margin-top: 10px;
+  }
+  .stats div {
+    padding-right: 26px;
+    margin-right: 26px;
+    border-right: 1px solid rgb(var(--border));
+  }
+  .stats div:last-child {
+    border-right: 0;
+  }
+  .stats dt {
+    font: 500 1.5rem Sora, ui-sans-serif, sans-serif;
+    letter-spacing: -0.03em;
+    color: rgb(var(--text-100));
+  }
+  .stats dd {
+    font-size: 0.84rem;
+    color: rgb(var(--text-300));
+  }
+  .note {
+    position: absolute;
+    right: 0;
+    top: 6%;
+  }
+
+  .side {
+    display: grid;
+    gap: 12px;
+    align-content: center;
+  }
+  .label {
+    font-size: 0.82rem;
+    font-weight: 500;
+    color: rgb(var(--accent-1));
+  }
+  .now {
+    display: flex;
+    gap: 14px;
+    align-items: center;
+    padding: 14px;
+    margin-bottom: 18px;
+    border-radius: 14px;
+    border: 1px solid rgb(var(--border));
+    background: rgb(var(--bg-elev) / 0.85);
+    backdrop-filter: blur(6px);
+    transition: border-color 0.2s;
+  }
+  .now:hover {
+    border-color: rgb(var(--accent-1) / 0.6);
+  }
+  .now :global(img) {
+    width: 44px;
+    height: 44px;
+    border-radius: 12px;
+  }
+  .now span {
+    display: grid;
+    gap: 2px;
+  }
+  .now b {
+    color: rgb(var(--text-100));
+    font-weight: 600;
+  }
+  .now small {
+    color: rgb(var(--text-300));
+    font-size: 0.8rem;
+  }
+  .now em {
+    font-style: normal;
+    font-size: 0.82rem;
+    color: rgb(var(--accent-2));
+  }
+  .stack {
+    display: grid;
+    gap: 10px;
+  }
+  .stack li {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    font-size: 0.92rem;
+    color: rgb(var(--text-100));
+  }
+  .ic {
+    display: grid;
+    place-items: center;
+    width: 30px;
+    height: 30px;
+    border-radius: 8px;
+    border: 1px solid rgb(var(--border));
+    background: rgb(var(--bg-elev) / 0.85);
+    color: rgb(var(--text-100));
+  }
+
+  .grid {
+    display: grid;
+    grid-template-columns: minmax(0, 0.85fr) minmax(0, 1.15fr);
+    gap: 48px;
+    align-items: center;
+    padding-top: clamp(56px, 7vw, 88px);
+  }
+  .photo {
+    position: relative;
+  }
+  .photo :global(img) {
+    width: 100%;
+    aspect-ratio: 4 / 5;
+    object-fit: cover;
+    border-radius: 20px;
+    border: 1px solid rgb(var(--border));
+  }
+  .photo figcaption {
+    position: absolute;
+    right: 22px;
+    bottom: 26px;
+    max-width: 11ch;
+    text-align: right;
+    color: #fff;
+    text-shadow: 0 1px 8px rgb(0 0 0 / 0.6);
   }
 
   /* Ask box */
@@ -354,19 +492,43 @@ const first = data.qa[0];
     background: rgb(var(--accent-1) / 0.12);
   }
 
-  @media (max-width: 860px) {
+  @media (max-width: 960px) {
     .hero-in {
-      padding-block: 40px 100px;
+      grid-template-columns: minmax(0, 1fr);
+      gap: 36px;
+      padding-block: 40px 120px;
+    }
+    .note {
+      display: none;
+    }
+  }
+  @media (max-width: 860px) {
+    .photo {
+      max-width: 360px;
     }
     .grid {
       grid-template-columns: minmax(0, 1fr);
       gap: 28px;
     }
-    .intro {
-      gap: 16px;
-    }
     .cta .btn {
       flex: 1 1 auto;
+    }
+    .stats {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
+    .stats div {
+      padding-right: 10px;
+      margin-right: 10px;
+    }
+    .stats dt {
+      font-size: 1.2rem;
+    }
+    .stats dd {
+      font-size: 0.76rem;
+    }
+    .stack {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
     }
     .convo {
       min-height: clamp(300px, 52vh, 380px);

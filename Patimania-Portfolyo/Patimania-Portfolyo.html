@@ -1,0 +1,703 @@
+<!doctype html><html lang="tr"><head><meta charset="utf-8">
+<title>Patimania — Portfolyo Dosyası</title>
+<style>
+:root{--mor:#662E9B;--mor-ac:#F6F2FB;--coral:#FC8957;--coral-ac:#FEF3EC;--mint:#57CC99;
+      --mint-ac:#EDF9F3;--ink:#221F27;--gri:#6B6577;--cizgi:#DDD7E8;--sis:#F7F5FB}
+*{box-sizing:border-box;margin:0}
+@page{size:A4;margin:16mm 15mm 15mm}
+body{font-family:-apple-system,"Helvetica Neue",Arial,sans-serif;color:var(--ink);
+     font-size:10.2pt;line-height:1.58;-webkit-print-color-adjust:exact;print-color-adjust:exact}
+
+/* ---- kapak ---- */
+.kapak{height:247mm;display:flex;flex-direction:column;justify-content:flex-start;padding-top:38mm;
+       page-break-after:always;text-align:left}
+.kapak img.logo{width:62mm;margin-bottom:16mm}
+.kapak h1{font-size:40pt;line-height:1.05;letter-spacing:-1.4pt}
+.kapak h1 em{font-style:normal;color:var(--mor)}
+.kapak .alt{font-size:14pt;color:var(--gri);margin-top:7mm;line-height:1.45;max-width:150mm}
+.kapak .serit{margin-top:14mm;display:flex;gap:4mm;flex-wrap:wrap}
+.kapak .serit span{font-size:9pt;font-weight:700;border:1pt solid var(--mor);color:var(--mor);
+                   border-radius:99pt;padding:1.6mm 4.5mm}
+.kapak .kunye{margin-top:auto;font-size:9pt;color:var(--gri);border-top:1pt solid var(--cizgi);
+              padding-top:4mm;line-height:1.7}
+
+/* ---- tipografi ---- */
+h2{font-size:19pt;color:var(--mor);letter-spacing:-.5pt;margin:0 0 1.5mm;
+   page-break-after:avoid;break-after:avoid}
+h2 .no{color:var(--cizgi);font-size:13pt;margin-right:2.5mm}
+h3{font-size:12pt;margin:6mm 0 2mm;page-break-after:avoid;break-after:avoid}
+h4{font-size:10.5pt;margin:5mm 0 1.5mm;color:var(--mor);page-break-after:avoid}
+p{margin:0 0 3mm}
+.giris{font-size:10.6pt;color:var(--gri);margin-bottom:4mm;line-height:1.5}
+section{page-break-before:always;break-before:page}
+section.devam{page-break-before:auto;break-before:auto}
+ul,ol{margin:0 0 3.5mm;padding-left:5.5mm}
+li{margin-bottom:1.6mm}
+code{font-family:ui-monospace,Menlo,monospace;font-size:8.6pt;background:var(--sis);
+     padding:.4mm 1.2mm;border-radius:1mm}
+strong{font-weight:700}
+a{color:var(--mor);text-decoration:none}
+
+/* ---- bileşenler ---- */
+table{width:100%;border-collapse:collapse;margin:0 0 4mm;font-size:9.2pt;
+      page-break-inside:avoid;break-inside:avoid}
+th{text-align:left;font-size:7.8pt;letter-spacing:.8pt;text-transform:uppercase;color:var(--gri);
+   padding:2mm 2.5mm;border-bottom:1pt solid var(--cizgi);font-weight:700}
+td{padding:1.9mm 2.5mm;border-bottom:.5pt solid #EFEBF6;vertical-align:top;line-height:1.5}
+td.k{font-weight:700;color:var(--mor);white-space:nowrap}
+tr{page-break-inside:avoid;break-inside:avoid}
+
+.sayilar{display:grid;grid-template-columns:repeat(4,1fr);gap:2.6mm;margin:0 0 4mm}
+.sayi{border:1pt solid var(--cizgi);border-radius:3mm;padding:2.4mm 3mm;background:#fff}
+.sayi b{display:block;font-size:19pt;color:var(--mor);line-height:1.1;letter-spacing:-.6pt}
+.sayi span{display:block;font-size:8.2pt;color:var(--gri);margin-top:1mm;line-height:1.35}
+
+.kutu{border:1pt solid var(--cizgi);border-left:3pt solid var(--mor);border-radius:2mm;
+      padding:3.5mm 4mm;margin:0 0 4mm;background:var(--mor-ac);
+      page-break-inside:avoid;break-inside:avoid}
+.kutu.uyari{border-left-color:var(--coral);background:var(--coral-ac)}
+.kutu.iyi{border-left-color:var(--mint);background:var(--mint-ac)}
+.kutu p:last-child{margin-bottom:0}
+.kutu b.bas{display:block;font-size:9.5pt;margin-bottom:1.5mm}
+
+figure{margin:0 0 5mm;page-break-inside:avoid;break-inside:avoid}
+figure.genis{width:158mm;margin-left:auto;margin-right:auto}
+figure img{width:100%;border:1pt solid var(--cizgi);border-radius:2mm;display:block}
+figcaption{font-size:8.2pt;color:var(--gri);margin-top:1.5mm;line-height:1.45}
+figcaption b{color:var(--ink)}
+.ikili{display:grid;grid-template-columns:1fr 1fr;gap:4mm}
+.uclu{display:grid;grid-template-columns:1fr 1fr 1fr;gap:3mm}
+.dortlu{display:grid;grid-template-columns:repeat(4,1fr);gap:2.5mm}
+.dortlu figcaption,.uclu figcaption{font-size:7.6pt}
+.tam{page-break-inside:avoid}
+
+.sorun{border:1pt solid var(--cizgi);border-radius:3mm;padding:4mm 4.5mm;margin:0 0 4mm;
+       page-break-inside:avoid;break-inside:avoid}
+.sorun h4{margin-top:0;display:flex;align-items:baseline;gap:2.5mm}
+.sorun h4 i{font-style:normal;font-size:7.5pt;font-weight:700;color:#fff;background:var(--mor);
+            border-radius:99pt;padding:.8mm 2.5mm;letter-spacing:.4pt}
+.sorun dt{font-size:7.8pt;letter-spacing:.8pt;text-transform:uppercase;color:var(--gri);
+          font-weight:700;margin-top:2.5mm}
+.sorun dd{margin:.8mm 0 0;line-height:1.55}
+pre{background:#2B2338;color:#EDE7F6;border-radius:2mm;padding:3mm 3.5mm;font-size:8pt;
+    line-height:1.5;overflow:hidden;margin:2mm 0 3mm;white-space:pre-wrap;
+    font-family:ui-monospace,Menlo,monospace}
+pre .c{color:#9C8FB5}
+.zaman td.t{white-space:nowrap;font-weight:700;color:var(--mor);width:26mm}
+blockquote{margin:0 0 4mm;padding:0 0 0 4mm;border-left:2pt solid var(--coral);
+           font-size:10.5pt;color:var(--gri);font-style:italic}
+.kopya{border:1pt dashed var(--cizgi);border-radius:2mm;padding:3.5mm 4mm;margin:0 0 4mm;
+       background:#fff;page-break-inside:avoid}
+.kopya .bas{font-size:7.8pt;letter-spacing:.8pt;text-transform:uppercase;color:var(--gri);
+            font-weight:700;margin-bottom:1.5mm}
+.dipnot{font-size:8.2pt;color:var(--gri);border-top:1pt solid var(--cizgi);
+        padding-top:2.5mm;margin-top:5mm;line-height:1.55}
+</style></head><body>
+
+<!-- ══════════════════ KAPAK ══════════════════ -->
+<div class="kapak">
+  <img class="logo" src="01-marka/logo-renkli.png" alt="Patimania">
+  <h1>Pet otel, taksi ve kuaför<br>hizmetlerini tek yerde<br>toplayan <em>pazaryeri</em></h1>
+  <div class="alt">Web, mobil uygulama, işletme paneli ve yönetim paneli —
+    emanet (escrow) ödeme modeliyle çalışan çok taraflı bir platformun
+    sıfırdan tasarımı, geliştirilmesi ve canlıya alınması.</div>
+  <div class="serit">
+    <span>NestJS + Prisma</span><span>PostgreSQL 17 + PostGIS</span>
+    <span>Next.js 15</span><span>React Native · Expo</span>
+    <span>Docker · VDS</span><span>Monorepo</span>
+  </div>
+  <div class="kunye">
+    <b>Portfolyo dosyası</b> · 24 Ekim 2026<br>
+    Bu belgedeki tüm sayılar canlı veritabanından ve kod deposundan ölçülmüştür; tahmin yoktur.<br>
+    Ekran görüntüleri canlı siteden (patimania.com) ve yerel geliştirme ortamından alınmıştır.
+  </div>
+</div>
+
+<!-- ══════════════════ 1 ══════════════════ -->
+<section class="devam">
+<h2><span class="no">01</span>Bir bakışta</h2>
+<p class="giris">Patimania, evcil hayvan sahibi ile pet otel, pet taksi ve pet kuaför
+işletmelerini buluşturan bir hizmet pazaryeri. Müşteri arar, seçer, güvenli öder —
+para işletmeye hizmet tamamlanana kadar geçmez. Ürünün tamamı, veritabanı şemasından
+mağaza görsellerine kadar, tek bir kişi tarafından dört ayda yazıldı.</p>
+
+<div class="sayilar">
+  <div class="sayi"><b>315.165</b><span>satır uygulama ve test kodu<br>(TS/TSX/MJS, 1.330 dosya)</span></div>
+  <div class="sayi"><b>2.441</b><span>commit · 2 Temmuz – 24 Ekim 2026</span></div>
+  <div class="sayi"><b>68</b><span>veritabanı tablosu<br>106 yabancı anahtar</span></div>
+  <div class="sayi"><b>76</b><span>uçtan uca test paketi<br>3.900 doğrulama</span></div>
+  <div class="sayi"><b>32</b><span>backend modülü (NestJS)</span></div>
+  <div class="sayi"><b>128</b><span>web sayfası / rota</span></div>
+  <div class="sayi"><b>45</b><span>mobil uygulama ekranı</span></div>
+  <div class="sayi"><b>124</b><span>canlıda uygulanmış migration</span></div>
+</div>
+
+<div class="kutu uyari" style="break-before:page;page-break-before:always">
+<b class="bas">Belgedeki dürüstlük notu</b>
+<p>Platform <b>yumuşak lansman</b> aşamasında: vitrin, arama ve işletme kaydı açık, ancak
+<b>gerçek ödeme kapalı</b> (<code>PAYMENTS_ENABLED=false</code>) — ödeme sağlayıcısı kararı
+şirket kuruluş takvimine bağlı olduğundan gerçek ödeme adaptörü henüz bağlanmadı. Panel
+ekran görüntülerindeki rakamlar (ciro, escrow bakiyesi) <b>demo verisidir</b>, gerçek ticaret
+değildir. Ödeme akışının tamamı sahte sağlayıcı üzerinden uçtan uca testlerle doğrulanıyor.</p>
+</div>
+
+<h3>Platformun üç yüzü</h3>
+<table>
+<tr><th style="width:32mm">Kim</th><th>Ne yapıyor</th></tr>
+<tr><td class="k">Müşteri</td><td>Konumuna göre arar, işletmeyi ve odayı/saati seçer, evcil hayvanını tanıtır, öder, işletmeyle mesajlaşır, sonunda değerlendirir. Web ve mobil uygulamada aynı akış.</td></tr>
+<tr><td class="k">İşletme</td><td>Kendi panelinden hizmetlerini, odalarını/çalışanlarını ve takvimini yönetir; gelen talebi kabul veya ret eder; kazancını izler. Üç hizmet tipinin paneli birbirinden farklı (oda takvimi ↔ randevu defteri ↔ yolculuk listesi).</td></tr>
+<tr><td class="k">Platform yönetimi</td><td>30 ekranlık yönetim paneli: işletme başvuruları, değişiklik onayları, uyuşmazlıklar, dondurulan ödemeler, şikâyetler, kampanyalar, trafik ve para raporları. Her personelin ne görebileceği kişi başına ayarlanır.</td></tr>
+</table>
+
+<h3>Üç hizmet, üç ayrı iş mantığı</h3>
+<p>Platformun en belirleyici tasarım kararı, bu üç hizmeti tek bir "randevu" soyutlamasına
+zorlamamak oldu. Her birinin zaman ve kapasite modeli gerçekten farklı. Pet taksi bu yüzden ayrı bir akışa sahip:
+müşteri talep açar, şoförler teklif verir, müşteri seçer — teklifler 12 saat geçerlidir ve bağlı
+oldukları talepten uzun yaşayamaz.</p>
+<table>
+<tr><th style="width:30mm">Hizmet</th><th>Zaman birimi</th><th>Kapasite</th><th>Fiyat</th></tr>
+<tr><td class="k">Pet otel</td><td>Gece (giriş–çıkış)</td><td>İsimli oda/süit — her biri ayrı kaynak</td><td>Gecelik sabit + ek hizmet</td></tr>
+<tr><td class="k">Pet kuaför</td><td>Saat dilimi</td><td>İsimli çalışan — her biri ayrı kaynak</td><td>Hizmet başına sabit</td></tr>
+<tr><td class="k">Pet taksi</td><td>Yolculuk aralığı</td><td>Araç + şoför</td><td><b>Sabit fiyat yok — teklif usulü</b></td></tr>
+</table>
+
+</section>
+
+<!-- ══════════════════ 2 ══════════════════ -->
+<section>
+<h2><span class="no">02</span>Müşteri arayüzü — web</h2>
+<p class="giris">Next.js 15 App Router ile sunucu tarafında render edilir; arama sonuçları,
+işletme sayfaları ve hizmet sayfaları arama motorlarına açıktır. Görseller 24 Ekim 2026'da
+canlı siteden alınmıştır.</p>
+
+<figure class="genis"><img src="02-web-masaustu/01-anasayfa.png">
+<figcaption><b>Ana sayfa.</b> Tek bir arama kutusu üç hizmeti de karşılar; sekme değişince
+kutunun alanları da değişir (otelde tarih aralığı, kuaförde tek gün, takside alış–varış).
+Arka plandaki kare hizmete göre değişir.</figcaption></figure>
+
+<figure class="genis"><img src="02-web-masaustu/02-arama-otel.png">
+<figcaption><b>Arama sonuçları.</b> Konum, mesafe, fiyat ve imkân filtreleri; harita görünümü;
+kart üzerinde mesafe ve öne çıkan imkânlar. Sıralama ve filtreleme <b>sunucuda</b> yapılır —
+sekme değişimi bir sunucu kovasıdır, istemci durumu değil.</figcaption></figure>
+
+<figure class="genis"><img src="02-web-masaustu/03-isletme-detay.png">
+<figcaption><b>İşletme sayfası.</b> Fotoğraf galerisi, imkân listesi, oda/hizmet seçimi,
+puan kırılımı ve yan panelde fiyat özeti. "DEMO — örnek kayıt" rozeti gerçek işletmeyle
+demo kaydı ayırır; gerçek müşteri demo işletmede rezervasyon yapamaz.</figcaption></figure>
+</section>
+
+<section class="devam">
+<div class="ikili">
+<figure><img src="02-web-masaustu/04-pet-otel.png">
+<figcaption><b>Pet otel</b> tanıtım sayfası</figcaption></figure>
+<figure><img src="02-web-masaustu/05-pet-taksi.png">
+<figcaption><b>Pet taksi</b> — teklif usulünün anlatıldığı sayfa</figcaption></figure>
+<figure><img src="02-web-masaustu/06-pet-kuafor.png">
+<figcaption><b>Pet kuaför</b> tanıtım sayfası</figcaption></figure>
+<figure><img src="02-web-masaustu/07-nasil-calisir.png">
+<figcaption><b>Nasıl çalışır</b> — ödeme güvencesi anlatımı</figcaption></figure>
+<figure><img src="02-web-masaustu/08-isletme-ol.png">
+<figcaption><b>İşletme ol</b> — arz tarafı kazanım sayfası</figcaption></figure>
+<figure><img src="02-web-masaustu/10-giris.png">
+<figcaption><b>Giriş</b> — e-posta/parola + Google ile giriş</figcaption></figure>
+</div>
+
+<h3>Mobil web</h3>
+<p>Aynı kod tabanı; ayrı bir mobil site yok. Alt sekme çubuğu yalnız dar ekranda belirir.</p>
+<div class="uclu">
+<figure><img src="03-web-mobil/m01-anasayfa.png"><figcaption>Ana sayfa</figcaption></figure>
+<figure><img src="03-web-mobil/m02-arama.png"><figcaption>Arama sonuçları</figcaption></figure>
+<figure><img src="03-web-mobil/m03-isletme.png"><figcaption>İşletme sayfası</figcaption></figure>
+</div>
+</section>
+
+<!-- ══════════════════ 3 ══════════════════ -->
+<section>
+<h2><span class="no">03</span>İşletme paneli</h2>
+<p class="giris">İşletmeler <code>isletme.patimania.com</code> alt alanında çalışır — çerezler
+host başına ayrıldığı için müşteri oturumu ile işletme oturumu birbirine karışmaz. Panelin
+menüsü hizmet tipine göre değişir, ama <b>menü bir güvenlik kapısı değildir</b>: her uç
+kendi yetki kontrolünü taşır.</p>
+
+<figure class="genis"><img src="04-paneller/p01-isletme-panel.png">
+<figcaption><b>Otel paneli — ana ekran.</b> Haftalık oda şeridi, onay bekleyen talepler
+(geri sayımla), yaklaşan rezervasyonlar. Yanıtlanmayan talep süresi dolunca otomatik iptal
+edilir ve müşteriye tam iade yapılır.</figcaption></figure>
+
+<figure class="genis"><img src="04-paneller/p02-oda-takvimi.png">
+<figcaption><b>Oda takvimi.</b> Her oda ayrı bir kaynak; çakışma veritabanı kısıtıyla
+imkânsız kılınmıştır (bkz. bölüm 06). İşletme ayrıca bakım/tatil için kendi bloklarını açabilir.</figcaption></figure>
+
+<div class="ikili">
+<figure><img src="04-paneller/p05-kuafor-randevu-defteri.png">
+<figcaption><b>Kuaför randevu defteri</b> — saat bazlı, çalışan bazlı</figcaption></figure>
+<figure><img src="04-paneller/p06-taksi-yolculuklar.png">
+<figcaption><b>Pet taksi</b> — açık talepler ve gönderilen teklifler</figcaption></figure>
+<figure><img src="04-paneller/p03-rezervasyonlar.png">
+<figcaption><b>Rezervasyon listesi</b> — sekmeler sunucu kovası</figcaption></figure>
+<figure><img src="04-paneller/p04-kazanc.png">
+<figcaption><b>Kazanç</b> — komisyon ve aktarım dökümü</figcaption></figure>
+</div>
+</section>
+
+<!-- ══════════════════ 4 ══════════════════ -->
+<section>
+<h2><span class="no">04</span>Yönetim paneli</h2>
+<p class="giris">30 ekran. Onay kuyrukları, para ekranları, şikâyet ve uyuşmazlık yönetimi,
+kampanya ve duyuru araçları, trafik raporu. Ekranlardaki tutarlar demo verisidir.</p>
+
+<figure class="genis"><img src="04-paneller/p10-admin-istatistik.png">
+<figcaption><b>İstatistik.</b> Escrow'da bekleyen tutar, komisyon geliri, işletmelere aktarılan
+ve iade edilen; altında talep ve görünürlük eğrileri. "Platformun parası" ekranı, escrow
+defterinden türetilir — ayrı bir sayaç tutulmaz.</figcaption></figure>
+
+<div class="ikili">
+<figure><img src="04-paneller/p07-admin-panel.png">
+<figcaption><b>Yönetim ana ekranı</b> — bekleyen işler</figcaption></figure>
+<figure><img src="04-paneller/p08-admin-isletmeler.png">
+<figcaption><b>İşletmeler</b> — onay, etiket ve demo ayrımı</figcaption></figure>
+<figure><img src="04-paneller/p11-admin-ekip-yetki.png">
+<figcaption><b>Ekip ve yetkiler</b> — kişi başına yetki defteri</figcaption></figure>
+<figure><img src="04-paneller/p12-admin-trafik.png">
+<figcaption><b>Trafik</b> — çerezsiz ölçüm</figcaption></figure>
+</div>
+
+<div class="kutu">
+<b class="bas">Yetki tasarımı — paneldeki en sert kural</b>
+<p>Her yönetim ucu bir yetki satırı taşımak zorundadır. Yetki satırı <b>olmayan</b> bir uç,
+bütün personele açık demektir — bu yüzden CI'da bir nöbetçi betik her yeni admin ucunu
+tarar ve yetkisiz olanı <b>derlemeyi kırarak</b> engeller. Ayrıca son yöneticinin kendi
+yetkisini kaldırması ve kendini silmesi kilitlenmiştir.</p>
+</div>
+</section>
+
+<!-- ══════════════════ 5 ══════════════════ -->
+<section>
+<h2><span class="no">05</span>Mobil uygulama</h2>
+<p class="giris">React Native + Expo. iOS ve Android'de tek kod tabanı; mağaza derlemesi EAS ile,
+küçük güncellemeler OTA (mağazadan geçmeden) yayınlanıyor. Google Play kapalı testte ve
+TestFlight dış test grubunda açık. Ekranlar 3 Ekim 2026 sürümünden.</p>
+
+<h4>Arama ve rezervasyon</h4>
+<div class="dortlu">
+<figure><img src="05-mobil-app/app-a1-ana-sayfa-arama-kutusu.jpg"><figcaption>Ana sayfa</figcaption></figure>
+<figure><img src="05-mobil-app/app-a4-patili-dost-paneli-kendiliginden-acilir.jpg"><figcaption>Eksik bilgi kendiliğinden sorulur</figcaption></figure>
+<figure><img src="05-mobil-app/app-a6-sonuclar-hemen-listelenir.jpg"><figcaption>Sonuçlar</figcaption></figure>
+<figure><img src="05-mobil-app/app-b2-hakkinda-tanitim-ve-imkanlar.jpg"><figcaption>İşletme sayfası</figcaption></figure>
+<figure><img src="05-mobil-app/app-b4-oda-detay-paneli.jpg"><figcaption>Oda detayı</figcaption></figure>
+<figure><img src="05-mobil-app/app-b6-ek-hizmet-toplam-ve-iptal-kurali.jpg"><figcaption>Ek hizmet ve iptal kuralı</figcaption></figure>
+<figure><img src="05-mobil-app/app-b7-otel-odemesi-boncuk-secili.jpg"><figcaption>Ödeme</figcaption></figure>
+<figure><img src="05-mobil-app/app-c6-kuafor-odemesi-saat-secimi.jpg"><figcaption>Kuaför saat seçimi</figcaption></figure>
+</div>
+
+<h4>Pet taksi — teklif akışı</h4>
+<div class="dortlu">
+<figure><img src="05-mobil-app/app-d2-varis-kayitli-adresler.jpg"><figcaption>Kayıtlı adresler</figcaption></figure>
+<figure><img src="05-mobil-app/app-d4-talep-formu-ve-harita.jpg"><figcaption>Talep ve harita</figcaption></figure>
+<figure><img src="05-mobil-app/app-d5-acik-talep-ve-gelen-teklifler.jpg"><figcaption>Gelen teklifler</figcaption></figure>
+<figure><img src="05-mobil-app/app-d7-sofor-profili.jpg"><figcaption>Şoför profili</figcaption></figure>
+</div>
+
+<h4>Hesap, mesajlaşma ve geçmiş</h4>
+<div class="dortlu">
+<figure><img src="05-mobil-app/app-e1-yaklasan-buyuk-kart.jpg"><figcaption>Yaklaşan rezervasyon</figcaption></figure>
+<figure><img src="05-mobil-app/app-f4-sohbet.jpg"><figcaption>İşletmeyle sohbet</figcaption></figure>
+<figure><img src="05-mobil-app/app-f2-patili-dostlar.jpg"><figcaption>Evcil hayvanlar</figcaption></figure>
+<figure><img src="05-mobil-app/app-f10-baglanti-yok-uyarisi.jpg"><figcaption>Bağlantı yok hâli</figcaption></figure>
+</div>
+
+<div class="kutu iyi">
+<b class="bas">Mobilde öğrenilen üç şey</b>
+<p><b>Ağ hatası ≠ boş liste.</b> İlk sürümde başarısız istek "hiç sonuç yok" gibi görünüyordu;
+artık her liste üç hâli ayrı gösteriyor: sonuç var / sonuç yok / bağlantı yok.<br>
+<b>Görünüş hatası testte görünmez.</b> Bu yüzden sapmalar önce sayıya çevriliyor: uygulamanın
+içinde, iOS ile Android arasındaki ölçü farklarını rakamla raporlayan bir tanı ekranı var ve
+CI'da bir nöbetçi platform ayrımlarını izliyor.<br>
+<b>Native değişiklik OTA ile gitmez</b> — açılış animasyonu değiştiğinde yeni mağaza derlemesi gerekti.</p>
+</div>
+</section>
+
+<!-- ══════════════════ 6 ══════════════════ -->
+<section>
+<h2><span class="no">06</span>Mimari</h2>
+<p class="giris">Modüler monolit. Mikroservis bilinçli olarak seçilmedi: tek kişilik bir ekipte
+dağıtık sistem maliyeti, kazandıracağı esnekliğin çok üstünde olurdu. Modül sınırları kod
+içinde net tutuldu, böylece ileride ayırmak gerekirse kesit hazır.</p>
+
+<figure><img src="06-mimari/01-sistem-mimarisi.png">
+<figcaption>Sistem mimarisi — istemciler, giriş katmanı, uygulama ve veri katmanı, dış servisler.</figcaption></figure>
+
+<h3>Teknoloji seçimleri ve gerekçeleri</h3>
+<table>
+<tr><th style="width:38mm">Seçim</th><th>Neden</th></tr>
+<tr><td class="k">Monorepo<br>(pnpm + Turborepo)</td><td>Web, mobil ve API aynı iş kurallarını paylaşıyor. Arama sorgusu, fiyat biçimi, imkân kataloğu ve konum sözlüğü <code>packages/core</code> içinde <b>bir kez</b> yazılır; üç yüzeyde aynı davranır. Ayrı depolar olsaydı bu kurallar üç kez yazılır ve sessizce birbirinden ayrışırdı.</td></tr>
+<tr><td class="k">NestJS + Prisma</td><td>Modül/servis yapısı büyüyen bir iş mantığını disiplinde tutuyor; Prisma'nın tip güvenliği şema ile kod arasındaki kaymayı derleme anında yakalıyor. Prisma şemasındaki <code>///</code> açıklamaları aynı zamanda veri modelinin resmî belgesi.</td></tr>
+<tr><td class="k">PostgreSQL 17<br>+ PostGIS</td><td>Çakışma engelleme (<code>EXCLUDE</code> kısıtı), zaman aralığı tipi (<code>tstzrange</code>), coğrafi mesafe sorguları ve kuyruk (pg-boss) — dördü de tek veritabanında. Ayrı bir Redis/Elasticsearch/kuyruk sunucusu kurulmadı; bu ölçekte gereksiz işletim yükü olurdu.</td></tr>
+<tr><td class="k">Next.js 15<br>App Router</td><td>Pazaryerinin vitrini arama motorundan trafik almak zorunda — sunucu tarafı render şart. Panel ve vitrin aynı uygulamada, farklı alt alanlarda.</td></tr>
+<tr><td class="k">React Native<br>+ Expo</td><td>Tek kişilik ekipte iki ayrı native kod tabanı sürdürülemezdi. EAS derleme + OTA güncelleme, mağaza inceleme süresini küçük düzeltmeler için devre dışı bırakıyor.</td></tr>
+<tr><td class="k">Escrow<br>(alt üye işyeri)</td><td>Çok taraflı pazaryerinde para doğrudan işletmeye gitmemeli: hizmet verilmezse iade mümkün olmalı, komisyon otomatik ayrışmalı. Türkiye'de iyzico ve PayTR bu modeli sunuyor; karar şirket kuruluşuna bağlı.</td></tr>
+<tr><td class="k">Tek VDS, Docker</td><td>Türkiye'de barındırma KVKK gereği (kişisel veri yurt içinde). Kubernetes yerine <code>docker compose</code>: staging ve prod aynı sunucuda ayrı yığınlar, prod'a çıkış elle onaylanır.</td></tr>
+<tr><td class="k">MinIO (S3 uyumlu)</td><td>Dosya depolama bulut sağlayıcıya bağlanmadan, aynı sunucuda S3 arayüzüyle. Aynı köken üzerinden vekillenir, böylece güvenlik politikası (CSP) gevşetilmek zorunda kalmaz.</td></tr>
+</table>
+</section>
+
+<!-- ══════════════════ 7 ══════════════════ -->
+<section>
+<h2><span class="no">07</span>Zor problemler ve çözümleri</h2>
+<p class="giris">Bu bölüm, projenin gerçek mühendislik yükünü taşıyan yerleri anlatıyor.
+Hepsi üretimde çalışan, testi yazılmış çözümler.</p>
+
+<figure><img src="06-mimari/02-rezervasyon-ve-para-akisi.png">
+<figcaption>Rezervasyon ve para akışı — otel/kuaför ve pet taksi için iki ayrı yol.</figcaption></figure>
+
+<div class="sorun">
+<h4><i>01</i> Çift rezervasyon asla olmamalı</h4>
+<dl>
+<dt>Sorun</dt><dd>İki müşteri aynı odayı aynı tarihe, aynı anda alamamalı. Uygulama kodunda
+"önce kontrol et, sonra yaz" yaklaşımı yarış durumunda çalışmaz: iki istek kontrolü aynı anda
+geçip ikisi de yazabilir.</dd>
+<dt>Çözüm</dt><dd>Kural uygulamadan alınıp <b>veritabanına</b> taşındı. PostgreSQL'in
+dışlama kısıtı, çakışan zaman aralıklarını fiziksel olarak imkânsız kılıyor:</dd>
+</dl>
+<pre>EXCLUDE USING gist (
+  resource_id WITH =,
+  tstzrange(start_at, end_at, '[)') WITH &amp;&amp;
+) WHERE (
+  exclusive
+  AND status IN ('pending_payment','paid','confirmed','in_progress','completed')
+);</pre>
+<dl><dt>Neden önemli</dt><dd>Uygulama kodu hata yapsa, yeni bir geliştirici kontrolü atlasa,
+iki istek aynı mikrosaniyede gelse bile veritabanı ikincisini reddeder. <code>WHERE</code>
+koşulu kısıtı yalnız "yer tutan" durumlara uygular — iptal edilmiş bir kayıt yeri tutmaz.
+Pet taksi teklifleri de bu yüzden takvimde yer tutmaz (<code>blocks_slot=false</code>).</dd></dl>
+</div>
+
+<div class="sorun">
+<h4><i>02</i> Para asla iki kez hareket etmemeli</h4>
+<dl>
+<dt>Sorun</dt><dd>Ödeme sağlayıcısının bildirimi (webhook) iki kez gelebilir; kullanıcı
+"onayla"ya iki kez basabilir; zamanlanmış iş ile kullanıcı eylemi aynı saniyede çakışabilir.</dd>
+<dt>Çözüm</dt><dd>Durum değiştiren her yazım <b>koşullu</b>: <code>updateMany … where status = 'beklenen'</code>.
+İkinci istek sıfır satır günceller ve sessizce durur. Kilit sırası projede sabittir
+(önce <code>payments</code>, sonra <code>reservations</code>); ters sırada kilitleyen bir yol
+eklenirse CI nöbetçisi uyarır. Para durum geçişleri <code>payment_transitions</code> defterine
+yazılır ve bu defter <b>yalnız eklenebilir</b> — temizlik betikleri bile bu tabloyu atlar.</dd>
+<dt>Ek kural</dt><dd>Tutar, komisyon ve uygunluk <b>her zaman</b> backend'de hesaplanır.
+İstemciden gelen fiyat hiçbir noktada kabul edilmez; "eski değer" karar anında veritabanından
+okunur, istekten değil.</dd>
+</dl>
+</div>
+
+<div class="sorun">
+<h4><i>03</i> Politika değişince geçmiş rezervasyon bozulmamalı</h4>
+<dl>
+<dt>Sorun</dt><dd>İptal penceresi ve komisyon oranı yönetim panelinden ayarlanabiliyor.
+Ayar değişince, geçmişte o ayara göre alınmış rezervasyonların kuralı da değişirse müşteriye
+söz verilen koşul ihlal edilmiş olur.</dd>
+<dt>Çözüm</dt><dd>Politika <b>kayıt anında rezervasyona dondurulur</b>. Ayar tablosu güncel
+kuralı tutar; rezervasyon kendi kopyasını taşır. Karar her zaman sunucuda, rezervasyonun
+kendi dondurulmuş kuralına göre verilir.</dd>
+<dt>Genel ilke</dt><dd>Aynı yaklaşım projede bir yazım kuralı hâline geldi: iş kuralları koda
+gömülmez, bir <b>politika tablosu</b> olur; görünümler bu tablodan türetilir; tek kayıt defteri
+tutulur ve sayaçlar ondan hesaplanır.</dd>
+</dl>
+</div>
+
+<div class="sorun">
+<h4><i>04</i> Adres yalnız bir nokta değildir</h4>
+<dl>
+<dt>Sorun</dt><dd>Pet taksi için "Kadıköy" yetmez — kapıya gelinmesi gerekiyor. Ama kullanıcıdan
+tam adres istemek, aramayı yapmadan önce terk edilmesine yol açıyor.</dd>
+<dt>Çözüm</dt><dd>Adres iki aşamalı: önce haritadan nokta (arama için yeterli), sonra gerektiğinde
+kapı ayrıntısı (apartman, no, kat, daire) — <b>ayrı alanlarda</b>, tek bir metin kutusunda değil.
+Teklif istemeden önce "detayları tamamla" düğmesi çıkıyor. Harita sağlayıcısı HERE (pin → sokak +
+kapı numarası, arama önerisi), yedeği Photon/OpenStreetMap, karo sağlayıcısı CARTO.</dd>
+<dt>Türkçeye özgü tuzak</dt><dd>Adres eşleştirmede iyelik eki belirleyici: "Tan Sokak" ile
+"Tan Sokağı" farklı yerler olabilir. Bu yüzden eşleşme basit metin içerme (<code>includes</code>)
+ile yapılmıyor; Türkçe ek kuralları ayrıca işleniyor.</dd>
+</dl>
+</div>
+
+<div class="sorun">
+<h4><i>05</i> Yetki unutulabilir — unutulamaz hâle getirildi</h4>
+<dl>
+<dt>Sorun</dt><dd>Yönetim panelinde 30 ekran ve kişi başına değişen yetkiler var. Yeni bir uç
+yazarken yetki kontrolünü eklemeyi unutmak, o ucu <b>bütün personele</b> açar — ve bu hata
+testte görünmez, çünkü test genelde yetkili kullanıcıyla koşar.</dd>
+<dt>Çözüm</dt><dd>CI'da bir nöbetçi betik bütün admin uçlarını tarar; yetki satırı olmayan
+bir uç bulursa derleme kırılır. Benzer nöbetçiler başka sessiz hata sınıfları için de yazıldı:
+kilit sırası, iOS/Android sapması, derin bağlantı pariteti, ölü sınıflar, ortak kural ihlalleri,
+sürüm tazeliği — <b>toplam 7 nöbetçi</b>.</dd>
+<dt>Öğrenilen</dt><dd>Bir hata sınıfı bir kez canınızı yaktıysa, onu yakalayan bir makine yazın.
+İnsan dikkati ölçeklenmez; nöbetçi ölçeklenir.</dd>
+</dl>
+</div>
+</section>
+
+<!-- ══════════════════ 8 ══════════════════ -->
+<section>
+<h2><span class="no">08</span>Veri modeli</h2>
+<p class="giris">68 tablo, 11 alan. Tüm tabloların sütun listesi ve açıklaması
+<i>07-ek-belgeler/Patimania-Veri-Yapisi.pdf</i> dosyasında.</p>
+<figure><img src="06-mimari/03-veri-modeli.png">
+<figcaption>Veri modeli — alanlara göre tablolar; turuncu işaretliler en çok atıf alan omurga tabloları.</figcaption></figure>
+</section>
+
+<!-- ══════════════════ 9 ══════════════════ -->
+<section>
+<h2><span class="no">09</span>Kalite, test ve işletim</h2>
+
+<h3>Test altyapısı</h3>
+<p>Testler birim değil, <b>uçtan uca</b>: her paket gerçek bir API sunucusu ayağa kaldırır,
+izole bir veritabanına karşı gerçek HTTP istekleri atar ve sonucu veritabanından doğrular.
+Paralel koşar, her paket kendi portunu alır.</p>
+<div class="sayilar">
+  <div class="sayi"><b>76</b><span>uçtan uca test paketi</span></div>
+  <div class="sayi"><b>3.900</b><span>doğrulama (assertion)</span></div>
+  <div class="sayi"><b>46.758</b><span>satır test kodu</span></div>
+  <div class="sayi"><b>7</b><span>CI nöbetçi betiği</span></div>
+</div>
+<p>Kapsanan senaryolardan birkaçı: eşzamanlı rezervasyon yarışı, iptal/iade matematiği,
+indirim hesabı, escrow geçişleri, kuaför saat dilimi çakışması, taksi teklif süresi,
+yetki kapıları, hesap silme, KVKK veri saklama, geriye dönük uyumluluk, disk kapasitesi.</p>
+
+<h3>Yayın hattı</h3>
+<table>
+<tr><td class="k">main'e birleşme</td><td>CI koşar (lint + tip + uçtan uca testler) → staging'e <b>otomatik</b> çıkar</td></tr>
+<tr><td class="k">prod'a çıkış</td><td><b>Elle tetiklenir</b> ve belirli bir imaj etiketiyle yapılır. Staging'de doğrulanan imajın <i>aynısı</i> prod'a terfi eder — yeniden derleme yok.</td></tr>
+<tr><td class="k">mobil</td><td>Küçük değişiklik OTA ile anında; native değişiklik yeni EAS derlemesi + mağaza incelemesi</td></tr>
+<tr><td class="k">geri alma</td><td>Önceki imaj etiketi hâlâ sunucuda — geri dönüş tek komut</td></tr>
+</table>
+
+<h3>Yedek ve kurtarma</h3>
+<p>Her gece 03:30'da otomatik veritabanı yedeği alınıyor. 23 Ekim 2026'da <b>geri yükleme
+provası yapıldı</b>: yedek boş bir veritabanına geri yüklendi ve tablo/kayıt sayıları
+doğrulandı. Dosya deposunun (MinIO) geri yükleme provası henüz yapılmadı — bu bilinçli
+olarak açık bir madde.</p>
+
+<h3>İzleme</h3>
+<p>Dört dış uptime monitörü (ana site, API, işletme paneli, staging) ve uygulama tarafında
+hata takibi. Sunucuda disk dolması bir kez kesintiye yol açtığı için disk kapasitesi artık
+otomatik testle de izleniyor.</p>
+</section>
+
+<!-- ══════════════════ 10 ══════════════════ -->
+<section>
+<h2><span class="no">10</span>Güvenlik ve KVKK</h2>
+<table>
+<tr><td class="k">Oturum</td><td>HttpOnly çerez + CSRF koruması. Oturum iptali veritabanından okunur — iptal edilen oturum ilk istekte kapanır; çerezin süresinin dolmasını beklemez.</td></tr>
+<tr><td class="k">Personel 2FA</td><td>Yönetim hesaplarında üretimde <b>zorunlu</b> ikinci faktör (e-posta kodu), güvenilen cihaz ve kurtarma kodu desteğiyle.</td></tr>
+<tr><td class="k">Yetki</td><td>Kişi başına yetki defteri; yetkisiz uç CI'da engellenir; son yöneticinin kendini kilitlemesi engellenir.</td></tr>
+<tr><td class="k">Denetim izi</td><td><code>audit_log</code> ve <code>payment_transitions</code> yalnız eklenebilir; silme ve güncelleme yolu yok.</td></tr>
+<tr><td class="k">Veri konumu</td><td>Kişisel veri Türkiye'deki sunucuda (KVKK). Geliştirme ve demo ortamlarında yalnız sahte veri kullanılır.</td></tr>
+<tr><td class="k">Ticari ileti</td><td>İYS (İleti Yönetim Sistemi) izin kayıtları 3 yıl saklanıyor; hesap silinse bile ticari izin kaydı mevzuat gereği kalır.</td></tr>
+<tr><td class="k">Sırlar</td><td>Depoda sır yok; ortam değişkenleri git dışında. Bir sır tarayıcısı commit öncesi kontrol ediyor.</td></tr>
+<tr><td class="k">Kaçış filtresi</td><td>Mesajlaşmada platform dışına yönlendirme girişimleri (telefon/IBAN paylaşımı) tespit edilip kaydediliyor — komisyon kaçağına ve dolandırıcılığa karşı.</td></tr>
+</table>
+
+<h3>Mahremiyet kararları</h3>
+<ul>
+<li><b>Çerezsiz analitik:</b> trafik ölçümü kullanıcıyı takip eden çerez kullanmıyor.</li>
+<li><b>Yorum metinleri gizli:</b> yazılı yorumu yalnız ilgili işletme ve platform yönetimi görür; herkese açık olan yalnız puan.</li>
+<li><b>Mesajlaşma penceresi sınırlı:</b> müşteri–işletme yazışması rezervasyona bağlı ve zaman aralığıyla kısıtlı.</li>
+<li><b>İki yönlü engelleme:</b> engellenen taraf da engelleyeni göremez.</li>
+</ul>
+</section>
+
+<!-- ══════════════════ 11 ══════════════════ -->
+<section>
+<h2><span class="no">11</span>Tasarım sistemi ve marka</h2>
+<p class="giris">Tasarım bir eklenti değil, kodun parçası: renk, tipografi, boşluk ve gölge
+değerleri tek bir token paketinde tanımlı ve hem web hem mobil oradan okuyor.</p>
+
+<div class="ikili" style="align-items:start">
+<div>
+<h4>Renk sistemi</h4>
+<table style="font-size:8.8pt">
+<tr><td class="k">Mor #662E9B</td><td>Baskın marka rengi; birincil eylemler</td></tr>
+<tr><td class="k">Coral #FC8957</td><td>Vurgu; dikkat çekmesi gereken yerler</td></tr>
+<tr><td class="k">Mint #57CC99</td><td>Marka yeşili; onay yüzeyleri</td></tr>
+<tr><td class="k">Mürekkep #221F27</td><td>Metin</td></tr>
+</table>
+<p style="font-size:9pt">Renkler <b>anlam rolüyle</b> kullanılıyor: onay → mint, sistem durumu
+(kaydedildi/ödendi) → ayrı bir success tonu. Kontrast oranları ölçülerek seçildi — coral
+üstünde beyaz yazı 2,93:1 veriyordu ve erişilebilirlik eşiğinin altında kaldığı için onay
+butonlarında kullanılmadı.</p>
+</div>
+<div>
+<figure><img src="01-marka/logo-renkli.png" style="border:none;padding:4mm;background:#fff">
+<figcaption>Logo — renkli zemin için</figcaption></figure>
+<figure><img src="01-marka/logo-beyaz.png" style="border:none;padding:4mm;background:#662E9B">
+<figcaption>Logo — koyu zemin için</figcaption></figure>
+</div>
+</div>
+
+<figure class="genis"><img src="01-marka/play-one-cikan-gorsel.png">
+<figcaption>Google Play mağaza görseli</figcaption></figure>
+
+<h3>Ortak bileşen kütüphanesi</h3>
+<p>Düğme, kart, alan, pencere ve liste bileşenleri ayrı bir pakette; web ve mobil aynı
+tasarım dilini paylaşıyor ama her platformun kendi yerleşimi var — uygulama, web sitesinin
+küçültülmüş hâli değil. Eylül 2026'dan beri mobil uygulama kendi yerleşim kararlarını izliyor.</p>
+</section>
+
+<!-- ══════════════════ 12 ══════════════════ -->
+<section>
+<h2><span class="no">12</span>Zaman çizelgesi</h2>
+<table class="zaman">
+<tr><th style="width:26mm">Dönem</th><th>Ne oldu</th><th style="width:20mm">Commit</th></tr>
+<tr><td class="t">Temmuz 2026</td><td>Monorepo iskeleti; veri modeli ve rezervasyon çekirdeği; çakışma kısıtı; kimlik ve oturum; tasarım token'ları</td><td>494</td></tr>
+<tr><td class="t">Ağustos 2026</td><td>Vitrin ve arama; işletme paneli; yönetim paneli; escrow defteri; pet taksi teklif sistemi; marka kimliğinin yenilenmesi</td><td>757</td></tr>
+<tr><td class="t">Eylül 2026</td><td>Mobil uygulamanın kendi yerleşimine geçişi; mağaza hazırlığı (Play + App Store); güvenlik sertleştirme; personel 2FA</td><td>331</td></tr>
+<tr><td class="t">Ekim 2026</td><td>Harita/adres sistemi (HERE); çoklu evcil hayvan sepeti; kampanyalar; push bildirim; yetki taraması; yumuşak lansman</td><td>859</td></tr>
+</table>
+<p style="font-size:9pt;color:var(--gri)">Toplam 2.441 commit · 115 gün · günde ortalama 21 commit.</p>
+
+<h3>Çalışma biçimi</h3>
+<p>Proje boyunca üç alışkanlık tutuldu ve bunlar kod kadar belirleyici oldu:</p>
+<ul>
+<li><b>Kararlar yazılıyor.</b> 102 numaralı karar kaydı var; her biri gerekçesiyle birlikte.
+Bir karar değiştiğinde eskisi silinmiyor, üstüne yazılıyor — böylece "neden böyle yapmıştık"
+sorusu üç ay sonra da cevaplanabiliyor.</li>
+<li><b>Tuzaklar bir kez öğreniliyor.</b> Canı yakan her hata (Android'de font ağırlığı aileyi
+düşürür, <code>touch-action: pan-x</code> dikey kaydırmayı iptal eder, <code>NEXT_PUBLIC_*</code>
+derleme anında gömülür…) kalıcı bir nota dönüştürüldü. 100'den fazla proje belgesi var.</li>
+<li><b>"Bitti" kanıt ister.</b> Bir iş, birincil eylemi uçtan uca çalıştırılmadan bitmiş
+sayılmıyor. Aşama sonlarında bağımsız bir denetim turu koşuluyor.</li>
+</ul>
+
+<h3>Yapay zekâ destekli geliştirme</h3>
+<p>Projenin kodu baştan sona <b>Claude Code</b> ile, yapay zekâ eşliğinde yazıldı. Bu bir
+dipnot değil, çalışma biçiminin kendisi: tek kişilik bir ekibin dört ayda dört ayrı yüzeyi
+(API, web, mobil uygulama, yönetim paneli) bu ölçekte üretebilmesinin sebebi bu.</p>
+<p>Ama asıl öğrenilen şey, yukarıdaki üç alışkanlığın <b>neden</b> zorunlu olduğuydu. Yapay
+zekâ hızlı yazar; yanlış yazdığında da aynı hızda ve aynı güvenle yazar. Projeyi ayakta tutan
+şey, bu hıza karşı kurulan denetim düzeniydi:</p>
+<ul>
+<li><b>Kararlar insanın.</b> Ürün kapsamı, veri modeli, mimari seçimler, iş kuralları ve
+"bunu yapmıyoruz" demek — hepsi insan kararı olarak kaldı ve gerekçesiyle yazıya geçti.
+Yapay zekâya devredilen şey uygulama, karar değil.</li>
+<li><b>Ölçülmeyen iddia kabul edilmiyor.</b> "Çalışıyor" yerine çalıştığının kanıtı isteniyor.
+Bu belgede tek bir tahmini sayı olmamasının sebebi de aynı alışkanlık: rakamlar canlı
+veritabanından ve kod deposundan ölçülerek yazıldı.</li>
+<li><b>Sessiz hata sınıfları makineye devredildi.</b> İnsan dikkatinin de yapay zekânın da
+kaçırabileceği şeyler (yetkisiz bir yönetim ucu, ters kilit sırası, iOS/Android sapması)
+artık CI nöbetçileriyle yakalanıyor — 7 nöbetçi betik bu yüzden var.</li>
+<li><b>Bağımsız denetim turu.</b> Aşama sonlarında, kodu yazan bağlamdan ayrı bir denetim
+koşuluyor — kendi yazdığını gözden geçiren bir süreç kör noktalarını da birlikte taşır.</li>
+</ul>
+<p>76 uçtan uca test paketi ve 3.900 doğrulama, bu çalışma biçiminin doğal sonucu:
+hızlı üretilen kodun güvenilir olması, ancak üretim hızıyla orantılı bir doğrulama düzeniyle
+mümkün.</p>
+</section>
+
+<!-- ══════════════════ 13 ══════════════════ -->
+<section>
+<h2><span class="no">13</span>Bugünkü durum ve bilinçli eksikler</h2>
+<p class="giris">Portfolyoda bir projenin en inandırıcı kısmı, neyin bitmediğini de söylemesidir.</p>
+
+<h3>Canlıda olan</h3>
+<ul>
+<li>Vitrin, arama, işletme sayfaları, işletme kaydı ve başvuru akışı</li>
+<li>İşletme paneli (üç hizmet tipi için ayrı ayrı) ve 30 ekranlık yönetim paneli</li>
+<li>Mobil uygulama: Google Play kapalı testte, TestFlight dış test grubunda</li>
+<li>Harita ve adres sistemi, mesajlaşma, bildirimler, kampanyalar</li>
+<li>Günlük yedek + doğrulanmış geri yükleme provası</li>
+</ul>
+
+<h3>Bilinçli olarak açık bırakılanlar</h3>
+<table>
+<tr><td class="k">Gerçek ödeme</td><td>Sağlayıcı kararı (iyzico ↔ PayTR) şirket kuruluş takvimine bağlı. Akış hazır ve test edilmiş, adaptör bağlı değil.</td></tr>
+<tr><td class="k">Arz darboğazı</td><td>Canlıdaki işletmelerin tamamı demo. Pazaryerinin gerçek sorunu teknik değil: önce yeterli sayıda gerçek işletme gerekiyor. Yerel SEO sayfaları da bu yüzden bekletiliyor — arz gelmeden açılırsa boş sayfa indekslenir.</td></tr>
+<tr><td class="k">Dosya deposu yedeği</td><td>Veritabanı geri yükleme provası geçti, MinIO arşivi henüz denenmedi.</td></tr>
+<tr><td class="k">Fiziksel cihazda push</td><td>Emülatörde doğrulandı, gerçek telefonda görülmedi.</td></tr>
+<tr><td class="k">Sunucu tarafı izleme</td><td>Hata takibi planlandı, henüz tam kurulmadı.</td></tr>
+</table>
+
+<h3>Sırada ne var</h3>
+<p>Gerçek ödeme adaptörü ve 3DS akışı; e-arşiv fatura ve stopaj/KDV süreçleri; mobil
+uygulamanın yeni geliştirme turu; arz tarafı kazanımı; 2027 başında işletim sistemi
+yükseltmesi için sunucu taşıması.</p>
+</section>
+
+<!-- ══════════════════ 14 ══════════════════ -->
+<section>
+<h2><span class="no">14</span>Portfolyo için hazır metinler</h2>
+<p class="giris">Aşağıdaki metinler doğrudan kullanılabilir. Düz metin hâlleri
+<i>08-metinler/</i> klasöründe.</p>
+
+<div class="kopya">
+<div class="bas">Tek cümle</div>
+<p>Pet otel, pet taksi ve pet kuaför hizmetlerini emanet (escrow) ödeme modeliyle tek platformda
+toplayan, web + mobil + işletme paneli + yönetim panelinden oluşan çok taraflı bir pazaryeri.</p>
+</div>
+
+<div class="kopya">
+<div class="bas">Kısa (~50 kelime)</div>
+<p>Patimania, evcil hayvan sahipleriyle pet otel, taksi ve kuaför işletmelerini buluşturan bir
+pazaryeri. Müşteri arar, seçer ve güvenli öder; para işletmeye hizmet tamamlanana kadar geçmez.
+Ürünün tamamı — Next.js vitrin, React Native uygulama, NestJS API, PostgreSQL veri modeli,
+işletme ve yönetim panelleri — dört ayda sıfırdan geliştirildi ve canlıya alındı.</p>
+</div>
+
+<div class="kopya">
+<div class="bas">Orta (~120 kelime)</div>
+<p>Patimania, üç farklı pet hizmetini tek platformda toplayan çok taraflı bir pazaryeri.
+Projenin belirleyici zorluğu, bu üç hizmetin gerçekten farklı zaman ve kapasite modellerine
+sahip olması: otel gece bazlı ve odaya bağlı, kuaför saat bazlı ve çalışana bağlı, taksi ise
+sabit fiyatı olmayan bir teklif pazarı.</p>
+<p>Çift rezervasyon riski uygulama kodunda değil, PostgreSQL dışlama kısıtıyla
+(<code>EXCLUDE USING gist</code> + <code>tstzrange</code>) veritabanı seviyesinde imkânsız
+kılındı. Para akışı emanet modeliyle kurgulandı: tutar bloke edilir, hizmet tamamlanınca
+komisyon kesilip işletmeye aktarılır; tüm geçişler silinemez bir deftere yazılır.</p>
+<p>Web (Next.js 15), mobil uygulama (React Native + Expo), API (NestJS + Prisma) ve ortak iş
+mantığı paketi tek monorepoda. 76 uçtan uca test paketi, 3.900 doğrulama ve 7 CI nöbetçisiyle
+korunuyor.</p>
+</div>
+
+<div class="kopya">
+<div class="bas">Öne çıkarılacak teknik başlıklar</div>
+<ul style="margin-bottom:0">
+<li>Veritabanı seviyesinde çakışma engelleme (<code>EXCLUDE</code> kısıtı + zaman aralığı tipi)</li>
+<li>Emanet (escrow) ödeme modeli ve yalnız-eklenebilir para defteri</li>
+<li>Kişi başına yetki sistemi + yetkisiz ucu derleme anında yakalayan CI nöbetçisi</li>
+<li>Üç yüzeyde (web, app, API) paylaşılan tek iş mantığı paketi</li>
+<li>Coğrafi arama (PostGIS) + harita sağlayıcısı yedeklemeli adres çözümleme</li>
+<li>OTA güncellemeli mobil yayın hattı; staging'de doğrulanan imajın prod'a terfisi</li>
+<li>76 uçtan uca test paketi / 3.900 doğrulama</li>
+</ul>
+</div>
+
+<div class="kopya">
+<div class="bas">Rol tanımı</div>
+<p>Ürün tasarımı, veri modeli, backend, web, mobil uygulama, tasarım sistemi, sunucu kurulumu,
+yayın hattı ve mağaza süreçlerinin tamamı tek kişi tarafından yürütüldü. Kod, baştan sona
+Claude Code ile yapay zekâ eşliğinde yazıldı; ürün ve mimari kararlar ile doğrulama düzeni
+(76 uçtan uca test paketi, 7 CI nöbetçisi, yazılı karar kaydı) geliştiriciye ait.</p>
+</div>
+</section>
+
+<!-- ══════════════════ 15 ══════════════════ -->
+<section>
+<h2><span class="no">15</span>Dosya dizini</h2>
+<table>
+<tr><th style="width:48mm">Klasör</th><th>İçinde ne var</th></tr>
+<tr><td class="k">01-marka</td><td>Logo (renkli, beyaz, düz beyaz), uygulama ikonu, Google Play öne çıkan görseli</td></tr>
+<tr><td class="k">02-web-masaustu</td><td>Canlı siteden 10 masaüstü ekran görüntüsü (2× retina, 1440×900)</td></tr>
+<tr><td class="k">03-web-mobil</td><td>Canlı siteden 4 mobil ekran görüntüsü (2× retina, 390×844)</td></tr>
+<tr><td class="k">04-paneller</td><td>İşletme paneli (6) ve yönetim paneli (6) ekran görüntüleri — demo veriyle</td></tr>
+<tr><td class="k">05-mobil-app</td><td>41 mobil uygulama ekranı, dosya adında ne gösterdiği yazılı</td></tr>
+<tr><td class="k">06-mimari</td><td>Sistem mimarisi, rezervasyon/para akışı ve veri modeli diyagramları (PNG)</td></tr>
+<tr><td class="k">07-ek-belgeler</td><td>Veri yapısı PDF'i (68 tablonun tamamı), proje tanıtım belgesi, uygulama ekranları sunumu, Ağustos raporu</td></tr>
+<tr><td class="k">08-metinler</td><td>Bu belgedeki hazır metinlerin düz metin hâli + ölçülmüş rakam listesi</td></tr>
+</table>
+
+<div class="dipnot">
+<b>Ölçüm notu.</b> Kod satırı ve dosya sayıları depodan (<code>node_modules</code>, derleme
+çıktıları ve native build klasörleri hariç); tablo, yabancı anahtar ve migration sayıları canlı
+PostgreSQL veritabanından; commit sayıları git geçmişinden 24 Ekim 2026'da ölçülmüştür.
+Panel ekran görüntülerindeki parasal tutarlar demo verisidir.
+</div>
+</section>
+
+</body></html>
