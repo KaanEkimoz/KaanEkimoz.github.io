@@ -80,15 +80,6 @@ export const copy = {
   skills: {
     title: { en: 'Tech Stack', tr: 'Tech Stack' },
   },
-  evals: {
-    title: { en: 'Test results', tr: 'Test sonuçları' },
-    assessment: { en: 'Assessment', tr: 'Test' },
-    percentile: { en: 'Percentile', tr: 'Yüzdelik dilim' },
-    caption: {
-      en: 'TestGorilla assessments, September 2026. Percentile among all test takers; the shaded band is the top 10%.',
-      tr: 'TestGorilla değerlendirmeleri, Eylül 2026. Tüm katılımcılar arasındaki yüzdelik dilim; taralı bölge ilk %10.',
-    },
-  },
   games: {
     title: { en: 'Where I started', tr: 'Başladığım yer' },
     all: { en: 'All projects', tr: 'Tüm projeler' },
@@ -98,7 +89,7 @@ export const copy = {
     },
   },
   writing: {
-    title: { en: 'Writing', tr: 'Yazılar' },
+    title: { en: 'Blog Posts', tr: 'Blog Yazıları' },
     all: { en: 'All posts →', tr: 'Tüm yazılar →' },
   },
   contact: {
@@ -153,7 +144,6 @@ export const copy = {
     method: { en: 'How I use AI', tr: 'Yapay zekâ' },
     career: { en: 'Career', tr: 'Kariyer' },
     skills: { en: 'Tech Stack', tr: 'Tech Stack' },
-    evals: { en: 'Evals', tr: 'Değerlendirme' },
     games: { en: 'Games', tr: 'Oyunlar' },
     contact: { en: 'Contact', tr: 'İletişim' },
   },
@@ -190,7 +180,7 @@ export const QA: { id: string; q: L10n; a: L10n; stats?: Record<Lang, string[]>;
       en: 'Taking a product from idea to release: data modelling and backend APIs, web and mobile interfaces, CI and deployment, and working with AI agents under checks I set up. In TestGorilla assessments in September 2026 I scored in the 99th percentile for .NET, React and artificial intelligence, the 98th for Microsoft Azure and the 97th for English.',
       tr: 'Bir ürünü fikirden yayına taşımak: veri modeli ve arka uç API’leri, web ve mobil arayüzler, CI ve yayın süreci, yapay zekâ ajanlarıyla kendi kurduğum denetimler altında çalışmak. Eylül 2026’daki TestGorilla değerlendirmelerinde .NET, React ve yapay zekâda 99., Microsoft Azure’da 98., İngilizcede 97. yüzdelik dilimde yer aldım.',
     },
-    src: ['skills', 'evals'],
+    src: ['skills'],
   },
   {
     id: 'stack',
