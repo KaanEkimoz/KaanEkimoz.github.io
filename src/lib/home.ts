@@ -13,7 +13,6 @@ export const pick = (v: L10n | string, lang: Lang): string => (typeof v === 'str
 
 export const copy = {
   hero: {
-    eyebrow: { en: 'Kaan Usta · Istanbul', tr: 'Kaan Usta · İstanbul' },
     title: { en: 'Full-stack engineer shipping products <em>end to end</em>.', tr: 'Ürünleri <em>uçtan uca</em> geliştiren <span style="white-space:nowrap">full-stack</span> mühendis.' },
     lede: {
       en: "I'm Kaan. I build the backend, the web and mobile apps, and the pipeline that deploys them. Right now that's Patimania, as its only engineer.",

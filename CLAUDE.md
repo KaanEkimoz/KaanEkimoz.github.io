@@ -72,7 +72,7 @@ These come from mistakes made in earlier sessions. Follow them in every session,
 ## Site structure
 
 ```
-/                    hero (data canvas + Q&A box), Patimania, how I work, career, skills, evals, games, latest posts, contact
+/                    hero (name + title over the data canvas), intro + Q&A box, Patimania, how I work, career, skills, evals, games, latest posts, contact
 /projects[/<slug>]   grid with filter pills (All | Products & Web | Games) and detail pages
 /blog[/<slug>]       posts (md / mdx)
 /brickcrack-privacy  hidden, for App Store Connect (iOS build name "BrickCrack" = Brick Game)
