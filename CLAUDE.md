@@ -4,7 +4,7 @@ Context for Claude sessions working on this repo (local or cloud). The repo is p
 
 ## Owner and how to work with him
 
-- **Kaan Usta** (Yusuf Kaan Usta), based in Türkiye. Full-stack engineer who builds Patimania (Next.js, NestJS, Expo); Unity/C# game developer since 2020. The site presents him as a full-stack engineer, with games as where he started.
+- **Kaan Usta** (Yusuf Kaan Usta), based in Türkiye. Full-stack developer who builds Patimania (Next.js, NestJS, Expo); Unity/C# game developer since 2020. The site presents him as a full-stack developer (Kaan, 26 Oct 2026: "Full-Stack Developer", no "AI", not "engineer"), with games as where he started.
 - Talk to him in **Turkish**, naturally (not translated-sounding). He gives a lot of autonomy. Site PRs merge without asking (see below); still confirm anything else hard to undo (deleting content, Worker deploys, D1 migrations, history rewrites).
 - His internet drops often: re-read this file and the code before asking where things were left.
 - Plans: write only what will be done — no "out of scope / v2" sections unless he asks what else is possible.

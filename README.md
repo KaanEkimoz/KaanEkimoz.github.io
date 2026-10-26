@@ -1,6 +1,6 @@
 # kaanusta.dev
 
-Personal site and blog for **Kaan Usta** — full-stack engineer (NestJS, Next.js, React Native), building Patimania end to end; Unity / C# games before that.
+Personal site and blog for **Kaan Usta** — full-stack developer (NestJS, Next.js, React Native), building Patimania end to end; Unity / C# games before that.
 
 **Live:** [kaanusta.dev](https://kaanusta.dev)
 

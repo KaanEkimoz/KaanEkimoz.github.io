@@ -4,7 +4,7 @@ platform: Web
 genres: ["Marketplace", "SaaS", "Pet-tech"]
 year: 2026
 duration: "Jun 2026 — ongoing"
-role: "Full-stack engineer"
+role: "Full-stack developer"
 description: "A multi-sided marketplace for pet-hotel, grooming, and pet-taxi services in Türkiye. Payments are held in escrow via iyzico until the service is confirmed complete. Web + iOS + Android, in soft launch."
 techStack:
   - "Next.js 15"
