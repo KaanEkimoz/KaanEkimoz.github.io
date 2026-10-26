@@ -1,0 +1,194 @@
+---
+/**
+ * Full-screen image viewer for project screenshots. Any <a data-lightbox>
+ * inside a [data-shots] row opens it, on project pages and inside the project
+ * modal alike (the listeners are delegated, so injected HTML works). Arrows,
+ * swipe and the buttons step through the row; Escape or a tap anywhere
+ * but the buttons closes it. The same script scrolls the row from its arrow buttons.
+ */
+---
+
+<div class="lb" data-lightbox-root transition:persist="lightbox" hidden role="dialog" aria-modal="true" aria-label="Screenshot">
+  <img alt="" />
+  <button class="lb-btn lb-close" type="button" aria-label="Close" data-lb-close>×</button>
+  <button class="lb-btn lb-prev" type="button" aria-label="Previous" data-lb-prev>‹</button>
+  <button class="lb-btn lb-next" type="button" aria-label="Next" data-lb-next>›</button>
+  <span class="lb-count" aria-live="polite"></span>
+</div>
+
+<style>
+  .lb {
+    position: fixed;
+    inset: 0;
+    z-index: 80;
+    display: grid;
+    grid-template: minmax(0, 1fr) / minmax(0, 1fr);
+    place-items: center;
+    padding: 56px 16px;
+    background: rgb(4 8 18 / 0.94);
+    backdrop-filter: blur(6px);
+    touch-action: pan-y;
+  }
+  .lb[hidden] {
+    display: none;
+  }
+  /* Fills the stage so the thumbnail shown first is as big as the full image. */
+  .lb img {
+    width: 100%;
+    height: 100%;
+    max-width: 1400px;
+    object-fit: contain;
+    user-select: none;
+    -webkit-user-drag: none;
+  }
+  .lb-btn {
+    position: absolute;
+    display: grid;
+    place-items: center;
+    width: 46px;
+    height: 46px;
+    border-radius: 50%;
+    border: 1px solid rgb(255 255 255 / 0.18);
+    background: rgb(255 255 255 / 0.08);
+    color: #fff;
+    font: 400 28px/1 system-ui, sans-serif;
+    cursor: pointer;
+    transition: background 0.2s;
+  }
+  .lb-btn:hover {
+    background: rgb(61 123 255 / 0.5);
+  }
+  .lb-close {
+    top: 14px;
+    right: 14px;
+  }
+  .lb-prev {
+    left: 14px;
+    top: 50%;
+    translate: 0 -50%;
+  }
+  .lb-next {
+    right: 14px;
+    top: 50%;
+    translate: 0 -50%;
+  }
+  .lb-count {
+    position: absolute;
+    bottom: 18px;
+    left: 50%;
+    translate: -50% 0;
+    font: 500 0.8rem 'JetBrains Mono', ui-monospace, monospace;
+    color: rgb(255 255 255 / 0.75);
+  }
+  @media (max-width: 640px) {
+    .lb {
+      padding: 64px 0;
+    }
+    .lb-prev,
+    .lb-next {
+      top: auto;
+      bottom: 6px;
+      translate: none;
+    }
+  }
+  :global(html.lb-open) {
+    overflow: hidden;
+  }
+</style>
+
+<script>
+  const root = document.querySelector<HTMLElement>('[data-lightbox-root]')!;
+  const img = root.querySelector('img')!;
+  const count = root.querySelector<HTMLElement>('.lb-count')!;
+  let items: HTMLAnchorElement[] = [];
+  let index = 0;
+  let lastFocus: HTMLElement | null = null;
+
+  const show = (i: number) => {
+    index = (i + items.length) % items.length;
+    const a = items[index];
+    const thumb = a.querySelector('img');
+    // Show the already loaded thumbnail at once, then swap in the full size.
+    img.src = thumb?.currentSrc || a.href;
+    img.alt = thumb?.alt ?? '';
+    const full = new Image();
+    full.onload = () => {
+      if (items[index] === a) img.src = a.href;
+    };
+    full.src = a.href;
+    count.textContent = `${index + 1} / ${items.length}`;
+  };
+  const open = (a: HTMLAnchorElement) => {
+    const row = a.closest('[data-shots]');
+    items = row ? [...row.querySelectorAll<HTMLAnchorElement>('a[data-lightbox]')] : [a];
+    lastFocus = document.activeElement as HTMLElement | null;
+    root.hidden = false;
+    document.documentElement.classList.add('lb-open');
+    show(items.indexOf(a));
+    root.querySelector<HTMLElement>('[data-lb-close]')!.focus();
+  };
+  const close = () => {
+    root.hidden = true;
+    img.removeAttribute('src');
+    // Keep the project modal's own scroll lock if it is still open.
+    document.documentElement.classList.remove('lb-open');
+    lastFocus?.focus();
+  };
+
+  // Capture on window: runs before the project modal's and the router's handlers.
+  window.addEventListener(
+    'click',
+    (e) => {
+      const t = e.target as HTMLElement;
+      const a = t.closest?.<HTMLAnchorElement>('a[data-lightbox]');
+      if (a) {
+        e.preventDefault();
+        e.stopImmediatePropagation();
+        open(a);
+        return;
+      }
+      const step = t.closest?.('[data-shots-prev], [data-shots-next]');
+      if (step) {
+        const row = step.closest('section')?.querySelector<HTMLElement>('[data-shots]');
+        row?.scrollBy({ left: (step.hasAttribute('data-shots-prev') ? -1 : 1) * row.clientWidth * 0.8, behavior: 'smooth' });
+        return;
+      }
+      if (root.hidden || !root.contains(t)) return;
+      e.stopImmediatePropagation();
+      if (swiped) return void (swiped = false);
+      if (t.closest('[data-lb-prev]')) show(index - 1);
+      else if (t.closest('[data-lb-next]')) show(index + 1);
+      else close();
+    },
+    true,
+  );
+  window.addEventListener(
+    'keydown',
+    (e) => {
+      if (root.hidden) return;
+      if (e.key === 'Escape') close();
+      else if (e.key === 'ArrowLeft') show(index - 1);
+      else if (e.key === 'ArrowRight') show(index + 1);
+      else return;
+      e.preventDefault();
+      e.stopImmediatePropagation();
+    },
+    true,
+  );
+  // Swipe between shots on touch screens.
+  // A swipe is not a tap: the click after it must not close the viewer.
+  let startX = 0;
+  let swiped = false;
+  root.addEventListener('pointerdown', (e) => {
+    startX = e.clientX;
+    swiped = false;
+  });
+  root.addEventListener('pointerup', (e) => {
+    const dx = e.clientX - startX;
+    if (Math.abs(dx) > 50) {
+      swiped = true;
+      show(index + (dx < 0 ? 1 : -1));
+    }
+  });
+  document.addEventListener('astro:before-swap', () => { if (!root.hidden) close(); });
+</script>
