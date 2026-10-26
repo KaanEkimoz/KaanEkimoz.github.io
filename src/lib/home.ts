@@ -25,7 +25,7 @@ export const copy = {
       { n: { en: '6+ yrs', tr: '6+ yıl' }, l: { en: 'Experience', tr: 'Deneyim' } },
     ],
     note: { en: 'better code, better tomorrow :)', tr: 'daha iyi kod, daha iyi yarın :)' },
-    now: { en: 'Currently Working On', tr: 'Şu An Üzerinde Çalıştığım' },
+    now: { en: 'Currently Working On', tr: 'Üzerine Çalışıyorum' },
     nowDesc: { en: 'Pet Services Marketplace', tr: 'Pet Hizmetleri Pazaryeri' },
     nowLink: { en: 'View Project', tr: 'Projeyi Gör' },
     stack: { en: 'Tech Stack', tr: 'Tech Stack' },
