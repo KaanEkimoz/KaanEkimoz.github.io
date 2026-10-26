@@ -9,9 +9,9 @@
 
 export const SITE = {
   name: 'kaanusta.dev',
-  title: 'Kaan Usta — Full-Stack Engineer',
+  title: 'Kaan Usta — Full-Stack Developer',
   description:
-    'Full-stack engineer in Istanbul. I build and ship complete products: backend, web, mobile and the pipeline that deploys them.',
+    'Full-stack developer in Istanbul. I build and ship complete products: backend, web, mobile and the pipeline that deploys them.',
   url: 'https://kaanusta.dev',
   author: 'Kaan Usta',
   locale: 'en-US',

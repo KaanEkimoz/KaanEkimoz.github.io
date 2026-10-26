@@ -86,9 +86,9 @@ const en: Dict = {
   },
   toggle: { theme: 'Toggle theme', language: 'Toggle language' },
   meta: {
-    siteTitle: 'Kaan Usta — Full-Stack Engineer',
+    siteTitle: 'Kaan Usta — Full-Stack Developer',
     siteDescription:
-      'Full-stack engineer in Istanbul. I build and ship complete products: NestJS and PostgreSQL backends, Next.js web apps, React Native mobile apps and the pipelines that deploy them.',
+      'Full-stack developer in Istanbul. I build and ship complete products: NestJS and PostgreSQL backends, Next.js web apps, React Native mobile apps and the pipelines that deploy them.',
     blogTitle: 'Blog',
     blogDescription: 'Devlogs, build notes and things I learned shipping software.',
     projectsTitle: 'Projects',
@@ -134,9 +134,9 @@ const tr: Dict = {
   },
   toggle: { theme: 'Temayı değiştir', language: 'Dili değiştir' },
   meta: {
-    siteTitle: 'Kaan Usta — Full-Stack Yazılım Mühendisi',
+    siteTitle: 'Kaan Usta — Full-Stack Developer',
     siteDescription:
-      "İstanbul'da full-stack yazılım mühendisi. Ürünleri uçtan uca kurup yayına alıyorum: NestJS ve PostgreSQL arka uçlar, Next.js web uygulamaları, React Native mobil uygulamalar ve bunları dağıtan altyapı.",
+      "İstanbul'da full-stack geliştiriciyim. Ürünleri uçtan uca kurup yayına alıyorum: NestJS ve PostgreSQL arka uçlar, Next.js web uygulamaları, React Native mobil uygulamalar ve bunları dağıtan altyapı.",
     blogTitle: 'Blog',
     blogDescription: 'Geliştirme günlüklerim, yapım notlarım ve yazılım yayımlarken öğrendiklerim.',
     projectsTitle: 'Projeler',

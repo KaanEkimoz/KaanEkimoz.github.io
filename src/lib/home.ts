@@ -14,7 +14,7 @@ export const pick = (v: L10n | string, lang: Lang): string => (typeof v === 'str
 export const copy = {
   hero: {
     hi: { en: "Hi, I'm Kaan", tr: 'Merhaba, ben Kaan' },
-    title: { en: 'Full-Stack AI Developer', tr: 'Full-Stack AI Developer' },
+    title: { en: 'Full-Stack Developer', tr: 'Full-Stack Developer' },
     lede: {
       en: "Based in Istanbul, I build end-to-end products. By collaborating with AI coding agents, I manage everything from database architecture to UI design, code review, and testing.",
       tr: "İstanbul'da ürünleri baştan sona geliştiriyorum. Yapay zekâ kodlama ajanlarıyla birlikte çalışıyorum; veritabanı mimarisinden arayüz tasarımına, kod incelemesinden testlere kadar her şeyi ben yönetiyorum.",
@@ -25,9 +25,9 @@ export const copy = {
       { n: { en: '6+ yrs', tr: '6+ yıl' }, l: { en: 'Experience', tr: 'Deneyim' } },
     ],
     note: { en: 'better code, better tomorrow :)', tr: 'daha iyi kod, daha iyi yarın :)' },
-    now: { en: 'Currently Working On', tr: 'Şu an üzerinde çalıştığım' },
-    nowDesc: { en: 'Pet Services Marketplace', tr: 'Evcil hayvan hizmetleri pazaryeri' },
-    nowLink: { en: 'View Project', tr: 'Projeyi gör' },
+    now: { en: 'Currently Working On', tr: 'Üzerine Çalışıyorum' },
+    nowDesc: { en: 'Pet Services Marketplace', tr: 'Pet Hizmetleri Pazaryeri' },
+    nowLink: { en: 'View Project', tr: 'Projeyi Gör' },
     stack: { en: 'Tech Stack', tr: 'Tech Stack' },
     photoNote: { en: 'same guy, bigger dreams :)', tr: 'aynı Kaan, daha büyük hayaller :)' },
   },
@@ -105,11 +105,11 @@ export const copy = {
   },
   resume: {
     title: { en: 'Resume', tr: 'Özgeçmiş' },
-    metaDescription: { en: 'Resume of Kaan Usta, full-stack AI developer in Istanbul.', tr: "Kaan Usta'nın özgeçmişi; İstanbul'da full-stack AI developer." },
+    metaDescription: { en: 'Resume of Kaan Usta, full-stack developer in Istanbul.', tr: "Kaan Usta'nın özgeçmişi; İstanbul'da full-stack developer." },
     print: { en: 'Download PDF', tr: 'PDF indir' },
     summary: {
       en: "Full-stack developer in Istanbul. Since June 2026 I've been building Patimania, a pet-services marketplace with a website, an iOS and Android app, and business and admin panels. I build with AI coding agents and check the work with tests and CI guards I wrote myself. Before that I spent six years making games in Unity.",
-      tr: "İstanbul'da full-stack geliştiriciyim. Haziran 2026'dan beri web sitesi, iOS ve Android uygulaması, işletme ve yönetim panelinden oluşan bir evcil hayvan hizmetleri pazaryeri olan Patimania'yı geliştiriyorum. Yapay zekâ kodlama ajanlarıyla geliştiriyor, işi kendi yazdığım testler ve CI nöbetçileriyle denetliyorum. Öncesinde altı yıl Unity ile oyun geliştirdim.",
+      tr: "İstanbul'da full-stack geliştiriciyim. Haziran 2026'dan beri web sitesi, iOS ve Android uygulaması, işletme ve yönetim panelinden oluşan bir pet hizmetleri pazaryeri olan Patimania'yı geliştiriyorum. Yapay zekâ kodlama ajanlarıyla geliştiriyor, işi kendi yazdığım testler ve CI nöbetçileriyle denetliyorum. Öncesinde altı yıl Unity ile oyun geliştirdim.",
     },
     experience: { en: 'Experience', tr: 'Deneyim' },
     education: { en: 'Education', tr: 'Eğitim' },
@@ -251,7 +251,7 @@ export const CAREER: { lane: 0 | 1 | 2; s: number; e: number; title: L10n; at: s
     d: { en: 'Core gameplay systems for mobile games in a team of three.', tr: 'Üç kişilik ekipte mobil oyunların temel oynanış sistemleri.' }, tools: ['unity', 'csharp', 'mobile', 'gameplay'] },
   { lane: 0, s: 2025.83, e: 2026.08, title: { en: 'Retail Technology Specialist', tr: 'Perakende Teknolojileri Uzmanı' }, at: 'Gurmenin Sepeti', when: { en: 'Nov 2025 — Jan 2026', tr: 'Kas 2025 — Oca 2026' },
     d: { en: "Took a grocery chain's POS, barcode and scale systems live across its stores, plus its online sales system.", tr: 'Market zincirinin kasa, barkod ve terazi sistemlerini mağazalarda canlıya aldım; online satış sistemini de yayına açtım.' }, tools: ['pos', 'barcode', 'scale', 'cart'] },
-  { lane: 0, s: 2026.42, e: 2026.85, title: { en: 'Full-Stack Engineer', tr: 'Full-Stack Engineer' }, at: 'Patimania', when: { en: 'Jun 2026 — now', tr: 'Haz 2026 — devam' },
+  { lane: 0, s: 2026.42, e: 2026.85, title: { en: 'Full-Stack Developer', tr: 'Full-Stack Developer' }, at: 'Patimania', when: { en: 'Jun 2026 — now', tr: 'Haz 2026 — devam' },
     d: { en: 'Architecture, backend, web, mobile, design system, escrow payments and CI/CD.', tr: 'Mimari, arka uç, web, mobil, tasarım sistemi, Ödeme Güvencesi altyapısı ve CI/CD.' }, tools: ['nextdotjs', 'nestjs', 'postgresql', 'expo'], more: ['typescript', 'react', 'prisma', 'docker', 'nginx', 'githubactions', 'minio', 'iyzico'] },
 ];
 

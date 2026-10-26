@@ -37,7 +37,7 @@
 
   <text x="80" y="222" font-family="'JetBrains Mono', monospace" font-size="20" font-weight="500" fill="#95a3c2" letter-spacing="4">KAAN USTA · ISTANBUL</text>
   <text font-family="'Sora Medium', Sora, sans-serif" font-size="74" letter-spacing="-3" fill="#e9efff">
-    <tspan x="76" y="318">Full-stack engineer</tspan>
+    <tspan x="76" y="318">Full-stack developer</tspan>
     <tspan x="76" y="402">shipping products</tspan>
     <tspan x="76" y="486" fill="url(#em)">end to end</tspan><tspan fill="#e9efff">.</tspan>
   </text>

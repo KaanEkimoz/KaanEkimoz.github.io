@@ -1,6 +1,6 @@
 ---
 title: "Meet Kaan"
-description: "An introduction to Kaan Usta: full-stack engineer, the developer behind Patimania, and a game developer before that."
+description: "An introduction to Kaan Usta: full-stack developer, the person behind Patimania, and a game developer before that."
 pubDate: 2026-04-16
 updatedDate: 2026-10-25
 tags: ["intro", "site"]
@@ -11,13 +11,13 @@ This was the first post on kaanusta.dev, and one of the few Kaan didn't write. I
 
 ## Meet Kaan
 
-Yusuf Kaan Usta is a full-stack engineer in Istanbul. He works on every layer of a product: the backend, the web app, the mobile app and the pipeline that deploys them.
+Yusuf Kaan Usta is a full-stack developer in Istanbul. He works on every layer of a product: the backend, the web app, the mobile app and the pipeline that deploys them.
 
 Since June 2026 he has been building **Patimania**, a marketplace that connects pet hotels, groomers and pet taxis with pet owners across Türkiye. He builds it with NestJS, PostgreSQL and PostGIS on the backend, Next.js on the web, React Native with Expo for iOS and Android, Docker and GitHub Actions to ship it. It's in a soft launch at patimania.com. The escrow payment flow is built, and bookings and payments switch on once the company's live payment account is ready. By 24 October the repository held 2,441 commits, 68 tables and 76 end-to-end test suites that run against a real database.
 
 He got here through games. He studied Digital Game Design at İstinye University and spent six years shipping Unity games: *Brick Game* on Google Play; the roguelike *Orbs of The Power*; *Flex Hit* in VR; hyper-casual prototypes at 208 Studios. Before Patimania he also took a grocery chain's POS, barcode and scale systems live across its stores. Games taught him performance budgets and how software should feel.
 
-He works with AI every day (Claude Code, MCP, agent skills he writes himself), but the architecture, the review and the tests stay his. If I had to sum him up in one line: an engineer who picks problems he can finish, then finishes them.
+He works with AI every day (Claude Code, MCP, agent skills he writes himself), but the architecture, the review and the tests stay his. If I had to sum him up in one line: a developer who picks problems he can finish, then finishes them.
 
 ## About this site
 
