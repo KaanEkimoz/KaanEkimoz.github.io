@@ -29,30 +29,34 @@ gallery:
   - "../../assets/projects/patimania/gallery/01-home.png"
   - "../../assets/projects/patimania/gallery/02-search.png"
   - "../../assets/projects/patimania/gallery/03-business-profile.png"
+  - "../../assets/projects/patimania/app/01-home.jpg"
+  - "../../assets/projects/patimania/app/02-hotels.jpg"
+  - "../../assets/projects/patimania/app/03-room.jpg"
+  - "../../assets/projects/patimania/app/04-groomer.jpg"
+  - "../../assets/projects/patimania/app/05-taxi-offers.jpg"
+  - "../../assets/projects/patimania/app/06-booking.jpg"
+  - "../../assets/projects/patimania/app/07-reviews.jpg"
+  - "../../assets/projects/patimania/app/08-driver.jpg"
   - "../../assets/projects/patimania/gallery/04-business-panel.png"
   - "../../assets/projects/patimania/gallery/05-room-calendar.png"
   - "../../assets/projects/patimania/gallery/06-admin-stats.png"
   - "../../assets/projects/patimania/gallery/07-mobile-home.png"
   - "../../assets/projects/patimania/gallery/08-mobile-business.png"
+  - "../../assets/projects/patimania/arch/01-system.png"
+  - "../../assets/projects/patimania/arch/02-booking-money.png"
+  - "../../assets/projects/patimania/arch/03-data-model.png"
 order: 0
 ---
 
-Patimania is a multi-sided marketplace for pet-hotel, grooming, and pet-taxi services in Türkiye. Payments are held in escrow via iyzico and only released once the service is confirmed complete. I'm building it end to end, from the data model to devops and from the backend to the mobile app; the first commit was on 2 July 2026.
+Patimania is a marketplace for pet-hotel, grooming and pet-taxi services in Türkiye. Customers pay up front; iyzico holds the money in escrow and releases it to the business once the service is done. I work on every layer of it: data model, backend, web, mobile app and devops. The first commit was on 2 July 2026.
 
-It's in soft launch at patimania.com: the storefront, search and business onboarding are open, and the businesses listed so far are demo records. Real payments stay off until the payment provider is connected; the flow itself is tested. The mobile app is in Google Play closed testing and TestFlight external testing.
+It's in soft launch at patimania.com. The storefront, search and business sign-up are open, and the businesses listed so far are demo records. Real payments stay off until the payment provider is connected; the flow itself is tested. The app is in Google Play closed testing and TestFlight external testing.
 
-In numbers (measured on 24 October 2026): 2,441 commits in 115 days, 315,165 lines of TypeScript, 32 NestJS modules, 68 tables with 106 foreign keys, 124 migrations live, 128 web routes, 45 app screens, 76 end-to-end test suites with 3,900 assertions, 7 CI guard scripts and 102 written decision records.
-
-The code was written with Claude Code from start to finish. The decisions, the review and the checks around it are mine.
+In numbers (24 October 2026): 2,441 commits in 115 days, 315,165 lines of TypeScript, 68 tables, 45 app screens and 76 end-to-end test suites. The code was written with Claude Code; the decisions, the review and the checks around it are mine.
 
 ## Pieces I'm proud of
 
-- **Double-booking is a database-level impossibility.** A PostgreSQL `EXCLUDE` constraint over `(resource_id, tstzrange)` using `btree_gist` rejects overlapping time ranges for the same room or vehicle. If two customers race for the same slot, one write wins at the database — the application can't overbook even if the logic misbehaves. A 5–10 minute soft-hold sits on top for the payment window.
-- **Backend-authoritative money + double-entry ledger.** Prices, commissions, and release rules live server-side; the client can only propose. Behind the escrow flow is a double-entry ledger that tracks commission, business receivable, and VAT legs, with debit = credit invariants enforced on every write. Money fields are `numeric`, never `float`.
-- **Status-changing writes are conditional.** Approvals, cancellations, and refunds all run as `UPDATE ... WHERE status = 'pending'`. I measured the unconditional version — two concurrent approve calls really did produce two accepted rows both reporting success. Now they can't.
-- **RBAC sentinels caught a real vulnerability.** Admin endpoints are wired to per-user permissions, but forgetting a row *opens* access, not closes it. CI now fails the build if a new admin endpoint ships without a permission entry. That sentinel caught a live bug: support staff could resolve their own customer complaints solo.
-- **iOS ↔ Android parity harness.** A three-layer setup — a ledger of platform-branches (CI fails if the count moves), a deep-link parity checker across `app.json` / AASA / route table, and an on-device diagnostic that turns visual regressions into numbers. A silent iOS deep-link outage got caught this way; plain smoke tests were both green.
-
-## Constraints on purpose
-
-Hosted end-to-end in Türkiye on a Turkish VDS, no third-party CDN in front of the origin, so KVKK compliance stays boring instead of scary. Modular monolith — one repo, three deployables (api / web / mobile). First-party, cookieless visit logging with daily-rotated hashes and 3-decimal coordinate rounding, so businesses get "how many people viewed me" without a third-party analytics vendor in the path.
+- **No double bookings.** A PostgreSQL `EXCLUDE` constraint rejects overlapping bookings for the same room or vehicle, even if the app logic slips.
+- **Money lives on the server.** Prices and commission are computed server-side and recorded in a double-entry ledger.
+- **Race-safe status changes.** Approvals, cancellations and refunds are conditional updates, so two concurrent calls can't both succeed.
+- **CI guards.** The build fails if a new admin endpoint has no permission entry; this caught a real access bug.

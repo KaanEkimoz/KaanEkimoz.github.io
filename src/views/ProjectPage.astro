@@ -1,5 +1,5 @@
 ---
-import { Image } from 'astro:assets';
+import { Image, getImage } from 'astro:assets';
 import { render } from 'astro:content';
 import BaseLayout from '@layouts/BaseLayout.astro';
 import Tag from '@components/ui/Tag.astro';
@@ -20,8 +20,10 @@ const { title, platform, genres, year, duration, role, description, techStack, l
 // The cover is a branded marketing asset, not a screenshot: keep it out of
 // the Screenshots grid even when `gallery` lists it.
 const screenshots = coverImage ? gallery.filter((g) => g.src !== coverImage.src) : gallery;
-const wideShots = screenshots.filter((s) => s.width >= s.height);
-const tallShots = screenshots.filter((s) => s.width < s.height);
+// Full-size copies for the lightbox (Lightbox.astro); the strip shows small ones.
+const fullSize = await Promise.all(
+  screenshots.map((s) => getImage({ src: s, width: Math.min(s.width, s.width >= s.height ? 1800 : 900), format: 'webp' })),
+);
 
 // Secondary links, in display order. The live product URL gets the primary button.
 const external = [
@@ -38,7 +40,7 @@ const external = [
 ---
 
 <BaseLayout lang={lang} title={title} description={description}>
-  <article id="project-detail" class="wrap max-w-4xl pt-12 sm:pt-20">
+  <article id="project-detail" class="wrap max-w-4xl pt-12 sm:pt-20 pb-16 sm:pb-24">
     <a href={localizedPath('/projects', lang)} data-back class="eyebrow inline-block mb-8 hover:text-accent-1">
       {t('projectDetail.back', lang)}
     </a>
@@ -77,6 +79,44 @@ const external = [
       )
     }
 
+    {
+      screenshots.length > 0 && (
+        <section class="mb-12">
+          <div class="flex items-center justify-between gap-3 mb-4">
+            <h2 class="eyebrow">
+              {t('projectDetail.screenshots', lang)} <span class="text-text-300">· {screenshots.length}</span>
+            </h2>
+            {screenshots.length > 2 && (
+              <div class="flex gap-2">
+                <button type="button" data-shots-prev aria-label={lang === 'tr' ? 'Önceki' : 'Previous'} class="grid place-items-center w-9 h-9 rounded-full border border-border text-text-200 hover:border-accent-1 hover:text-accent-1 transition-colors">‹</button>
+                <button type="button" data-shots-next aria-label={lang === 'tr' ? 'Sonraki' : 'Next'} class="grid place-items-center w-9 h-9 rounded-full border border-border text-text-200 hover:border-accent-1 hover:text-accent-1 transition-colors">›</button>
+              </div>
+            )}
+          </div>
+          {/* One scrolling row at a fixed height, each shot at its own aspect; a tap opens the lightbox. */}
+          <div data-shots class="flex gap-3 overflow-x-auto snap-x snap-mandatory overscroll-x-contain pb-3 [scrollbar-width:thin]">
+            {screenshots.map((img, i) => (
+              <a
+                href={fullSize[i].src}
+                data-lightbox
+                class="group shrink-0 snap-start h-[190px] sm:h-[300px] rounded-xl border border-border overflow-hidden bg-bg-elev-2 hover:border-accent-1/60 transition-colors"
+                style={`aspect-ratio:${img.width}/${img.height}`}
+              >
+                <Image
+                  src={img}
+                  alt={`${title} ${i + 1}`}
+                  widths={img.width >= img.height ? [400, 800] : [200, 400]}
+                  sizes={img.width >= img.height ? '480px' : '140px'}
+                  loading={i < 4 ? 'eager' : 'lazy'}
+                  class="h-full w-full object-cover transition-transform duration-300 group-hover:scale-[1.03]"
+                />
+              </a>
+            ))}
+          </div>
+        </section>
+      )
+    }
+
     <dl class="grid sm:grid-cols-[1fr_1fr_2fr] gap-6 py-6 mb-12 border-y border-border">
       <div>
         <dt class="eyebrow mb-1.5">{t('projectDetail.role', lang)}</dt>
@@ -95,29 +135,5 @@ const external = [
     <div class="prose-content space-y-4 leading-relaxed max-w-2xl">
       <Content />
     </div>
-
-    {
-      screenshots.length > 0 && (
-        <section class="mt-16">
-          <h2 class="eyebrow mb-5">{t('projectDetail.screenshots', lang)}</h2>
-          {/* Landscape shots two per row, phone shots three per row, each at its own aspect. */}
-          {[wideShots, tallShots].map((group, g) => group.length > 0 && (
-            <div class:list={['grid gap-4 items-start mb-4', g === 0 ? 'sm:grid-cols-2' : 'grid-cols-2 sm:grid-cols-3']}>
-              {group.map((img) => (
-                <div class="rounded-xl border border-border overflow-hidden bg-bg-elev-2">
-                  <Image
-                    src={img}
-                    alt={`${title} ${screenshots.indexOf(img) + 1}`}
-                    widths={g === 0 ? [400, 800, 1200] : [300, 600]}
-                    sizes={g === 0 ? '(min-width: 768px) 440px, 100vw' : '(min-width: 768px) 290px, 50vw'}
-                    class="w-full h-auto"
-                  />
-                </div>
-              ))}
-            </div>
-          ))}
-        </section>
-      )
-    }
   </article>
 </BaseLayout>

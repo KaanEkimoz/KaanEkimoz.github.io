@@ -4,6 +4,7 @@ import { ClientRouter } from 'astro:transitions';
 import Header from '@components/Header.astro';
 import Footer from '@components/Footer.astro';
 import ProjectModal from '@components/ProjectModal.astro';
+import Lightbox from '@components/Lightbox.astro';
 import Cursor from '@components/Cursor.astro';
 import { SITE } from '@lib/constants';
 import { BCP47, DEFAULT_LOCALE, alternateUrl, t, type Lang } from '@lib/i18n';
@@ -151,6 +152,7 @@ const ogLocaleAlt = BCP47[altLang];
     </main>
     <Footer lang={lang} />
     <ProjectModal lang={lang} />
+    <Lightbox />
     <Cursor />
 
     {/* Scroll-triggered fade-in for elements with data-fade-in attribute. */}
