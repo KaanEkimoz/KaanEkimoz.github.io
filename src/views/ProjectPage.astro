@@ -94,7 +94,7 @@ const external = [
             )}
           </div>
           {/* One scrolling row at a fixed height, each shot at its own aspect; a tap opens the lightbox. */}
-          <div data-shots class="flex gap-3 overflow-x-auto snap-x snap-mandatory overscroll-x-contain pb-3 [scrollbar-width:thin]">
+          <div data-shots class="flex gap-3 overflow-x-auto snap-x snap-mandatory overscroll-x-contain select-none [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
             {screenshots.map((img, i) => (
               <a
                 href={fullSize[i].src}
