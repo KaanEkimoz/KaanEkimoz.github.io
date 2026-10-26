@@ -1,41 +1,18 @@
 ---
 /**
- * Futuristic cursor for mouse users: a crystal arrow drawn as the real
- * cursor image (so it never lags), plus a ring that trails it, turns into a
- * rotating reticle over anything clickable and bursts on click. Touch
- * devices keep the native cursor; reduced motion keeps the arrow only.
+ * Crystal cursor for mouse users: the classic arrow drawn as a lit 3D solid
+ * (extruded, with a raised ridge from the tip) on a canvas that follows the
+ * pointer. It leans the way it moves and settles when it stops; over
+ * anything clickable it turns cyan and a reticle ring spins round the tip;
+ * a click presses it into the page and sends out a ripple. The tip is the
+ * exact pointer position. Touch devices keep the native cursor, and text
+ * fields keep the text cursor. With reduced motion the arrow stays upright
+ * and the ring and ripple are left out.
  */
-
-// Upright crystal arrow in three tints: idle (blue), over a link (cyan),
-// pressed (indigo). A darker copy offset down-right gives it depth, two
-// bevel faces and an edge highlight give it the 3D look.
-const BODY = 'M4 2 L4 24.5 L9.6 19.4 L13.3 28 L17 26.4 L13.4 18 L21 18 Z';
-const arrow = (light: string, mid: string, dark: string, deep: string) =>
-  `<svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 32 32">` +
-  `<defs><linearGradient id="g" x1="0" y1="0" x2=".9" y2="1">` +
-  `<stop offset="0" stop-color="${light}"/><stop offset=".55" stop-color="${mid}"/><stop offset="1" stop-color="${dark}"/>` +
-  `</linearGradient></defs>` +
-  `<path d="${BODY}" transform="translate(1.8 1.8)" fill="${deep}" stroke="${deep}" stroke-width="1.4" stroke-linejoin="round"/>` +
-  `<path d="${BODY}" fill="url(#g)" stroke="#06103a" stroke-width="1.1" stroke-linejoin="round"/>` +
-  `<path d="M4 2 L13.4 18 L21 18 Z" fill="#000" fill-opacity=".16"/>` +
-  `<path d="M4 2 L4 24.5 L9.6 19.4 L13.4 18 Z" fill="#fff" fill-opacity=".22"/>` +
-  `<path d="M5.3 5.2 L5.3 20.6" stroke="#fff" stroke-opacity=".75" stroke-width="1.1" stroke-linecap="round"/>` +
-  `<path d="M10.6 20.6 L13.6 27.2" stroke="#fff" stroke-opacity=".35" stroke-width=".9" stroke-linecap="round"/>` +
-  `</svg>`;
-const url = (svg: string) => `url("data:image/svg+xml,${encodeURIComponent(svg)}") 4 2`;
-const idle = url(arrow('#eef6ff', '#5b9dff', '#2f43c9', '#0b1d63'));
-const hover = url(arrow('#ecfeff', '#38d3ee', '#1f74f0', '#0a3a6e'));
-const down = url(arrow('#f3efff', '#8f7dff', '#4a2bd0', '#22105e'));
-const HOT = ':is(a, button, summary, label, select, [role="button"], [data-qa], [tabindex]:not([tabindex="-1"]))';
-const cursorCss =
-  `html.fx-cursor-on, html.fx-cursor-on * { cursor: ${idle}, auto !important; }` +
-  `html.fx-cursor-on ${HOT}, html.fx-cursor-on ${HOT} * { cursor: ${hover}, pointer !important; }` +
-  `html.fx-cursor-on.fx-down, html.fx-cursor-on.fx-down * { cursor: ${down}, auto !important; }`;
 ---
 
-<Fragment set:html={`<style>${cursorCss}</style>`} />
 <div class="fx-cursor" aria-hidden="true" transition:persist="fx-cursor">
-  <div class="fx-ring"><i></i><i></i><i></i><i></i></div>
+  <canvas></canvas>
 </div>
 
 <style is:global>
@@ -49,127 +26,294 @@ const cursorCss =
   html.fx-cursor-on .fx-cursor {
     display: block;
   }
-  .fx-ring {
+  .fx-cursor canvas {
     position: absolute;
     left: 0;
     top: 0;
-    width: 28px;
-    height: 28px;
-    margin: -14px 0 0 -14px;
-    border-radius: 50%;
-    border: 1.5px solid rgb(var(--accent-1) / 0.55);
-    transform: translate3d(var(--rx, -100px), var(--ry, -100px), 0) scale(var(--rs, 1)) rotate(var(--rr, 0deg));
-    transition: width 0.25s, height 0.25s, margin 0.25s, border-color 0.25s, opacity 0.25s;
     opacity: 0;
+    transition: opacity 0.2s;
+    will-change: transform;
   }
-  html.fx-cursor-on.fx-seen .fx-ring {
+  html.fx-seen .fx-cursor canvas {
     opacity: 1;
   }
-  /* Reticle ticks, shown over clickable things. */
-  .fx-ring i {
-    position: absolute;
-    left: 50%;
-    top: 50%;
-    width: 2px;
-    height: 8px;
-    margin: -4px 0 0 -1px;
-    border-radius: 1px;
-    background: rgb(var(--accent-2));
+  html.fx-text .fx-cursor canvas {
     opacity: 0;
-    transition: opacity 0.2s, transform 0.25s;
   }
-  .fx-ring i:nth-child(1) { transform: rotate(0deg) translateY(-14px); }
-  .fx-ring i:nth-child(2) { transform: rotate(90deg) translateY(-14px); }
-  .fx-ring i:nth-child(3) { transform: rotate(180deg) translateY(-14px); }
-  .fx-ring i:nth-child(4) { transform: rotate(270deg) translateY(-14px); }
-  html.fx-hot .fx-ring {
-    width: 40px;
-    height: 40px;
-    margin: -20px 0 0 -20px;
-    border-color: rgb(var(--accent-2) / 0.85);
+  html.fx-cursor-on,
+  html.fx-cursor-on * {
+    cursor: none !important;
   }
-  html.fx-hot .fx-ring i {
-    opacity: 1;
-  }
-  html.fx-hot .fx-ring i:nth-child(1) { transform: rotate(0deg) translateY(-22px); }
-  html.fx-hot .fx-ring i:nth-child(2) { transform: rotate(90deg) translateY(-22px); }
-  html.fx-hot .fx-ring i:nth-child(3) { transform: rotate(180deg) translateY(-22px); }
-  html.fx-hot .fx-ring i:nth-child(4) { transform: rotate(270deg) translateY(-22px); }
-  html.fx-down .fx-ring {
-    border-color: rgb(var(--accent-3));
-  }
-  html.fx-down .fx-ring i {
-    background: rgb(var(--accent-3));
-  }
-
-  /* Click burst: an expanding ring and a few sparks. */
-  .fx-burst,
-  .fx-spark {
-    position: fixed;
-    z-index: 2147483000;
-    pointer-events: none;
-    border-radius: 50%;
-  }
-  .fx-burst {
-    width: 12px;
-    height: 12px;
-    margin: -6px 0 0 -6px;
-    border: 2px solid rgb(var(--accent-2));
-    animation: fx-burst 0.55s cubic-bezier(0.2, 0.8, 0.2, 1) forwards;
-  }
-  @keyframes fx-burst {
-    to {
-      transform: scale(5.5);
-      opacity: 0;
-      border-width: 0.5px;
-    }
-  }
-  .fx-spark {
-    width: 4px;
-    height: 4px;
-    margin: -2px 0 0 -2px;
-    background: rgb(var(--accent-2));
-    animation: fx-spark 0.5s ease-out forwards;
-  }
-  .fx-spark:nth-child(even) {
-    background: rgb(var(--accent-1));
-  }
-  @keyframes fx-spark {
-    to {
-      transform: translate(var(--sx), var(--sy)) scale(0.2);
-      opacity: 0;
-    }
+  html.fx-cursor-on :is(input:not([type='button'], [type='submit'], [type='checkbox'], [type='radio'], [type='range']), textarea, [contenteditable='true']) {
+    cursor: text !important;
   }
 </style>
 
 <script>
+  type Vec = [number, number, number];
+  type Spring = { x: number; v: number };
+
   const FINE = matchMedia('(hover: hover) and (pointer: fine)');
   const REDUCED = matchMedia('(prefers-reduced-motion: reduce)');
   const HOT = 'a, button, summary, label, select, [role="button"], [data-qa], [tabindex]:not([tabindex="-1"])';
+  const TEXT = 'input:not([type="button"], [type="submit"], [type="checkbox"], [type="radio"], [type="range"]), textarea, [contenteditable="true"]';
   const root = document.documentElement;
   let started = false;
+
+  const clamp = (v: number, a: number, b: number) => Math.max(a, Math.min(b, v));
+  const lerp = (a: number, b: number, t: number) => a + (b - a) * t;
+  const mix = (a: Vec, b: Vec, t: number): Vec => [lerp(a[0], b[0], t), lerp(a[1], b[1], t), lerp(a[2], b[2], t)];
+  const scale = (c: Vec, k: number): Vec => [c[0] * k, c[1] * k, c[2] * k];
+  const norm = (v: Vec): Vec => { const l = Math.hypot(v[0], v[1], v[2]) || 1; return [v[0] / l, v[1] / l, v[2] / l]; };
+  const dot = (a: Vec, b: Vec) => a[0] * b[0] + a[1] * b[1] + a[2] * b[2];
+  const rgb = (c: Vec, a = 1) => `rgba(${clamp(c[0], 0, 255) | 0},${clamp(c[1], 0, 255) | 0},${clamp(c[2], 0, 255) | 0},${a})`;
+  const outCubic = (t: number) => 1 - Math.pow(1 - t, 3);
+  const FOCAL = 300;
+  const project = (p: Vec): [number, number] => { const k = FOCAL / (FOCAL + p[2]); return [p[0] * k, p[1] * k]; };
+  function rotate(p: Vec, rx: number, ry: number, rz: number): Vec {
+    let [x, y, z] = p;
+    let c = Math.cos(rz), s = Math.sin(rz);
+    [x, y] = [x * c - y * s, x * s + y * c];
+    c = Math.cos(rx); s = Math.sin(rx);
+    [y, z] = [y * c - z * s, y * s + z * c];
+    c = Math.cos(ry); s = Math.sin(ry);
+    [x, z] = [x * c + z * s, -x * s + z * c];
+    return [x, y, z];
+  }
+  // Polygon normal (Newell's method), so slightly bent faces still shade.
+  function newell(pts: Vec[]): Vec {
+    let nx = 0, ny = 0, nz = 0;
+    for (let i = 0; i < pts.length; i++) {
+      const a = pts[i], b = pts[(i + 1) % pts.length];
+      nx += (a[1] - b[1]) * (a[2] + b[2]);
+      ny += (a[2] - b[2]) * (a[0] + b[0]);
+      nz += (a[0] - b[0]) * (a[1] + b[1]);
+    }
+    return norm([nx, ny, nz]);
+  }
+  function spring(s: Spring, target: number, dt: number, k: number, d: number) {
+    const steps = Math.ceil(dt / 0.008);
+    const h = dt / steps;
+    for (let i = 0; i < steps; i++) {
+      s.v += (-k * (s.x - target) - d * s.v) * h;
+      s.x += s.v * h;
+    }
+  }
+
+  // The arrow outline (tip at the origin), extruded backwards; the ridge
+  // point (index 5) is raised towards the viewer to split the face in two.
+  const SCALE = 1.36, DEPTH = 8, RIDGE = 3.6;
+  const OUTLINE = [[4, 2], [4, 24.5], [9.6, 19.4], [13.3, 28], [17, 26.4], [13.4, 18], [21, 18]].map(
+    ([x, y]) => [(x - 4) * SCALE, (y - 2) * SCALE] as [number, number],
+  );
+  const N = OUTLINE.length;
+  const BASE: Vec[] = [
+    ...OUTLINE.map(([x, y], i): Vec => [x, y, i === 5 ? -RIDGE : 0]),
+    ...OUTLINE.map(([x, y]): Vec => [x, y, DEPTH]),
+  ];
+  type Face = { idx: number[]; side: boolean };
+  const FACES: Face[] = [
+    { idx: [0, 1, 2, 5], side: false },
+    { idx: [0, 5, 6], side: false },
+    { idx: [2, 3, 4, 5], side: false },
+    { idx: OUTLINE.map((_, i) => N + i), side: false },
+    ...OUTLINE.map((_, i) => ({ idx: [i, (i + 1) % N, N + (i + 1) % N, N + i], side: true })),
+  ];
+  // Wind every face outward: the front faces the viewer (-z), the back away,
+  // and a side away from the outline's inside.
+  const inside = (x: number, y: number) => {
+    let ins = false;
+    for (let i = 0, j = N - 1; i < N; j = i++) {
+      const [xi, yi] = OUTLINE[i], [xj, yj] = OUTLINE[j];
+      if ((yi > y) !== (yj > y) && x < ((xj - xi) * (y - yi)) / (yj - yi) + xi) ins = !ins;
+    }
+    return ins;
+  };
+  FACES.forEach((f, i) => {
+    const n = newell(f.idx.map((k) => BASE[k]));
+    let out: boolean;
+    if (i < 3) out = n[2] < 0;
+    else if (i === 3) out = n[2] > 0;
+    else {
+      const a = BASE[f.idx[0]], b = BASE[f.idx[1]];
+      out = !inside((a[0] + b[0]) / 2 + n[0] * 0.6, (a[1] + b[1]) / 2 + n[1] * 0.6);
+    }
+    if (!out) f.idx.reverse();
+  });
+  const LIGHT = norm([-0.55, -0.75, -0.9]);
+  const IDLE: Vec = [76, 138, 255], HOT_C: Vec = [40, 206, 240], DOWN_C: Vec = [150, 122, 255];
+  const RING_RX = -0.5, RING_RY = 0.35, LEAN_X = -0.36, LEAN_Y = 0.46;
 
   function start() {
     if (started || !FINE.matches) return;
     started = true;
     root.classList.add('fx-cursor-on');
-    if (REDUCED.matches) return; // the arrow alone, no trailing ring or bursts
-
-    let x = -100, y = -100, rx = -100, ry = -100, rot = 0, raf = 0;
-    const ring = () => document.querySelector<HTMLElement>('.fx-ring');
-
-    const tick = () => {
-      rx += (x - rx) * 0.22;
-      ry += (y - ry) * 0.22;
-      const el = ring();
-      if (el) {
-        if (root.classList.contains('fx-hot')) rot = (rot + 1.6) % 360;
-        el.style.setProperty('--rx', `${rx.toFixed(1)}px`);
-        el.style.setProperty('--ry', `${ry.toFixed(1)}px`);
-        el.style.setProperty('--rr', `${rot.toFixed(1)}deg`);
+    const canvas = () => document.querySelector<HTMLCanvasElement>('.fx-cursor canvas');
+    const SIZE = 180, O = 75;
+    const dpr = Math.min(2, window.devicePixelRatio || 1);
+    const prep = (c: HTMLCanvasElement) => {
+      if (c.width !== Math.round(SIZE * dpr)) {
+        c.width = c.height = Math.round(SIZE * dpr);
+        c.style.width = c.style.height = `${SIZE}px`;
       }
-      const still = Math.abs(x - rx) + Math.abs(y - ry) < 0.3 && !root.classList.contains('fx-hot');
-      raf = still ? 0 : requestAnimationFrame(tick);
+    };
+
+    let x = -200, y = -200, px = x, py = y, vx = 0, vy = 0;
+    let hot = false, down = false, wasDown = false, raf = 0, last = 0;
+    const st = {
+      rx: { x: LEAN_X, v: 0 }, ry: { x: LEAN_Y, v: 0 }, rz: { x: 0, v: 0 }, sc: { x: 1, v: 0 }, press: { x: 0, v: 0 },
+      hot: 0, down: 0, ring: [x, y], ringR: 12, spin: 0, waves: [] as number[], time: 0,
+    };
+
+    const place = (c: HTMLCanvasElement) => { c.style.transform = `translate3d(${x - O}px,${y - O}px,0)`; };
+
+    const draw = (dt: number) => {
+      const c = canvas();
+      const g = c?.getContext('2d');
+      if (!c || !g) return false;
+      prep(c);
+      const reduced = REDUCED.matches;
+      st.time += dt;
+      st.hot = lerp(st.hot, hot ? 1 : 0, 1 - Math.exp(-dt * 14));
+      st.down = lerp(st.down, down ? 1 : 0, 1 - Math.exp(-dt * 22));
+      if (down && !wasDown && !reduced) st.waves.push(0);
+      wasDown = down;
+      const ivx = (x - px) / Math.max(dt, 0.001), ivy = (y - py) / Math.max(dt, 0.001);
+      const k = 1 - Math.exp(-dt * 18);
+      vx = lerp(vx, ivx, k); vy = lerp(vy, ivy, k);
+      px = x; py = y;
+      const lean = reduced ? 0 : 1;
+      spring(st.ry, LEAN_Y + lean * clamp(vx / 1500, -0.5, 0.5), dt, 140, 16);
+      spring(st.rx, LEAN_X + lean * clamp(-vy / 1500, -0.45, 0.45), dt, 140, 16);
+      spring(st.rz, -0.2 * st.hot, dt, 160, 18);
+      spring(st.sc, (1 + 0.12 * st.hot) * (down ? 0.86 : 1), dt, 300, 16);
+      spring(st.press, down ? 1 : 0, dt, 320, 22);
+      const follow = 1 - Math.exp(-dt * (hot ? 22 : 12));
+      st.ring[0] = lerp(st.ring[0], x, follow);
+      st.ring[1] = lerp(st.ring[1], y, follow);
+      st.ringR = lerp(st.ringR, hot ? 21 : 12, 1 - Math.exp(-dt * 12));
+      st.spin += dt * (0.8 + 2.6 * st.hot);
+
+      place(c);
+      g.setTransform(dpr, 0, 0, dpr, 0, 0);
+      g.clearRect(0, 0, SIZE, SIZE);
+      g.translate(O, O);
+      const light = root.dataset.theme === 'light';
+      const col = mix(mix(IDLE, HOT_C, st.hot), DOWN_C, st.down);
+      const circle = (cx: number, cy: number, r: number, rx: number, ry: number) => {
+        g.beginPath();
+        for (let i = 0; i <= 56; i++) {
+          const a = (i / 56) * Math.PI * 2;
+          const [qx, qy] = project(rotate([Math.cos(a) * r, Math.sin(a) * r, 0], rx, ry, 0));
+          i ? g.lineTo(cx + qx, cy + qy) : g.moveTo(cx + qx, cy + qy);
+        }
+      };
+
+      if (!reduced) {
+        // Reticle ring round the tip, trailing a little, in the tilted plane.
+        const rdx = clamp(st.ring[0] - x, -40, 40), rdy = clamp(st.ring[1] - y, -40, 40);
+        const rc = mix(light ? [50, 100, 230] : [110, 160, 255], light ? [10, 150, 200] : [60, 220, 245], st.hot);
+        g.lineWidth = 1.4;
+        g.strokeStyle = rgb(rc, 0.3 + 0.55 * st.hot);
+        circle(rdx, rdy, st.ringR, RING_RX, RING_RY);
+        g.stroke();
+        if (st.hot > 0.02) {
+          g.strokeStyle = rgb(rc, st.hot);
+          g.lineWidth = 2;
+          g.lineCap = 'round';
+          for (let i = 0; i < 4; i++) {
+            const a = st.spin + (i * Math.PI) / 2;
+            const p1 = project(rotate([Math.cos(a) * (st.ringR + 3), Math.sin(a) * (st.ringR + 3), 0], RING_RX, RING_RY, 0));
+            const p2 = project(rotate([Math.cos(a) * (st.ringR + 8), Math.sin(a) * (st.ringR + 8), 0], RING_RX, RING_RY, 0));
+            g.beginPath(); g.moveTo(rdx + p1[0], rdy + p1[1]); g.lineTo(rdx + p2[0], rdy + p2[1]); g.stroke();
+          }
+        }
+        // Click ripples.
+        st.waves = st.waves.map((t) => t + dt).filter((t) => t < 0.6);
+        for (const t of st.waves) {
+          const q = t / 0.6;
+          g.lineWidth = 2 * (1 - q) + 0.5;
+          g.strokeStyle = rgb(light ? [50, 100, 230] : [150, 200, 255], 0.9 * (1 - q));
+          circle(0, 0, 8 + 48 * outCubic(q), -1, 0.25);
+          g.stroke();
+        }
+      }
+
+      const s = st.sc.x;
+      const V = BASE.map((p) => rotate([p[0] * s, p[1] * s, p[2] * s * (1 - 0.45 * st.press.x) + 4 * st.press.x], st.rx.x, st.ry.x, st.rz.x));
+      const PV = V.map(project);
+      const front = PV.slice(0, N);
+      const path = (pts: [number, number][]) => { g.beginPath(); pts.forEach(([a, b], i) => (i ? g.lineTo(a, b) : g.moveTo(a, b))); g.closePath(); };
+
+      // Soft shadow on the page, down and to the right.
+      g.save();
+      g.filter = 'blur(3px)';
+      g.fillStyle = light ? 'rgba(20,40,90,0.28)' : 'rgba(0,0,0,0.45)';
+      path(front.map(([a, b]) => [a + 4, b + 6 - 3 * st.press.x]));
+      g.fill();
+      g.restore();
+
+      const shown = FACES.map((f) => {
+        const pts = f.idx.map((i) => V[i]);
+        const n = newell(pts);
+        const ctr = pts.reduce<Vec>((a, p) => [a[0] + p[0] / pts.length, a[1] + p[1] / pts.length, a[2] + p[2] / pts.length], [0, 0, 0]);
+        const view = norm([-ctr[0], -ctr[1], -FOCAL - ctr[2]]);
+        return { f, n, view, z: ctr[2], pp: f.idx.map((i) => PV[i]) };
+      })
+        .filter((F) => dot(F.n, F.view) > 0.01)
+        .sort((a, b) => b.z - a.z);
+      g.lineJoin = 'round';
+      for (const { f, n, view, pp } of shown) {
+        const diff = Math.max(0, dot(n, LIGHT));
+        const h = norm([LIGHT[0] + view[0], LIGHT[1] + view[1], LIGHT[2] + view[2]]);
+        const spec = Math.pow(Math.max(0, dot(n, h)), 26);
+        let shade = scale(col, f.side ? 0.22 + 0.55 * diff : 0.38 + 0.78 * diff);
+        shade = shade.map((v) => v + 255 * spec * (f.side ? 0.45 : 0.85)) as Vec;
+        // Back light: a cool rim on the sides turned away from the light.
+        if (f.side) shade = mix(shade, [90, 220, 255], Math.pow(1 - Math.abs(dot(n, view)), 1.5) * (1 - diff) * 0.7);
+        const grad = g.createLinearGradient(pp[0][0], pp[0][1], pp[pp.length - 2][0], pp[pp.length - 2][1]);
+        grad.addColorStop(0, rgb(scale(shade, 1.2)));
+        grad.addColorStop(1, rgb(scale(shade, 0.8)));
+        g.fillStyle = grad;
+        path(pp);
+        g.fill();
+        g.lineWidth = 0.7;
+        g.strokeStyle = 'rgba(4,10,40,0.55)';
+        g.stroke();
+      }
+      // Highlights on the lit front edges.
+      g.lineCap = 'round';
+      g.strokeStyle = 'rgba(255,255,255,0.8)';
+      g.lineWidth = 1.1;
+      g.beginPath(); g.moveTo(front[0][0] + 1, front[0][1] + 2.5); g.lineTo(front[1][0] + 1, front[1][1] - 3); g.stroke();
+      g.strokeStyle = 'rgba(255,255,255,0.45)';
+      g.beginPath(); g.moveTo(front[0][0], front[0][1]); g.lineTo(front[5][0], front[5][1]); g.stroke();
+      // A glint at the tip over clickable things.
+      if (st.hot > 0.05) {
+        const r = 4.5 * st.hot * (reduced ? 1 : 0.85 + 0.15 * Math.sin(st.time * 6));
+        g.fillStyle = `rgba(255,255,255,${0.9 * st.hot})`;
+        g.beginPath();
+        g.moveTo(0, -r); g.quadraticCurveTo(0, 0, r, 0); g.quadraticCurveTo(0, 0, 0, r); g.quadraticCurveTo(0, 0, -r, 0); g.quadraticCurveTo(0, 0, 0, -r);
+        g.fill();
+      }
+
+      // Keep animating while anything is still moving.
+      const settling =
+        Math.abs(vx) + Math.abs(vy) > 2 ||
+        [st.rx, st.ry, st.rz, st.sc, st.press].some((q) => Math.abs(q.v) > 0.002) ||
+        Math.abs(st.ring[0] - x) + Math.abs(st.ring[1] - y) > 0.3 ||
+        Math.abs(st.hot - (hot ? 1 : 0)) > 0.01 ||
+        Math.abs(st.down - (down ? 1 : 0)) > 0.01 ||
+        st.waves.length > 0 ||
+        (hot && !reduced);
+      return settling;
+    };
+
+    const tick = (t: number) => {
+      const dt = last ? Math.min(0.05, (t - last) / 1000) : 1 / 60;
+      last = t;
+      raf = draw(dt) ? requestAnimationFrame(tick) : 0;
+      if (!raf) last = 0;
     };
     const wake = () => { if (!raf) raf = requestAnimationFrame(tick); };
 
@@ -177,51 +321,43 @@ const cursorCss =
       if (e.pointerType !== 'mouse') return;
       x = e.clientX;
       y = e.clientY;
-      if (!root.classList.contains('fx-seen')) { rx = x; ry = y; root.classList.add('fx-seen'); }
-      root.classList.toggle('fx-hot', !!(e.target as Element | null)?.closest?.(HOT));
+      if (!root.classList.contains('fx-seen')) {
+        px = x; py = y; st.ring = [x, y];
+        root.classList.add('fx-seen');
+      }
+      const target = e.target as Element | null;
+      hot = !!target?.closest?.(HOT);
+      root.classList.toggle('fx-hot', hot);
+      root.classList.toggle('fx-text', !!target?.closest?.(TEXT));
+      // Move the canvas at once; the next frame redraws the arrow.
+      const c = canvas();
+      if (c) place(c);
       wake();
     }, { passive: true });
 
-    document.addEventListener('pointerleave', () => root.classList.remove('fx-seen', 'fx-hot'));
-    addEventListener('blur', () => root.classList.remove('fx-down'));
-
+    // Leaving the window (or entering an iframe, which takes the pointer).
+    document.addEventListener('mouseout', (e) => { if (!e.relatedTarget) root.classList.remove('fx-seen', 'fx-hot'); });
+    addEventListener('blur', () => { root.classList.remove('fx-down'); down = false; wake(); });
     addEventListener('pointerdown', (e) => {
       if (e.pointerType !== 'mouse' || e.button !== 0) return;
       root.classList.add('fx-down');
-      ring()?.style.setProperty('--rs', '0.7');
-      const frag = document.createDocumentFragment();
-      const burst = document.createElement('span');
-      burst.className = 'fx-burst';
-      burst.style.left = `${e.clientX}px`;
-      burst.style.top = `${e.clientY}px`;
-      frag.appendChild(burst);
-      const sparks: HTMLElement[] = [burst];
-      for (let i = 0; i < 6; i++) {
-        const a = (i / 6) * Math.PI * 2 + Math.random() * 0.5;
-        const d = 18 + Math.random() * 14;
-        const s = document.createElement('span');
-        s.className = 'fx-spark';
-        s.style.left = `${e.clientX}px`;
-        s.style.top = `${e.clientY}px`;
-        s.style.setProperty('--sx', `${(Math.cos(a) * d).toFixed(1)}px`);
-        s.style.setProperty('--sy', `${(Math.sin(a) * d).toFixed(1)}px`);
-        frag.appendChild(s);
-        sparks.push(s);
-      }
-      document.body.appendChild(frag);
-      setTimeout(() => sparks.forEach((s) => s.remove()), 650);
+      down = true;
+      wake();
     });
     addEventListener('pointerup', () => {
       root.classList.remove('fx-down');
-      ring()?.style.setProperty('--rs', '1');
+      down = false;
+      wake();
     });
+    // Elements can appear or vanish under a still pointer (a modal opening).
+    document.addEventListener('astro:page-load', wake);
   }
 
   start();
   FINE.addEventListener?.('change', start);
   // ClientRouter copies the new page's <html> attributes, which drops our classes.
   document.addEventListener('astro:after-swap', () => {
-    if (started) root.classList.add('fx-cursor-on');
+    if (started) root.classList.add('fx-cursor-on', 'fx-seen');
   });
   document.addEventListener('astro:page-load', start);
 </script>
