@@ -16,14 +16,19 @@
 </div>
 
 <style is:global>
+  /* Full-viewport layer, kept across page swaps (transition:persist). Its
+     state lives in its own classes, which a swap doesn't touch, unlike the
+     <html> classes that ClientRouter replaces. */
   .fx-cursor {
     position: fixed;
-    inset: 0 auto auto 0;
+    inset: 0;
     z-index: 2147483000;
     pointer-events: none;
+    overflow: hidden;
     display: none;
+    view-transition-name: fx-cursor;
   }
-  html.fx-cursor-on .fx-cursor {
+  .fx-cursor.on {
     display: block;
   }
   .fx-cursor canvas {
@@ -34,18 +39,27 @@
     transition: opacity 0.2s;
     will-change: transform;
   }
-  html.fx-seen .fx-cursor canvas {
+  .fx-cursor.seen canvas {
     opacity: 1;
   }
-  html.fx-text .fx-cursor canvas {
+  .fx-cursor.text canvas {
     opacity: 0;
   }
-  html.fx-cursor-on,
-  html.fx-cursor-on * {
+  html:has(.fx-cursor.on),
+  html:has(.fx-cursor.on) * {
     cursor: none !important;
   }
-  html.fx-cursor-on :is(input:not([type='button'], [type='submit'], [type='checkbox'], [type='radio'], [type='range']), textarea, [contenteditable='true']) {
+  html:has(.fx-cursor.on) :is(input:not([type='button'], [type='submit'], [type='checkbox'], [type='radio'], [type='range']), textarea, [contenteditable='true']) {
     cursor: text !important;
+  }
+  /* Page transitions: the cursor is left out of the page snapshots and only
+     its new frame is shown, unanimated, so two arrows never cross-fade. */
+  ::view-transition-old(fx-cursor) {
+    display: none;
+  }
+  ::view-transition-new(fx-cursor),
+  ::view-transition-group(fx-cursor) {
+    animation: none;
   }
 </style>
 
@@ -58,6 +72,8 @@
   const HOT = 'a, button, summary, label, select, [role="button"], [data-qa], [tabindex]:not([tabindex="-1"])';
   const TEXT = 'input:not([type="button"], [type="submit"], [type="checkbox"], [type="radio"], [type="range"]), textarea, [contenteditable="true"]';
   const root = document.documentElement;
+  const layer = () => document.querySelector<HTMLElement>('.fx-cursor');
+  const flag = (name: string, on: boolean) => layer()?.classList.toggle(name, on);
   let started = false;
 
   const clamp = (v: number, a: number, b: number) => Math.max(a, Math.min(b, v));
@@ -147,7 +163,7 @@
   function start() {
     if (started || !FINE.matches) return;
     started = true;
-    root.classList.add('fx-cursor-on');
+    flag('on', true);
     const canvas = () => document.querySelector<HTMLCanvasElement>('.fx-cursor canvas');
     const SIZE = 180, O = 75;
     const dpr = Math.min(2, window.devicePixelRatio || 1);
@@ -165,6 +181,10 @@
       hot: 0, down: 0, ring: [x, y], ringR: 12, spin: 0, waves: [] as number[], time: 0,
     };
 
+    const aim = (target: Element | null) => {
+      hot = !!target?.closest?.(HOT);
+      flag('text', !!target?.closest?.(TEXT));
+    };
     const place = (c: HTMLCanvasElement) => { c.style.transform = `translate3d(${x - O}px,${y - O}px,0)`; };
 
     const draw = (dt: number) => {
@@ -321,14 +341,11 @@
       if (e.pointerType !== 'mouse') return;
       x = e.clientX;
       y = e.clientY;
-      if (!root.classList.contains('fx-seen')) {
+      if (!layer()?.classList.contains('seen')) {
         px = x; py = y; st.ring = [x, y];
-        root.classList.add('fx-seen');
+        flag('seen', true);
       }
-      const target = e.target as Element | null;
-      hot = !!target?.closest?.(HOT);
-      root.classList.toggle('fx-hot', hot);
-      root.classList.toggle('fx-text', !!target?.closest?.(TEXT));
+      aim(e.target as Element | null);
       // Move the canvas at once; the next frame redraws the arrow.
       const c = canvas();
       if (c) place(c);
@@ -336,28 +353,27 @@
     }, { passive: true });
 
     // Leaving the window (or entering an iframe, which takes the pointer).
-    document.addEventListener('mouseout', (e) => { if (!e.relatedTarget) root.classList.remove('fx-seen', 'fx-hot'); });
-    addEventListener('blur', () => { root.classList.remove('fx-down'); down = false; wake(); });
+    document.addEventListener('mouseout', (e) => { if (!e.relatedTarget) flag('seen', false); });
+    addEventListener('blur', () => { down = false; wake(); });
     addEventListener('pointerdown', (e) => {
       if (e.pointerType !== 'mouse' || e.button !== 0) return;
-      root.classList.add('fx-down');
       down = true;
       wake();
     });
     addEventListener('pointerup', () => {
-      root.classList.remove('fx-down');
       down = false;
       wake();
     });
-    // Elements can appear or vanish under a still pointer (a modal opening).
-    document.addEventListener('astro:page-load', wake);
+    // A new page puts different elements under a still pointer: recheck
+    // what it is over, so the ring doesn't keep spinning on nothing.
+    document.addEventListener('astro:page-load', () => {
+      down = false;
+      if (layer()?.classList.contains('seen')) aim(document.elementFromPoint(x, y));
+      wake();
+    });
   }
 
   start();
   FINE.addEventListener?.('change', start);
-  // ClientRouter copies the new page's <html> attributes, which drops our classes.
-  document.addEventListener('astro:after-swap', () => {
-    if (started) root.classList.add('fx-cursor-on', 'fx-seen');
-  });
   document.addEventListener('astro:page-load', start);
 </script>
