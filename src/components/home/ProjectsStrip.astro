@@ -237,11 +237,26 @@ const lap = Array.from({ length: passes }, (_, k) => projects.map((p, i) => ({ p
       transform: translateX(5px);
     }
   }
+  .swipe.no-hint .hint {
+    display: none;
+  }
+  /* Reduced motion: a plain scroll row. The bar below stands in for the
+     native scrollbar, which would otherwise show as a second slider. */
   @media (prefers-reduced-motion: reduce) {
     .strip {
       overflow-x: auto;
+      scrollbar-width: none;
       -webkit-mask-image: none;
       mask-image: none;
+    }
+    .strip::-webkit-scrollbar {
+      display: none;
+    }
+    .strip.grab {
+      user-select: none;
+    }
+    .strip :global(:is(img, a)) {
+      -webkit-user-drag: none;
     }
     .track {
       animation: none;
@@ -275,10 +290,42 @@ const lap = Array.from({ length: passes }, (_, k) => projects.map((p, i) => ({ p
     swipe.hidden = !touch;
     const thumb = swipe.querySelector<HTMLElement>('.bar i')!;
     if (matchMedia('(prefers-reduced-motion: reduce)').matches) {
-      if (!touch) return;
+      // The row scrolls natively; the bar tracks it on every device and a
+      // mouse can drag it (the "Swipe" hint stays touch-only).
+      swipe.hidden = false;
+      swipe.classList.toggle('no-hint', !touch);
       const onNative = () => thumb.style.setProperty('--p', String(strip.scrollLeft / Math.max(1, strip.scrollWidth - strip.clientWidth)));
+      let fromX = -1, fromLeft = 0, dragged = 0;
+      const down = (e: PointerEvent) => {
+        if (e.pointerType !== 'mouse' || e.button !== 0) return;
+        fromX = e.clientX; fromLeft = strip.scrollLeft; dragged = 0;
+      };
+      const move = (e: PointerEvent) => {
+        if (fromX < 0) return;
+        dragged = Math.abs(e.clientX - fromX);
+        if (dragged > 8) { strip.classList.add('grab'); strip.scrollLeft = fromLeft - (e.clientX - fromX); }
+      };
+      const up = () => { fromX = -1; strip.classList.remove('grab'); setTimeout(() => (dragged = 0), 0); };
+      // A drag is not a tap (window capture runs before the project modal).
+      const click = (e: MouseEvent) => {
+        if (dragged > 8 && strip.contains(e.target as Node)) { e.preventDefault(); e.stopImmediatePropagation(); }
+      };
+      const noDrag = (e: DragEvent) => e.preventDefault();
       strip.addEventListener('scroll', onNative, { passive: true });
-      cleanup = () => { strip.removeEventListener('scroll', onNative); cleanup = null; };
+      strip.addEventListener('pointerdown', down);
+      strip.addEventListener('dragstart', noDrag);
+      addEventListener('pointermove', move, { passive: true });
+      addEventListener('pointerup', up);
+      addEventListener('click', click, true);
+      cleanup = () => {
+        strip.removeEventListener('scroll', onNative);
+        strip.removeEventListener('pointerdown', down);
+        strip.removeEventListener('dragstart', noDrag);
+        removeEventListener('pointermove', move);
+        removeEventListener('pointerup', up);
+        removeEventListener('click', click, true);
+        cleanup = null;
+      };
       return;
     }
 
