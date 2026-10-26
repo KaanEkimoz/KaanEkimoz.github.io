@@ -4,12 +4,13 @@
  * inside a [data-shots] row opens it, on project pages and inside the project
  * modal alike (the listeners are delegated, so injected HTML works). Arrows,
  * swipe and the buttons step through the row; Escape or a tap anywhere
- * but the buttons closes it. The same script scrolls the row from its arrow buttons.
+ * but the buttons closes it. The same script scrolls the row from its arrow
+ * buttons and lets a mouse drag it.
  */
 ---
 
 <div class="lb" data-lightbox-root transition:persist="lightbox" hidden role="dialog" aria-modal="true" aria-label="Screenshot">
-  <img alt="" />
+  <img alt="" draggable="false" />
   <button class="lb-btn lb-close" type="button" aria-label="Close" data-lb-close>×</button>
   <button class="lb-btn lb-prev" type="button" aria-label="Previous" data-lb-prev>‹</button>
   <button class="lb-btn lb-next" type="button" aria-label="Next" data-lb-next>›</button>
@@ -140,6 +141,13 @@
     'click',
     (e) => {
       const t = e.target as HTMLElement;
+      if (rowDragged) {
+        // The click that ends a drag of the row is not a tap on a shot.
+        rowDragged = false;
+        e.preventDefault();
+        e.stopImmediatePropagation();
+        return;
+      }
       const a = t.closest?.<HTMLAnchorElement>('a[data-lightbox]');
       if (a) {
         e.preventDefault();
@@ -190,5 +198,44 @@
       show(index + (dx < 0 ? 1 : -1));
     }
   });
+
+  // Mouse drag on a [data-shots] row scrolls it. Native link/image drag is
+  // blocked: it would show the system cursor and steal the gesture.
+  let row: HTMLElement | null = null;
+  let rowX = 0;
+  let rowLeft = 0;
+  let rowDragged = false;
+  document.addEventListener('dragstart', (e) => {
+    if ((e.target as Element).closest?.('[data-shots], [data-lightbox-root]')) e.preventDefault();
+  });
+  document.addEventListener('pointerdown', (e) => {
+    if (e.pointerType !== 'mouse' || e.button !== 0) return;
+    row = (e.target as Element).closest?.<HTMLElement>('[data-shots]') ?? null;
+    if (!row) return;
+    rowX = e.clientX;
+    rowLeft = row.scrollLeft;
+    rowDragged = false;
+  });
+  addEventListener('pointermove', (e) => {
+    if (!row) return;
+    const dx = e.clientX - rowX;
+    if (!rowDragged && Math.abs(dx) < 6) return;
+    if (!rowDragged) {
+      rowDragged = true;
+      // Snapping fights a hand-driven scroll; it comes back on release.
+      row.style.scrollSnapType = 'none';
+      row.style.scrollBehavior = 'auto';
+    }
+    row.scrollLeft = rowLeft - dx;
+  });
+  addEventListener('pointerup', () => {
+    if (!row) return;
+    row.style.scrollSnapType = '';
+    row.style.scrollBehavior = '';
+    row = null;
+    // No click follows a drag that ended outside the row; clear the flag then.
+    setTimeout(() => (rowDragged = false), 0);
+  });
+
   document.addEventListener('astro:before-swap', () => { if (!root.hidden) close(); });
 </script>

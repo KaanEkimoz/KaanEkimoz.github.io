@@ -6,8 +6,9 @@
  * project appears in both shapes and the alternation never breaks at the
  * seam. The lap is rendered twice and the track slides by exactly one lap.
  * Hover or focus pauses it; with reduced motion it becomes a scroll row.
- * On touch screens the strip can also be dragged and flung (it drifts on
- * again after a pause), with a progress bar and a "Swipe" hint below it.
+ * It can be dragged and flung with a finger or the mouse (it drifts on
+ * again after a pause); touch screens also get a progress bar and a
+ * "Swipe" hint below it.
  */
 import { Image } from 'astro:assets';
 import { copy, pick } from '@lib/home';
@@ -181,17 +182,17 @@ const lap = Array.from({ length: passes }, (_, k) => projects.map((p, i) => ({ p
       mask-image: linear-gradient(to right, transparent, #000 16px, #000 calc(100% - 16px), transparent);
     }
   }
-  /* Touch screens: the script moves the track and the strip takes horizontal drags. */
-  .strip.touch {
+  /* The script moves the track and the strip takes horizontal drags. */
+  .strip.js {
     touch-action: pan-y;
+    user-select: none;
   }
-  .strip.touch .track {
+  .strip.js .track {
     animation: none;
     will-change: transform;
   }
-  .strip.touch :global(img) {
+  .strip.js :global(:is(img, a)) {
     -webkit-user-drag: none;
-    user-select: none;
   }
   .swipe {
     display: flex;
@@ -268,27 +269,30 @@ const lap = Array.from({ length: passes }, (_, k) => projects.map((p, i) => ({ p
     const swipe = document.querySelector<HTMLElement>('[data-swipe]');
     if (!strip || !track || !lap || !swipe) return;
     strip.style.setProperty('--dur', `${(lap.offsetWidth / SPEED).toFixed(1)}s`);
-    if (!matchMedia('(hover: none)').matches) return;
+    const touch = matchMedia('(hover: none)').matches;
 
     // Touch: show the hint; with reduced motion the row scrolls natively.
-    swipe.hidden = false;
+    swipe.hidden = !touch;
     const thumb = swipe.querySelector<HTMLElement>('.bar i')!;
     if (matchMedia('(prefers-reduced-motion: reduce)').matches) {
+      if (!touch) return;
       const onNative = () => thumb.style.setProperty('--p', String(strip.scrollLeft / Math.max(1, strip.scrollWidth - strip.clientWidth)));
       strip.addEventListener('scroll', onNative, { passive: true });
       cleanup = () => { strip.removeEventListener('scroll', onNative); cleanup = null; };
       return;
     }
 
-    strip.classList.add('touch');
-    let off = 0, vel = SPEED, raf = 0, last = 0, visible = false;
+    strip.classList.add('js');
+    let off = 0, vel = SPEED, raf = 0, last = 0, visible = false, held = false;
     let dragging = false, lastX = 0, lastT = 0, moved = 0, resumeAt = 0;
     const lapW = () => lap.offsetWidth;
     const tick = (t: number) => {
       const dt = last ? Math.min(0.05, (t - last) / 1000) : 0; last = t;
       if (!dragging) {
         // A fling slows with friction; after a pause the drift eases back in.
-        if (t < resumeAt) vel *= Math.pow(0.04, dt);
+        // A mouse over the strip (or focus inside it) holds it still.
+        if (held || strip.querySelector(':focus-visible')) vel *= Math.pow(held && t >= resumeAt ? 1e-4 : 0.04, dt);
+        else if (t < resumeAt) vel *= Math.pow(0.04, dt);
         else vel += (SPEED - vel) * Math.min(1, dt * 1.5);
         off += vel * dt;
       }
@@ -303,7 +307,9 @@ const lap = Array.from({ length: passes }, (_, k) => projects.map((p, i) => ({ p
     io.observe(strip);
 
     const down = (e: PointerEvent) => {
+      if (e.pointerType === 'mouse' && e.button !== 0) return;
       dragging = true; moved = 0; vel = 0; lastX = e.clientX; lastT = e.timeStamp;
+      start();
     };
     const move = (e: PointerEvent) => {
       if (!dragging) return;
@@ -317,13 +323,24 @@ const lap = Array.from({ length: passes }, (_, k) => projects.map((p, i) => ({ p
       if (!dragging) return;
       dragging = false; resumeAt = performance.now() + 2600;
     };
-    // A drag is not a tap: keep it from opening the project.
-    const click = (e: MouseEvent) => { if (moved > 8) { e.preventDefault(); e.stopPropagation(); } };
+    // A drag is not a tap: keep it from opening the project. Window capture
+    // runs before the project modal's own document-level click handler.
+    const click = (e: MouseEvent) => {
+      if (moved > 8 && strip.contains(e.target as Node)) { e.preventDefault(); e.stopImmediatePropagation(); }
+    };
+    // Native link/image drag would show the system cursor and steal the gesture.
+    const noDrag = (e: DragEvent) => e.preventDefault();
+    const enter = (e: PointerEvent) => { if (e.pointerType === 'mouse') held = true; };
+    const leave = (e: PointerEvent) => { if (e.pointerType === 'mouse') { held = false; start(); } };
+    strip.addEventListener('dragstart', noDrag);
+    strip.addEventListener('pointerenter', enter);
+    strip.addEventListener('pointerleave', leave);
+    strip.addEventListener('focusout', start);
     strip.addEventListener('pointerdown', down);
     addEventListener('pointermove', move, { passive: true });
     addEventListener('pointerup', up);
     addEventListener('pointercancel', up);
-    strip.addEventListener('click', click, true);
+    addEventListener('click', click, true);
 
     cleanup = () => {
       io.disconnect(); cancelAnimationFrame(raf);
@@ -331,8 +348,12 @@ const lap = Array.from({ length: passes }, (_, k) => projects.map((p, i) => ({ p
       removeEventListener('pointermove', move);
       removeEventListener('pointerup', up);
       removeEventListener('pointercancel', up);
-      strip.removeEventListener('click', click, true);
-      strip.classList.remove('touch'); track.style.transform = '';
+      removeEventListener('click', click, true);
+      strip.removeEventListener('dragstart', noDrag);
+      strip.removeEventListener('pointerenter', enter);
+      strip.removeEventListener('pointerleave', leave);
+      strip.removeEventListener('focusout', start);
+      strip.classList.remove('js'); track.style.transform = '';
       cleanup = null;
     };
   }
