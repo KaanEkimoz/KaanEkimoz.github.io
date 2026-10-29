@@ -38,7 +38,7 @@ export const SOCIAL = {
 // design (they end up in every page's HTML); an empty value switches it off.
 export const ANALYTICS = {
   // Cloudflare Web Analytics site token (dash.cloudflare.com → Web Analytics).
-  cloudflareToken: '',
+  cloudflareToken: 'ed23a3abe76f406ea34227ba71cca638',
   // Google Search Console HTML-tag verification code (its content="…" value).
   googleVerification: '',
 } as const;
