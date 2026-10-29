@@ -98,6 +98,7 @@ These come from mistakes made in earlier sessions. Follow them in every session,
 - **Home copy and data** (Q&A, career nodes, skills, evals for the resume and Q&A) live in `src/lib/home.ts`, EN and TR side by side. Numbers there come from Kaan's profile brief; don't add figures or claims (store status, metrics) he hasn't confirmed.
 - **Client scripts** init on `astro:page-load` and clean up on `astro:before-swap`. The project modal injects `#project-detail` from a detail page into other pages, so `ProjectPage` uses utilities / global classes only (scoped CSS wouldn't load there); its back link carries `data-back` so the modal can hide it.
 - **Images:** put content images in `src/assets/` (Astro optimizes them); `public/` is served as-is. Keep big PNGs under ~2 MB.
+- **SEO and stats:** `src/lib/seo.ts` builds the schema.org JSON-LD (Person + WebSite on home, BlogPosting on posts, CreativeWork on projects); posts and projects use their own cover, cut to 1200×630 JPEG, as the link preview. `ANALYTICS` in `src/lib/constants.ts` holds the Cloudflare Web Analytics token and the Google Search Console verification code (public values; empty = off). /chat loads neither.
 - **OG image:** must be JPEG — WhatsApp silently rejects palette PNGs. Regenerate from `scripts/og-image.svg` after `node scripts/install-og-fonts.mjs` (without the fonts librsvg falls back silently):
   `node -e "require('sharp')(require('fs').readFileSync('scripts/og-image.svg')).flatten({background:'#050912'}).jpeg({quality:88,mozjpeg:true}).toFile('public/og-image.jpg')"`
 

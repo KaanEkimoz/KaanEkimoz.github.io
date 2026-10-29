@@ -6,13 +6,21 @@ import Footer from '@components/Footer.astro';
 import ProjectModal from '@components/ProjectModal.astro';
 import Lightbox from '@components/Lightbox.astro';
 import Cursor from '@components/Cursor.astro';
-import { SITE } from '@lib/constants';
+import { ANALYTICS, SITE } from '@lib/constants';
 import { BCP47, DEFAULT_LOCALE, alternateUrl, t, type Lang } from '@lib/i18n';
 
 interface Props {
   title?: string;
   description?: string;
+  /** Social preview image: a site path or an absolute URL, 1200×630 JPEG. */
   image?: string;
+  imageAlt?: string;
+  /** 'article' for blog posts; adds the published / modified times. */
+  type?: 'website' | 'article';
+  published?: Date;
+  modified?: Date;
+  /** schema.org data for search engines, written as JSON-LD. */
+  jsonLd?: Record<string, unknown>;
   /** Path within the site, e.g. "/projects/orbs". Used to build canonical URL + og:url. */
   pathname?: string;
   /** Current locale for this page. Drives html lang, meta, and the toggle. */
@@ -23,6 +31,11 @@ const {
   title,
   description,
   image = '/og-image.jpg',
+  imageAlt = 'kaanusta.dev — Kaan Usta, full-stack developer',
+  type = 'website',
+  published,
+  modified,
+  jsonLd,
   pathname = Astro.url.pathname,
   lang = DEFAULT_LOCALE,
 } = Astro.props;
@@ -39,6 +52,8 @@ const altLang: Lang = lang === 'en' ? 'tr' : 'en';
 const alternateHref = new URL(alternateUrl(pathname, lang), SITE.url).href;
 const ogLocale = BCP47[lang];
 const ogLocaleAlt = BCP47[altLang];
+// "<" escaped so a value can never close the script tag.
+const jsonLdText = jsonLd ? JSON.stringify(jsonLd).replace(/</g, '\\u003c') : '';
 ---
 
 <!doctype html>
@@ -118,9 +133,10 @@ const ogLocaleAlt = BCP47[altLang];
     <title>{fullTitle}</title>
     <meta name="description" content={finalDescription} />
     <meta name="author" content={SITE.author} />
+    {ANALYTICS.googleVerification && <meta name="google-site-verification" content={ANALYTICS.googleVerification} />}
 
     <!-- Open Graph -->
-    <meta property="og:type" content="website" />
+    <meta property="og:type" content={type} />
     <meta property="og:title" content={fullTitle} />
     <meta property="og:description" content={finalDescription} />
     <meta property="og:url" content={canonicalUrl} />
@@ -129,21 +145,29 @@ const ogLocaleAlt = BCP47[altLang];
     <meta property="og:image:type" content="image/jpeg" />
     <meta property="og:image:width" content="1200" />
     <meta property="og:image:height" content="630" />
-    <meta property="og:image:alt" content="kaanusta.dev — Kaan Usta, full-stack developer" />
+    <meta property="og:image:alt" content={imageAlt} />
     <meta property="og:locale" content={ogLocale} />
     <meta property="og:locale:alternate" content={ogLocaleAlt} />
     <meta property="og:site_name" content={SITE.name} />
+    {published && <meta property="article:published_time" content={published.toISOString()} />}
+    {modified && <meta property="article:modified_time" content={modified.toISOString()} />}
+    {jsonLdText && <script is:inline type="application/ld+json" set:html={jsonLdText} />}
 
     <!-- Twitter -->
     <meta name="twitter:card" content="summary_large_image" />
     <meta name="twitter:title" content={fullTitle} />
     <meta name="twitter:description" content={finalDescription} />
     <meta name="twitter:image" content={socialImage} />
+    <meta name="twitter:image:alt" content={imageAlt} />
 
     <!-- Theme color matches bg-base for mobile browser chrome -->
     <meta name="theme-color" content="#050912" />
 
     <ClientRouter />
+    {/* Cookieless visitor statistics; it also counts ClientRouter navigations. */}
+    {ANALYTICS.cloudflareToken && (
+      <script is:inline defer src="https://static.cloudflareinsights.com/beacon.min.js" data-cf-beacon={JSON.stringify({ token: ANALYTICS.cloudflareToken })}></script>
+    )}
   </head>
   <body class="min-h-screen flex flex-col">
     <Header lang={lang} />
