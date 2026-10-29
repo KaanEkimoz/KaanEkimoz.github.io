@@ -6,6 +6,10 @@ on:
     branches: [main]
   # Allow manual runs from the Actions tab.
   workflow_dispatch:
+  # Daily rebuild so the GitHub calendar on the home page stays current
+  # (06:17 in Türkiye).
+  schedule:
+    - cron: '17 3 * * *'
 
 permissions:
   contents: read
@@ -36,6 +40,9 @@ jobs:
 
       - name: Build site
         run: npm run build
+        env:
+          # Lets scripts/github-activity.mjs read the contribution calendar.
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Upload Pages artifact
         uses: actions/upload-pages-artifact@v3

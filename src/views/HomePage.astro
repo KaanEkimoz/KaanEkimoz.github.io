@@ -5,6 +5,7 @@ import MethodSection from '@components/home/MethodSection.astro';
 import CareerSection from '@components/home/CareerSection.astro';
 import SkillsSection from '@components/home/SkillsSection.astro';
 import ProjectsStrip from '@components/home/ProjectsStrip.astro';
+import GitHubActivity from '@components/home/GitHubActivity.astro';
 import ContactSection from '@components/home/ContactSection.astro';
 import BlogCard from '@components/BlogCard.astro';
 import { getPosts } from '@lib/content';
@@ -27,6 +28,7 @@ const w = copy.writing;
   <CareerSection lang={lang} />
   <SkillsSection lang={lang} />
   <ProjectsStrip lang={lang} />
+  <GitHubActivity lang={lang} />
 
   {
     latestPosts.length > 0 && (
