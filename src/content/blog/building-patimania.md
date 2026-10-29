@@ -1,9 +1,9 @@
 ---
-title: "Building Patimania"
+title: "Building a Pet Marketplace Platform"
 description: "Four months of building a pet-services marketplace: the design decisions, the bugs the database now refuses, working with Claude Code, and what isn't done yet."
 pubDate: 2026-10-29
 tags: ["patimania", "engineering", "ai"]
-heroImage: ../../assets/projects/patimania/gallery/01-home.png
+heroImage: ../../assets/blog/building-patimania.jpg
 ---
 
 I'm building **Patimania**, a marketplace that connects pet owners with pet hotels, groomers and pet taxis in Türkiye. It runs on the web, on iOS and Android, and behind it there's a business panel and an admin panel. The customer pays up front, and the money waits in escrow until the service is done; then the commission is taken and the rest goes to the business.
