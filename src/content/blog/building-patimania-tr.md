@@ -1,9 +1,9 @@
 ---
-title: "Patimania'yı Geliştirirken"
+title: "Pet Pazaryeri Platformu Geliştirmek"
 description: "Bir pet hizmetleri pazaryerini geliştirdiğim dört ay: verdiğim kararlar, artık veritabanının izin vermediği hatalar, Claude Code ile çalışmak ve henüz bitmeyenler."
 pubDate: 2026-10-29
 tags: ["patimania", "mühendislik", "yapay zekâ"]
-heroImage: ../../assets/projects/patimania/gallery/01-home.png
+heroImage: ../../assets/blog/building-patimania.jpg
 lang: tr
 ---
 
