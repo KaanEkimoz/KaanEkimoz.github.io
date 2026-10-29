@@ -25,6 +25,9 @@ pnpm-debug.log*
 !.vscode/settings.json
 .idea/
 
+# GitHub calendar, fetched before each build (scripts/github-activity.mjs)
+src/data/github-activity.json
+
 # planning docs (kept local, not deployed)
 CLAUDE_CODE_KICKOFF.md
 tmp/

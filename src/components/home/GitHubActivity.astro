@@ -1,0 +1,322 @@
+---
+/**
+ * A Year on GitHub: the contribution calendar of the last 12 months, one
+ * square per day in weeks starting on Monday, plus a few numbers worked
+ * out from it. The data comes from scripts/github-activity.mjs, which runs
+ * before each build (and the site rebuilds daily); without that file the
+ * section isn't rendered. Hovering or tapping a day shows its date and count.
+ */
+import { readFileSync } from 'node:fs';
+import { join } from 'node:path';
+import { copy, pick } from '@lib/home';
+import { SOCIAL } from '@lib/constants';
+import { BCP47, type Lang } from '@lib/i18n';
+
+interface Props {
+  lang: Lang;
+}
+const { lang } = Astro.props;
+const c = copy.github;
+
+type Day = { d: string; c: number };
+let data: { fetchedAt: string; days: Day[] } | null = null;
+try {
+  data = JSON.parse(readFileSync(join(process.cwd(), 'src/data/github-activity.json'), 'utf8'));
+} catch {
+  data = null;
+}
+const days = data?.days ?? [];
+
+const locale = BCP47[lang];
+const at = (iso: string) => new Date(`${iso}T12:00:00Z`);
+const short = (iso: string) => at(iso).toLocaleDateString(locale, { day: 'numeric', month: 'short', year: 'numeric', timeZone: 'UTC' });
+const long = (iso: string) => at(iso).toLocaleDateString(locale, { day: 'numeric', month: 'long', year: 'numeric', timeZone: 'UTC' });
+const count = (n: number) => (n === 0 ? pick(c.none, lang) : `${n.toLocaleString(locale)} ${pick(n === 1 ? c.one : c.many, lang)}`);
+
+// Numbers worked out from the calendar.
+const total = days.reduce((s, x) => s + x.c, 0);
+const active = days.filter((x) => x.c > 0).length;
+let longest = 0;
+let run = 0;
+for (const x of days) {
+  run = x.c > 0 ? run + 1 : 0;
+  longest = Math.max(longest, run);
+}
+const busiest = days.reduce<Day | null>((b, x) => (!b || x.c > b.c ? x : b), null);
+
+// Four shades, split at the quartiles of the days that have any activity.
+const nonzero = days.map((x) => x.c).filter((n) => n > 0).sort((a, b) => a - b);
+const q = (p: number) => nonzero[Math.min(nonzero.length - 1, Math.floor(p * nonzero.length))] ?? 1;
+const cuts = [q(0.25), q(0.5), q(0.75)];
+const level = (n: number) => (n === 0 ? 0 : n <= cuts[0] ? 1 : n <= cuts[1] ? 2 : n <= cuts[2] ? 3 : 4);
+
+// Weeks start on Monday: pad the first column so each row is one weekday.
+const lead = days.length ? (at(days[0].d).getUTCDay() + 6) % 7 : 0;
+const cells: (Day | null)[] = [...Array(lead).fill(null), ...days];
+const weeks = Math.ceil(cells.length / 7);
+// A month label sits over the first column that holds that month's 1st.
+const months: { col: number; label: string }[] = [];
+cells.forEach((x, i) => {
+  if (x && x.d.endsWith('-01')) {
+    const col = Math.floor(i / 7) + 1;
+    if (col <= weeks - 2) months.push({ col, label: at(x.d).toLocaleDateString(locale, { month: 'short', timeZone: 'UTC' }) });
+  }
+});
+---
+
+{
+  days.length > 0 && (
+    <section class="sec" id="github">
+      <div class="wrap">
+        <div class="head" data-fade-in>
+          <div>
+            <h2>{pick(c.title, lang)}</h2>
+            <p class="lede">{pick(c.lede, lang)}</p>
+          </div>
+          <a class="link" href={SOCIAL.github} target="_blank" rel="noopener noreferrer">{pick(c.profile, lang)}</a>
+        </div>
+
+        <dl class="stats">
+          <div><dt>{pick(c.total, lang)}</dt><dd>{total.toLocaleString(locale)}</dd></div>
+          <div><dt>{pick(c.active, lang)}</dt><dd>{active.toLocaleString(locale)}</dd></div>
+          <div><dt>{pick(c.streak, lang)}</dt><dd>{longest} <small>{pick(c.days, lang)}</small></dd></div>
+          {busiest && (
+            <div><dt>{pick(c.busiest, lang)} · {short(busiest.d)}</dt><dd>{busiest.c.toLocaleString(locale)}</dd></div>
+          )}
+        </dl>
+
+        <div class="cal panel" data-gh>
+          <div class="months" style={`grid-template-columns: repeat(${weeks}, minmax(0, 1fr))`} aria-hidden="true">
+            {months.map((m) => <span style={`grid-column: ${m.col} / span 3`}>{m.label}</span>)}
+          </div>
+          <div class="grid" style={`grid-template-columns: repeat(${weeks}, minmax(0, 1fr))`} role="img" aria-label={`${pick(c.title, lang)}: ${total.toLocaleString(locale)} ${pick(c.many, lang)}`}>
+            {cells.map((x) => (x ? <i data-l={level(x.c)} data-t={`${long(x.d)} · ${count(x.c)}`}></i> : <i class="pad"></i>))}
+          </div>
+          <div class="foot">
+            <span>{pick(c.updated, lang)}: {data && long(data.fetchedAt.slice(0, 10))}</span>
+            <span class="legend" aria-hidden="true">
+              {pick(c.less, lang)}
+              {[0, 1, 2, 3, 4].map((l) => <i data-l={l}></i>)}
+              {pick(c.more, lang)}
+            </span>
+          </div>
+          <div class="tip" hidden></div>
+        </div>
+      </div>
+    </section>
+  )
+}
+
+<style>
+  .head {
+    display: flex;
+    justify-content: space-between;
+    align-items: end;
+    flex-wrap: wrap;
+    gap: 16px 24px;
+    margin-bottom: 32px;
+  }
+  h2 {
+    font-size: clamp(1.9rem, 3.8vw, 2.9rem);
+    line-height: 1.08;
+    letter-spacing: -0.04em;
+    font-weight: 500;
+  }
+  .lede {
+    margin-top: 10px;
+    max-width: 58ch;
+    color: rgb(var(--text-200));
+  }
+  .stats {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 12px;
+    margin-bottom: 16px;
+  }
+  .stats div {
+    display: flex;
+    flex-direction: column-reverse;
+    justify-content: flex-end;
+    gap: 4px;
+    padding: 14px 16px;
+    border-left: 2px solid rgb(var(--accent-1) / 0.5);
+  }
+  .stats dt {
+    font: 500 0.72rem 'JetBrains Mono', ui-monospace, monospace;
+    letter-spacing: 0.04em;
+    color: rgb(var(--text-300));
+  }
+  .stats dd {
+    font: 500 clamp(1.5rem, 2.6vw, 2rem) / 1.1 Sora, ui-sans-serif, sans-serif;
+    letter-spacing: -0.03em;
+    color: rgb(var(--text-100));
+    font-variant-numeric: tabular-nums;
+  }
+  .stats small {
+    margin-left: 4px;
+    font: 0.78rem Geist, ui-sans-serif, sans-serif;
+    letter-spacing: 0;
+    color: rgb(var(--text-300));
+  }
+  .cal {
+    position: relative;
+    padding: 18px 20px 14px;
+  }
+  .months,
+  .grid {
+    display: grid;
+    column-gap: 3px;
+  }
+  .months {
+    margin-bottom: 6px;
+    font: 0.7rem 'JetBrains Mono', ui-monospace, monospace;
+    color: rgb(var(--text-300));
+  }
+  .months span {
+    grid-row: 1;
+    white-space: nowrap;
+  }
+  .grid {
+    grid-template-rows: repeat(7, auto);
+    grid-auto-flow: column;
+    row-gap: 3px;
+  }
+  .grid i,
+  .legend i {
+    display: block;
+    aspect-ratio: 1;
+    border-radius: 3px;
+    background: rgb(var(--border) / 0.7);
+  }
+  .grid i.pad {
+    visibility: hidden;
+  }
+  [data-l='1'] {
+    background: rgb(var(--accent-1) / 0.3) !important;
+  }
+  [data-l='2'] {
+    background: rgb(var(--accent-1) / 0.55) !important;
+  }
+  [data-l='3'] {
+    background: rgb(var(--accent-1) / 0.85) !important;
+  }
+  [data-l='4'] {
+    background: rgb(var(--accent-2)) !important;
+  }
+  /* Light theme: one blue scale (its cyan reads as teal on white). */
+  :global(html[data-theme='light']) [data-l='1'] {
+    background: rgb(var(--accent-1) / 0.22) !important;
+  }
+  :global(html[data-theme='light']) [data-l='2'] {
+    background: rgb(var(--accent-1) / 0.45) !important;
+  }
+  :global(html[data-theme='light']) [data-l='3'] {
+    background: rgb(var(--accent-1) / 0.7) !important;
+  }
+  :global(html[data-theme='light']) [data-l='4'] {
+    background: rgb(var(--accent-1)) !important;
+  }
+  .grid i[data-t]:hover {
+    outline: 2px solid rgb(var(--text-100) / 0.7);
+    outline-offset: 1px;
+  }
+  .foot {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-between;
+    gap: 8px 16px;
+    margin-top: 12px;
+    font: 0.72rem 'JetBrains Mono', ui-monospace, monospace;
+    color: rgb(var(--text-300));
+  }
+  .legend {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+  }
+  .legend i {
+    width: 11px;
+  }
+  .tip {
+    position: absolute;
+    z-index: 2;
+    left: 0;
+    top: 0;
+    padding: 6px 10px;
+    border-radius: 8px;
+    font: 500 0.75rem 'JetBrains Mono', ui-monospace, monospace;
+    white-space: nowrap;
+    color: rgb(var(--text-100));
+    background: rgb(var(--bg-elev-2));
+    border: 1px solid rgb(var(--border));
+    box-shadow: 0 8px 24px -10px rgb(0 0 0 / 0.5);
+    pointer-events: none;
+    transform: translate(-50%, calc(-100% - 8px));
+  }
+  .tip[hidden] {
+    display: none;
+  }
+  @media (max-width: 860px) {
+    .stats {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+  }
+  @media (max-width: 640px) {
+    .cal {
+      padding: 14px 12px 12px;
+    }
+    .months,
+    .grid {
+      column-gap: 2px;
+    }
+    .grid {
+      row-gap: 2px;
+    }
+    .grid i {
+      border-radius: 1.5px;
+    }
+    .months {
+      font-size: 0.6rem;
+    }
+  }
+</style>
+
+<script>
+  // Date and count of the day under the pointer (or the tapped one).
+  let cleanup: (() => void) | null = null;
+  function init() {
+    cleanup?.();
+    const cal = document.querySelector<HTMLElement>('[data-gh]');
+    const tip = cal?.querySelector<HTMLElement>('.tip');
+    if (!cal || !tip) return;
+    const show = (e: PointerEvent) => {
+      const cell = (e.target as Element).closest?.<HTMLElement>('[data-t]');
+      if (!cell || !cal.contains(cell)) { tip.hidden = true; return; }
+      const c = cal.getBoundingClientRect(), r = cell.getBoundingClientRect();
+      tip.textContent = cell.dataset.t ?? '';
+      tip.hidden = false;
+      // Keep the label inside the panel near its edges.
+      const half = tip.offsetWidth / 2;
+      const x = Math.min(Math.max(r.left - c.left + r.width / 2, half + 4), c.width - half - 4);
+      tip.style.left = `${x}px`;
+      tip.style.top = `${r.top - c.top}px`;
+    };
+    // A mouse leaving hides it; a finger lifting doesn't (it stays until
+    // another tap, inside or outside the calendar).
+    const leave = (e: PointerEvent) => { if (e.pointerType === 'mouse') tip.hidden = true; };
+    const outside = (e: PointerEvent) => { if (!cal.contains(e.target as Node)) tip.hidden = true; };
+    cal.addEventListener('pointerover', show);
+    cal.addEventListener('pointerdown', show);
+    cal.addEventListener('pointerleave', leave);
+    document.addEventListener('pointerdown', outside);
+    cleanup = () => {
+      cal.removeEventListener('pointerover', show);
+      cal.removeEventListener('pointerdown', show);
+      cal.removeEventListener('pointerleave', leave);
+      document.removeEventListener('pointerdown', outside);
+      cleanup = null;
+    };
+  }
+  document.addEventListener('astro:page-load', init);
+  document.addEventListener('astro:before-swap', () => cleanup?.());
+</script>
