@@ -10,6 +10,7 @@ import BlogCard from '@components/BlogCard.astro';
 import { getPosts } from '@lib/content';
 import { copy, pick } from '@lib/home';
 import { localizedPath, type Lang } from '@lib/i18n';
+import { homeLd } from '@lib/seo';
 
 interface Props {
   lang: Lang;
@@ -20,7 +21,7 @@ const latestPosts = (await getPosts(lang)).slice(0, 3);
 const w = copy.writing;
 ---
 
-<BaseLayout lang={lang}>
+<BaseLayout lang={lang} jsonLd={homeLd(lang)}>
   <HeroSection lang={lang} />
   <MethodSection lang={lang} />
   <CareerSection lang={lang} />

@@ -6,6 +6,8 @@ import Tag from '@components/ui/Tag.astro';
 import LiteYouTube from '@components/LiteYouTube.astro';
 import type { Project } from '@lib/content';
 import { localizedPath, t, type Lang } from '@lib/i18n';
+import { SITE } from '@lib/constants';
+import { projectLd } from '@lib/seo';
 
 interface Props {
   project: Project;
@@ -25,6 +27,12 @@ const fullSize = await Promise.all(
   screenshots.map((s) => getImage({ src: s, width: Math.min(s.width, s.width >= s.height ? 1800 : 900), format: 'webp' })),
 );
 
+// Link previews and search engines get the project's cover, cut to 1200×630.
+const social = coverImage
+  ? new URL((await getImage({ src: coverImage, width: 1200, height: 630, fit: 'cover', format: 'jpeg', quality: 85 })).src, SITE.url).href
+  : undefined;
+const ld = projectLd({ title, description, url: new URL(Astro.url.pathname, SITE.url).href, image: social, year, keywords: [platform, ...genres, ...techStack], lang });
+
 // Secondary links, in display order. The live product URL gets the primary button.
 const external = [
   links.youtube && { href: links.youtube, label: t('projectDetail.trailer', lang) },
@@ -39,7 +47,7 @@ const external = [
 // file's scoped CSS would not be loaded.
 ---
 
-<BaseLayout lang={lang} title={title} description={description}>
+<BaseLayout lang={lang} title={title} description={description} image={social} imageAlt={social ? title : undefined} jsonLd={ld}>
   <article id="project-detail" class="wrap max-w-4xl pt-12 sm:pt-20 pb-16 sm:pb-24">
     <a href={localizedPath('/projects', lang)} data-back class="eyebrow inline-block mb-8 hover:text-accent-1">
       {t('projectDetail.back', lang)}

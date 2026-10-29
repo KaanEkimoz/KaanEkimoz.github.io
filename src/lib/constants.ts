@@ -34,6 +34,15 @@ export const SOCIAL = {
   itchio: 'https://ekimozkaan.itch.io',
 } as const;
 
+// Visitor statistics and Google Search Console. Both values are public by
+// design (they end up in every page's HTML); an empty value switches it off.
+export const ANALYTICS = {
+  // Cloudflare Web Analytics site token (dash.cloudflare.com → Web Analytics).
+  cloudflareToken: '',
+  // Google Search Console HTML-tag verification code (its content="…" value).
+  googleVerification: '',
+} as const;
+
 // Cloudflare Worker that proxies /chat to the Anthropic API (see worker/).
 // Public URL only — the API key and the chat password live in the Worker's
 // secrets, never here.
