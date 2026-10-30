@@ -87,11 +87,7 @@ export const copy = {
     swipe: { en: 'Swipe', tr: 'Kaydır' },
   },
   github: {
-    title: { en: 'A Year on GitHub', tr: "GitHub'da Son Bir Yıl" },
-    lede: {
-      en: "My contributions over the last 12 months, updated every day. Patimania's repository is private, so its days show up as counts only.",
-      tr: "Son 12 ayda GitHub'daki katkılarım, her gün güncelleniyor. Patimania'nın deposu gizli olduğu için onun günleri sadece sayı olarak görünüyor.",
-    },
+    title: { en: 'My Past Year on GitHub', tr: "GitHub'da Son 12 Ay" },
     total: { en: 'contributions in the last year', tr: 'son bir yılda katkı' },
     active: { en: 'active days', tr: 'aktif gün' },
     streak: { en: 'longest streak', tr: 'en uzun seri' },

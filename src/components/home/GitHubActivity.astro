@@ -1,6 +1,6 @@
 ---
 /**
- * A Year on GitHub: the contribution calendar of the last 12 months, one
+ * My Past Year on GitHub: the contribution calendar of the last 12 months, one
  * square per day in weeks starting on Monday, plus a few numbers worked
  * out from it. The data comes from scripts/github-activity.mjs, which runs
  * before each build (and the site rebuilds daily); without that file the
@@ -69,10 +69,7 @@ cells.forEach((x, i) => {
     <section class="sec" id="github">
       <div class="wrap">
         <div class="head" data-fade-in>
-          <div>
-            <h2>{pick(c.title, lang)}</h2>
-            <p class="lede">{pick(c.lede, lang)}</p>
-          </div>
+          <h2>{pick(c.title, lang)}</h2>
           <a class="link" href={SOCIAL.github} target="_blank" rel="noopener noreferrer">{pick(c.profile, lang)}</a>
         </div>
 
@@ -121,11 +118,6 @@ cells.forEach((x, i) => {
     line-height: 1.08;
     letter-spacing: -0.04em;
     font-weight: 500;
-  }
-  .lede {
-    margin-top: 10px;
-    max-width: 58ch;
-    color: rgb(var(--text-200));
   }
   .stats {
     display: grid;
