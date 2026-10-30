@@ -101,15 +101,22 @@ const FALLBACK_BETA = 'server-side-fallback-2026-07-01';
 // model in MODELS. Web search is $10 per 1,000 searches; fetch is free
 // apart from the tokens it reads; code execution has 1,550 free container
 // hours a month per organization, then $0.05/hour.
-const WEB_TOOLS = [
-  {
-    type: 'web_search_20250305',
-    name: 'web_search',
-    max_uses: 5,
-    user_location: { type: 'approximate', country: 'TR', timezone: 'Europe/Istanbul' },
-  },
-  { type: 'web_fetch_20250910', name: 'web_fetch', max_uses: 5, max_content_tokens: 50_000, citations: { enabled: true } },
-];
+const WEB_SEARCH_TOOL = {
+  type: 'web_search_20250305',
+  name: 'web_search',
+  max_uses: 5,
+  user_location: { type: 'approximate', country: 'TR', timezone: 'Europe/Istanbul' },
+};
+const WEB_FETCH_TOOL = {
+  type: 'web_fetch_20250910',
+  name: 'web_fetch',
+  max_uses: 5,
+  max_content_tokens: 50_000,
+  citations: { enabled: true },
+};
+// A link in the chat turns web_fetch on even with the Web button off:
+// reading a page the person shared costs only tokens.
+const LINK_RE = /\bhttps?:\/\/\S|\bwww\.\S|\b[a-z0-9-]+\.(?:com|net|org|io|dev|app|ai|co|edu|gov|tr)\b/i;
 const CODE_TOOL = { type: 'code_execution_20250825', name: 'code_execution' };
 // Client tool: Claude asks, this Worker runs it against D1.
 const MEMORY_TOOL = { type: 'memory_20250818', name: 'memory' };
@@ -412,11 +419,17 @@ async function readChatRequest(request, user, env) {
     model,
     effort,
     web: data.web === true,
+    links: messages.some((m) => m.role === 'user' && hasLink(m.content)),
     // Office attachments need the sandbox to be read at all.
     code: data.code === true || counts.container,
     project,
     containerId,
   };
+}
+
+function hasLink(content) {
+  if (typeof content === 'string') return LINK_RE.test(content);
+  return content.some((b) => b.type === 'text' && LINK_RE.test(b.text));
 }
 
 // A message is either a string or a list of blocks:
@@ -483,7 +496,8 @@ async function runTurn(req, user, env, ctx, cors) {
   const settings = await loadSettings(user, env);
   const memoryOn = settings.memory && !!env.DB;
   const tools = [];
-  if (req.web) tools.push(...WEB_TOOLS);
+  if (req.web) tools.push(WEB_SEARCH_TOOL);
+  if (req.web || req.links) tools.push(WEB_FETCH_TOOL);
   if (req.code) tools.push(CODE_TOOL);
   if (memoryOn) tools.push(MEMORY_TOOL);
 
@@ -763,7 +777,12 @@ function systemPrompt({ name, instructions }, req, memory) {
   if (name) parts.push(`The person you're talking to is called ${name}.`);
 
   if (req.web) {
-    parts.push('You can search the web and read web pages. Use them for anything current or when the person shares a link.');
+    parts.push('You can search the web. Use it for anything current.');
+  }
+  if (req.web || req.links) {
+    parts.push(
+      "You can read web pages with web_fetch. When the person shares a link, read it before answering. If a page can't be read (login wall, blocked site, video), say which link failed and why, and ask them to paste the text.",
+    );
   }
   if (req.code) {
     parts.push(
