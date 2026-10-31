@@ -82,7 +82,6 @@ import { CHAT_EFFORTS, CHAT_MODELS } from '@lib/constants';
           </button>
         </nav>
 
-        <div class="sidebar-section">Son sohbetler</div>
         <ul id="convo-list" class="convo-list"></ul>
 
         <div class="sidebar-foot">
@@ -208,6 +207,7 @@ import { CHAT_EFFORTS, CHAT_MODELS } from '@lib/constants';
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18" /></svg>
           </button>
         </header>
+        <div id="split-view" class="split-view"></div>
         <iframe id="html-panel-frame" class="html-panel-frame" title="HTML önizleme" sandbox="allow-scripts allow-modals" referrerpolicy="no-referrer"></iframe>
       </aside>
     </div>
@@ -215,6 +215,9 @@ import { CHAT_EFFORTS, CHAT_MODELS } from '@lib/constants';
     <!-- Settings: account-wide (saved on the server) and this device's own -->
     <dialog id="settings-dialog" class="settings-dialog">
       <form id="settings-form" method="dialog" class="settings-form">
+        <button id="settings-x" type="button" class="icon-btn dialog-x" aria-label="Kapat" title="Kapat">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18" /></svg>
+        </button>
         <h2 class="settings-title">Ayarlar</h2>
 
         <section class="settings-section">
@@ -306,6 +309,10 @@ import { CHAT_EFFORTS, CHAT_MODELS } from '@lib/constants';
           <span class="text-sm text-text-200">Ad</span>
           <input id="project-name" maxlength="80" required class="w-full bg-bg-base border border-border focus:border-accent-1 outline-none px-3 py-2 text-text-100" />
         </label>
+        <div class="space-y-1">
+          <span class="text-sm text-text-200">Simge</span>
+          <div id="project-emoji" class="emoji-grid" role="radiogroup" aria-label="Proje simgesi"></div>
+        </div>
         <label class="block space-y-1">
           <span class="text-sm text-text-200">Talimatlar (bu projedeki her sohbette geçerli)</span>
           <textarea id="project-instructions" rows="4" maxlength="4000" class="w-full bg-bg-base border border-border focus:border-accent-1 outline-none px-3 py-2 text-text-100 leading-relaxed"></textarea>
@@ -495,7 +502,6 @@ import { CHAT_EFFORTS, CHAT_MODELS } from '@lib/constants';
       const greetingEl = $<HTMLSpanElement>('greeting');
       const userName = $<HTMLSpanElement>('user-name');
       const userAvatar = $<HTMLSpanElement>('user-avatar');
-      const sidebarSection = document.querySelector<HTMLElement>('.sidebar-section')!;
       // Fallback names until a person sets their own in Ayarlar.
       const USER_NAMES: Record<string, string> = { kaan: 'Kaan' };
       let displayName = '';
@@ -639,6 +645,13 @@ import { CHAT_EFFORTS, CHAT_MODELS } from '@lib/constants';
       const projectKey = () => `fx-chat-project:${user}`;
       const active = () => convos.find((c) => c.id === activeId) ?? null;
       const projectOf = (id?: string | null) => projects.find((p) => p.id === id) ?? null;
+      // A project's emoji is the start of its name, so it syncs like the name.
+      const LEADING_EMOJI = /^(\p{Extended_Pictographic}(?:\uFE0F|\u200D\p{Extended_Pictographic}|\p{Emoji_Modifier})*)\s+/u;
+      const DEFAULT_ICON = '📁';
+      const projectIcon = (p: Project) => LEADING_EMOJI.exec(p.name)?.[1] ?? DEFAULT_ICON;
+      const projectTitle = (p: Project) => p.name.replace(LEADING_EMOJI, '');
+      const pinsKey = () => `fx-chat-pins:${user}`;
+      const foldedKey = () => `fx-chat-folded:${user}`;
 
       function persist() {
         if (!user) return;
@@ -849,15 +862,14 @@ import { CHAT_EFFORTS, CHAT_MODELS } from '@lib/constants';
           projectSelect.append(o);
         };
         opt('', 'Proje yok');
-        for (const p of projects) opt(p.id, `📁 ${p.name}`);
+        for (const p of projects) opt(p.id, `${projectIcon(p)} ${projectTitle(p)}`);
         opt('__new', '+ Yeni proje');
-        sidebarSection.textContent = currentProject ? `${projectOf(currentProject)?.name ?? 'Proje'} sohbetleri` : 'Son sohbetler';
       }
 
       function renderProjectLabel() {
         const p = projectOf(active()?.projectId ?? currentProject);
         projectLabel.hidden = !p;
-        projectLabel.textContent = p ? ` · ${p.name}` : '';
+        projectLabel.textContent = p ? ` · ${projectTitle(p)}` : '';
         projectSelect.value = p?.id ?? '';
         projectEditBtn.hidden = !p;
       }
@@ -887,10 +899,34 @@ import { CHAT_EFFORTS, CHAT_MODELS } from '@lib/constants';
 
       let editing: { id: string; files: Attachment[]; removed: string[]; uploading: number } | null = null;
 
+      const PROJECT_EMOJIS = ['📁', '📚', '🧠', '🗣️', '🩺', '🎓', '💼', '✍️', '💡', '🧪', '❤️', '🌱', '🎨', '🏠', '✈️', '⭐'];
+      let projectEmoji = DEFAULT_ICON;
+      function renderEmojiGrid() {
+        const grid = $<HTMLDivElement>('project-emoji');
+        const choices = PROJECT_EMOJIS.includes(projectEmoji) ? PROJECT_EMOJIS : [...PROJECT_EMOJIS, projectEmoji];
+        grid.replaceChildren(
+          ...choices.map((emoji) => {
+            const btn = document.createElement('button');
+            btn.type = 'button';
+            btn.className = 'emoji-btn';
+            btn.textContent = emoji;
+            btn.setAttribute('role', 'radio');
+            btn.setAttribute('aria-checked', String(emoji === projectEmoji));
+            btn.addEventListener('click', () => {
+              projectEmoji = emoji;
+              renderEmojiGrid();
+            });
+            return btn;
+          }),
+        );
+      }
+
       function openProjectDialog(p: Project | null) {
         closeDrawer();
         editing = { id: p?.id ?? crypto.randomUUID(), files: [...(p?.files ?? [])], removed: [], uploading: 0 };
-        projectName.value = p?.name ?? '';
+        projectName.value = p ? projectTitle(p) : '';
+        projectEmoji = p ? projectIcon(p) : DEFAULT_ICON;
+        renderEmojiGrid();
         projectInstructions.value = p?.instructions ?? '';
         $<HTMLButtonElement>('project-delete').hidden = !p;
         projectError.classList.add('hidden');
@@ -972,7 +1008,11 @@ import { CHAT_EFFORTS, CHAT_MODELS } from '@lib/constants';
           const res = await api(`/projects/${editing.id}`, {
             method: 'PUT',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ name: projectName.value, instructions: projectInstructions.value, files: editing.files }),
+            body: JSON.stringify({
+              name: projectEmoji === DEFAULT_ICON ? projectName.value : `${projectEmoji} ${projectName.value.trim()}`,
+              instructions: projectInstructions.value,
+              files: editing.files,
+            }),
           });
           if (!res.ok) throw new Error(await errorMessage(res));
           deleteFiles(editing.removed);
@@ -1056,9 +1096,12 @@ import { CHAT_EFFORTS, CHAT_MODELS } from '@lib/constants';
       const htmlPanel = $<HTMLElement>('html-panel');
       const htmlFrame = $<HTMLIFrameElement>('html-panel-frame');
       const htmlTitle = $<HTMLSpanElement>('html-panel-title');
+      const splitView = $<HTMLDivElement>('split-view');
       let panelDoc: { name: string; html: string; convo: string | null } | null = null;
+      let splitId: string | null = null;
 
       function openPanel(name: string, html: string) {
+        closePanel();
         panelDoc = { name, html, convo: activeId };
         htmlTitle.textContent = name;
         htmlFrame.srcdoc = withPolicy(html);
@@ -1068,7 +1111,9 @@ import { CHAT_EFFORTS, CHAT_MODELS } from '@lib/constants';
       }
       function closePanel() {
         panelDoc = null;
-        htmlPanel.classList.remove('is-open');
+        splitId = null;
+        splitView.replaceChildren();
+        htmlPanel.classList.remove('is-open', 'is-split');
         htmlPanel.inert = true;
         htmlFrame.removeAttribute('srcdoc');
       }
@@ -1300,7 +1345,7 @@ import { CHAT_EFFORTS, CHAT_MODELS } from '@lib/constants';
       function renderConversation() {
         const c = active();
         const msgs = c?.messages ?? [];
-        if (panelDoc && panelDoc.convo !== activeId) closePanel();
+        if ((panelDoc && panelDoc.convo !== activeId) || (splitId && splitId === activeId)) closePanel();
         const lastUser = msgs.map((m) => m.role).lastIndexOf('user');
         const nodes: HTMLElement[] = [];
         msgs.forEach((m, i) => {
@@ -1333,60 +1378,222 @@ import { CHAT_EFFORTS, CHAT_MODELS } from '@lib/constants';
         meter.textContent = [context, `bu sohbet ≈ ${money(cost)}`].filter(Boolean).join(' · ');
       }
 
+      const readSet = (key: string) => new Set(load<string[]>(key, []));
+
+      function convoRow(c: Convo, pinned: boolean, nested: boolean): HTMLLIElement {
+        const li = document.createElement('li');
+        li.className = `group flex items-center${nested ? ' convo-nested' : ''}`;
+        const open = document.createElement('button');
+        open.type = 'button';
+        open.className = `convo-item ${c.id === activeId ? 'is-active' : ''}`;
+        const title = document.createElement('span');
+        title.className = 'convo-title';
+        title.textContent = c.title || 'Yeni sohbet';
+        const sub = document.createElement('span');
+        sub.className = 'convo-sub';
+        sub.textContent = `${pinned ? '📌 ' : ''}${when(c.updatedAt)}`;
+        open.append(title, sub);
+        open.addEventListener('click', () => {
+          if (streaming) return;
+          activeId = c.id;
+          persist();
+          renderConvoList();
+          closeDrawer();
+          if (c.messages === null) void loadFull(c);
+          else renderConversation();
+        });
+        const more = document.createElement('button');
+        more.type = 'button';
+        more.className = 'convo-more';
+        more.setAttribute('aria-label', 'Sohbet seçenekleri');
+        more.setAttribute('aria-haspopup', 'menu');
+        more.textContent = '⋯';
+        more.addEventListener('click', (e) => {
+          e.stopPropagation();
+          openConvoMenu(c, more);
+        });
+        li.append(open, more);
+        return li;
+      }
+
+      function sectionLabel(text: string, onAdd?: () => void): HTMLLIElement {
+        const li = document.createElement('li');
+        li.className = 'sidebar-section';
+        const label = document.createElement('span');
+        label.textContent = text;
+        li.append(label);
+        if (onAdd) {
+          const add = document.createElement('button');
+          add.type = 'button';
+          add.className = 'section-add';
+          add.setAttribute('aria-label', 'Yeni proje');
+          add.title = 'Yeni proje';
+          add.textContent = '+';
+          add.addEventListener('click', onAdd);
+          li.append(add);
+        }
+        return li;
+      }
+
+      function projectRow(p: Project, folded: boolean): HTMLLIElement {
+        const li = document.createElement('li');
+        li.className = 'project-row';
+        const toggle = document.createElement('button');
+        toggle.type = 'button';
+        toggle.className = 'project-toggle';
+        toggle.setAttribute('aria-expanded', String(!folded));
+        const icon = document.createElement('span');
+        icon.textContent = projectIcon(p);
+        const name = document.createElement('span');
+        name.className = 'convo-title';
+        name.textContent = projectTitle(p);
+        toggle.append(icon, name);
+        toggle.addEventListener('click', () => {
+          const set = readSet(foldedKey());
+          if (!set.delete(p.id)) set.add(p.id);
+          save(foldedKey(), [...set]);
+          renderConvoList();
+        });
+        const add = document.createElement('button');
+        add.type = 'button';
+        add.className = 'convo-more';
+        add.setAttribute('aria-label', `${projectTitle(p)} projesinde yeni sohbet`);
+        add.title = 'Bu projede yeni sohbet';
+        add.textContent = '+';
+        add.addEventListener('click', () => {
+          if (streaming) return;
+          currentProject = p.id;
+          save(projectKey(), p.id);
+          activeId = null;
+          persist();
+          renderConversation();
+          renderConvoList();
+          closeDrawer();
+          input.focus();
+        });
+        li.append(toggle, add);
+        return li;
+      }
+
       function renderConvoList() {
         convoList.replaceChildren();
         const q = convoSearch.value.trim().toLocaleLowerCase('tr');
-        const shown = convos.filter(
-          (c) =>
-            (!currentProject || c.projectId === currentProject) &&
-            (!q ||
-              `${c.title} ${(c.messages ?? []).map((m) => m.content).join(' ')}`.toLocaleLowerCase('tr').includes(q)),
+        const matches = (c: Convo) =>
+          !q || `${c.title} ${(c.messages ?? []).map((m) => m.content).join(' ')}`.toLocaleLowerCase('tr').includes(q);
+        const pins = readSet(pinsKey());
+        const folded = readSet(foldedKey());
+        const inOrder = (list: Convo[]) => [...list].sort((a, b) => Number(pins.has(b.id)) - Number(pins.has(a.id)));
+        const shown = convos.filter(matches);
+        const note = (text: string) => {
+          const li = document.createElement('li');
+          li.className = 'px-4 py-2 text-sm text-text-300';
+          li.textContent = text;
+          return li;
+        };
+
+        const groups = projects
+          .map((p) => ({ p, rows: inOrder(shown.filter((c) => c.projectId === p.id)) }))
+          .filter((g) => !q || g.rows.length);
+        if (!q || groups.length) convoList.append(sectionLabel('Projeler', () => openProjectDialog(null)));
+        if (!q && !groups.length) convoList.append(note('Henüz proje yok.'));
+        for (const { p, rows } of groups) {
+          const closed = !q && folded.has(p.id);
+          convoList.append(projectRow(p, closed));
+          if (closed) continue;
+          if (!rows.length) convoList.append(note('Henüz sohbet yok.'));
+          for (const c of rows) convoList.append(convoRow(c, pins.has(c.id), true));
+        }
+
+        const loose = inOrder(shown.filter((c) => !projectOf(c.projectId)));
+        if (!q || loose.length) convoList.append(sectionLabel('Son sohbetler'));
+        for (const c of loose) convoList.append(convoRow(c, pins.has(c.id), false));
+        if (!shown.length) convoList.append(note(q ? 'Eşleşen sohbet yok.' : 'Henüz sohbet yok.'));
+      }
+
+      // ─── Chat menu (⋯ on each row) ─────────────────────────────────────
+      let convoMenu: HTMLElement | null = null;
+      function closeConvoMenu() {
+        convoMenu?.remove();
+        convoMenu = null;
+      }
+      async function fullConvo(c: Convo): Promise<Convo> {
+        if (c.messages === null) await loadFull(c);
+        return c;
+      }
+      function openConvoMenu(c: Convo, anchor: HTMLElement) {
+        closeConvoMenu();
+        const pins = readSet(pinsKey());
+        const pinned = pins.has(c.id);
+        const menu = document.createElement('div');
+        menu.className = 'convo-menu';
+        menu.setAttribute('role', 'menu');
+        const item = (label: string, run: () => void, danger = false) => {
+          const btn = document.createElement('button');
+          btn.type = 'button';
+          btn.className = `menu-item${danger ? ' menu-item--danger' : ''}`;
+          btn.setAttribute('role', 'menuitem');
+          btn.textContent = label;
+          btn.addEventListener('click', () => {
+            closeConvoMenu();
+            run();
+          });
+          menu.append(btn);
+        };
+        item(pinned ? 'Sabitlemeyi kaldır' : 'Sabitle', () => {
+          if (!pins.delete(c.id)) pins.add(c.id);
+          save(pinsKey(), [...pins]);
+          renderConvoList();
+        });
+        item('Yeniden adlandır', () => void renameConvo(c));
+        if (c.id !== activeId) item('Yanda aç', () => void openSplit(c));
+        item('.md olarak indir', () => void fullConvo(c).then(exportConvo));
+        item('Sil', () => {
+          if (streaming && c.id === activeId) return;
+          if (!confirm('Bu sohbet silinsin mi? Tüm cihazlarından silinir.')) return;
+          removeConvo(c);
+          renderConversation();
+          renderConvoList();
+        }, true);
+        document.body.append(menu);
+        const box = anchor.getBoundingClientRect();
+        const left = Math.min(box.left, innerWidth - menu.offsetWidth - 8);
+        const top = Math.min(box.bottom + 4, innerHeight - menu.offsetHeight - 8);
+        menu.style.left = `${Math.max(8, left)}px`;
+        menu.style.top = `${Math.max(8, top)}px`;
+        convoMenu = menu;
+      }
+      document.addEventListener('click', (e) => {
+        if (convoMenu && !convoMenu.contains(e.target as Node)) closeConvoMenu();
+      });
+
+      async function renameConvo(c: Convo) {
+        const name = prompt('Sohbetin yeni adı', c.title)?.trim();
+        if (!name || name === c.title) return;
+        await fullConvo(c);
+        c.title = name.slice(0, 120);
+        c.titled = true;
+        // One tick newer: other devices pick it up, its place in the list stays.
+        c.updatedAt += 1;
+        c.synced = false;
+        persist();
+        void push(c);
+        chatTitle.textContent = active()?.title ?? '';
+        renderConvoList();
+      }
+
+      // Second chat beside the open one, to read; the composer stays with the open one.
+      async function openSplit(c: Convo) {
+        closePanel();
+        await fullConvo(c);
+        if (!c.messages) return;
+        splitId = c.id;
+        htmlTitle.textContent = c.title || 'Yeni sohbet';
+        splitView.replaceChildren(
+          ...c.messages.map((m) => (m.role === 'user' ? userEl(m, false, false) : assistantEl(m, false))),
         );
-        if (shown.length === 0) {
-          const li = document.createElement('li');
-          li.className = 'px-4 py-3 text-sm text-text-300';
-          li.textContent = q ? 'Eşleşen sohbet yok.' : currentProject ? 'Bu projede henüz sohbet yok.' : 'Henüz sohbet yok.';
-          convoList.append(li);
-          return;
-        }
-        for (const c of shown) {
-          const li = document.createElement('li');
-          li.className = 'group flex items-center';
-          const open = document.createElement('button');
-          open.type = 'button';
-          open.className = `convo-item ${c.id === activeId ? 'is-active' : ''}`;
-          const p = !currentProject && projectOf(c.projectId);
-          const title = document.createElement('span');
-          title.className = 'convo-title';
-          title.textContent = c.title || 'Yeni sohbet';
-          const sub = document.createElement('span');
-          sub.className = 'convo-sub';
-          sub.textContent = [p && `📁 ${p.name}`, when(c.updatedAt)].filter(Boolean).join(' · ');
-          open.append(title, sub);
-          open.addEventListener('click', () => {
-            if (streaming) return;
-            activeId = c.id;
-            persist();
-            renderConvoList();
-            closeDrawer();
-            if (c.messages === null) void loadFull(c);
-            else renderConversation();
-          });
-          const del = document.createElement('button');
-          del.type = 'button';
-          del.className = 'convo-del';
-          del.setAttribute('aria-label', 'Sohbeti sil');
-          del.textContent = '×';
-          del.addEventListener('click', () => {
-            if (streaming && c.id === activeId) return;
-            if (!confirm('Bu sohbet silinsin mi? Tüm cihazlarından silinir.')) return;
-            removeConvo(c);
-            renderConversation();
-            renderConvoList();
-          });
-          li.append(open, del);
-          convoList.append(li);
-        }
+        htmlPanel.classList.add('is-open', 'is-split');
+        htmlPanel.inert = false;
+        closeDrawer();
       }
       convoSearch.addEventListener('input', renderConvoList);
 
@@ -1457,7 +1664,8 @@ import { CHAT_EFFORTS, CHAT_MODELS } from '@lib/constants';
       $<HTMLButtonElement>('drawer-close').addEventListener('click', collapseSidebar);
       document.addEventListener('keydown', (e) => {
         if (e.key !== 'Escape' || document.querySelector('dialog[open]')) return;
-        if (panelDoc) closePanel();
+        if (convoMenu) closeConvoMenu();
+        else if (panelDoc || splitId) closePanel();
         else closeDrawer();
       });
 
@@ -1483,7 +1691,10 @@ import { CHAT_EFFORTS, CHAT_MODELS } from '@lib/constants';
 
       $<HTMLButtonElement>('export-btn').addEventListener('click', () => {
         const c = active();
-        if (!c?.messages?.length) return;
+        if (c) exportConvo(c);
+      });
+      function exportConvo(c: Convo) {
+        if (!c.messages?.length) return;
         const out = [`# ${c.title || 'Sohbet'}`, ''];
         c.messages.forEach((m, i) => {
           if (c.summary && i === c.summary.upto) out.push('---', '_Önceki mesajların özeti:_', '', c.summary.text, '---', '');
@@ -1498,7 +1709,7 @@ import { CHAT_EFFORTS, CHAT_MODELS } from '@lib/constants';
         a.download = `${(c.title || 'sohbet').replace(/[\\/:*?"<>|]+/g, '-').slice(0, 60)}.md`;
         a.click();
         setTimeout(() => URL.revokeObjectURL(a.href), 1000);
-      });
+      }
 
       $<HTMLButtonElement>('logout-btn').addEventListener('click', async () => {
         streaming?.abort();
@@ -1592,6 +1803,15 @@ import { CHAT_EFFORTS, CHAT_MODELS } from '@lib/constants';
         settingsInput.placeholder = 'Claude sana nasıl yanıt versin?';
       });
       $<HTMLButtonElement>('settings-cancel').addEventListener('click', () => settingsDialog.close());
+      $<HTMLButtonElement>('settings-x').addEventListener('click', () => settingsDialog.close());
+      // A click on the backdrop lands on the dialog itself, outside its box.
+      for (const dialog of [settingsDialog, memoryDialog]) {
+        dialog.addEventListener('click', (e) => {
+          const box = dialog.getBoundingClientRect();
+          const inside = e.clientX >= box.left && e.clientX <= box.right && e.clientY >= box.top && e.clientY <= box.bottom;
+          if (e.target === dialog && !inside) dialog.close();
+        });
+      }
       settingsForm.addEventListener('submit', async (e) => {
         e.preventDefault();
         settingsSave.disabled = true;
@@ -2677,10 +2897,16 @@ import { CHAT_EFFORTS, CHAT_MODELS } from '@lib/constants';
   .nav-search:focus-within {
     background: rgb(var(--hover) / 0.06);
   }
-  .sidebar-section {
-    padding: 0.9rem 1.15rem 0.35rem;
+  .convo-list > li.sidebar-section {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0.9rem 0.65rem 0.35rem;
     font-size: 0.75rem;
     color: rgb(var(--text-300));
+  }
+  .convo-list > li.sidebar-section:hover {
+    background: none;
   }
   .convo-list {
     flex: 1;
@@ -2722,23 +2948,65 @@ import { CHAT_EFFORTS, CHAT_MODELS } from '@lib/constants';
   .convo-item.is-active {
     color: rgb(var(--text-100));
   }
-  .convo-del {
-    padding: 0.3rem 0.6rem;
+  .convo-more {
+    width: 1.9rem;
+    flex-shrink: 0;
+    padding: 0.3rem 0;
+    text-align: center;
     color: rgb(var(--text-300));
     opacity: 0;
     font-size: 1rem;
   }
-  .convo-list > li:hover .convo-del,
-  .convo-del:focus-visible {
+  .convo-list > li:hover .convo-more,
+  .convo-more:focus-visible {
     opacity: 1;
   }
-  .convo-del:hover {
-    color: rgb(var(--accent-2));
+  .convo-more:hover {
+    color: rgb(var(--text-100));
   }
   @media (hover: none) {
-    .convo-del {
+    .convo-more {
       opacity: 0.7;
     }
+  }
+  .convo-nested {
+    padding-left: 1.1rem;
+  }
+  .project-toggle {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    flex: 1;
+    min-width: 0;
+    padding: 0.4rem 0.65rem;
+    font-size: 0.875rem;
+    text-align: left;
+    color: rgb(var(--text-100));
+  }
+  .project-toggle[aria-expanded='false'] {
+    color: rgb(var(--text-200));
+  }
+  .section-add {
+    padding: 0 0.4rem;
+    font-size: 1rem;
+    line-height: 1;
+    color: rgb(var(--text-300));
+  }
+  .section-add:hover {
+    color: rgb(var(--text-100));
+  }
+  .convo-menu {
+    position: fixed;
+    z-index: 50;
+    min-width: 11rem;
+    padding: 0.3rem;
+    border-radius: 0.7rem;
+    background: rgb(var(--bg-elev-2));
+    border: 1px solid rgb(var(--border));
+    box-shadow: 0 8px 24px rgb(0 0 0 / 0.25);
+  }
+  .convo-menu .menu-item--danger {
+    color: rgb(var(--accent-2));
   }
 
   .sidebar-foot {
@@ -2886,6 +3154,23 @@ import { CHAT_EFFORTS, CHAT_MODELS } from '@lib/constants';
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
+  }
+  .split-view {
+    display: none;
+    flex: 1;
+    flex-direction: column;
+    gap: 1.25rem;
+    min-height: 0;
+    overflow-y: auto;
+    padding: 1rem;
+    background: rgb(var(--bg-base));
+  }
+  .html-panel.is-split .split-view {
+    display: flex;
+  }
+  .html-panel.is-split .html-panel-frame,
+  .html-panel.is-split #html-panel-save {
+    display: none;
   }
   .html-panel-frame {
     flex: 1;
@@ -3637,6 +3922,30 @@ import { CHAT_EFFORTS, CHAT_MODELS } from '@lib/constants';
     flex-direction: column;
     gap: 1.1rem;
     max-height: calc(100dvh - 4rem);
+  }
+  .dialog-x {
+    position: absolute;
+    top: 0.75rem;
+    right: 0.75rem;
+  }
+  .emoji-grid {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.25rem;
+  }
+  .emoji-btn {
+    width: 2.1rem;
+    height: 2.1rem;
+    border-radius: 0.5rem;
+    border: 1px solid transparent;
+    font-size: 1.1rem;
+  }
+  .emoji-btn:hover {
+    background: rgb(var(--hover) / 0.07);
+  }
+  .emoji-btn[aria-checked='true'] {
+    border-color: rgb(var(--accent-1));
+    background: rgb(var(--hover) / 0.07);
   }
   .settings-title {
     margin: 0;
