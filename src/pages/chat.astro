@@ -159,10 +159,6 @@ import { CHAT_EFFORTS, CHAT_MODELS } from '@lib/constants';
                     <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><circle cx="12" cy="12" r="9" /><path d="M3 12h18M12 3a14 14 0 0 1 0 18M12 3a14 14 0 0 0 0 18" /></svg>
                     <span>Web</span>
                   </button>
-                  <button id="code-btn" type="button" class="chip-btn" aria-pressed="false" title="Kod çalıştırsın, dosya üretsin (Excel, Word, PDF, grafik)">
-                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M8 7l-5 5 5 5M16 7l5 5-5 5" /></svg>
-                    <span>Kod</span>
-                  </button>
                 </div>
                 <div class="composer-actions">
                   <button id="mic-btn" type="button" class="tool-btn" aria-label="Sesle yaz" aria-pressed="false" title="Sesle yaz" hidden>
@@ -416,7 +412,6 @@ import { CHAT_EFFORTS, CHAT_MODELS } from '@lib/constants';
       const KEY_MODEL = 'fx-chat-model';
       const KEY_EFFORT = 'fx-chat-effort';
       const KEY_WEB = 'fx-chat-web';
-      const KEY_CODE = 'fx-chat-code';
       // Each device asks for the password again after this long. The Worker
       // still accepts it afterwards; this only makes the browser forget it.
       const TOKEN_MAX_AGE_MS = 30 * 24 * 60 * 60 * 1000;
@@ -459,7 +454,6 @@ import { CHAT_EFFORTS, CHAT_MODELS } from '@lib/constants';
       const modelSelect = $<HTMLSelectElement>('model-select');
       const effortSelect = $<HTMLSelectElement>('effort-select');
       const webBtn = $<HTMLButtonElement>('web-btn');
-      const codeBtn = $<HTMLButtonElement>('code-btn');
       const meter = $<HTMLSpanElement>('meter');
       const attachBtn = $<HTMLButtonElement>('attach-btn');
       const fileInput = $<HTMLInputElement>('file-input');
@@ -2118,7 +2112,7 @@ import { CHAT_EFFORTS, CHAT_MODELS } from '@lib/constants';
               model: modelSelect.value,
               effort: effortSelect.value,
               web: pressed(webBtn),
-              code: pressed(codeBtn),
+              code: true, // always offered; Claude runs code when the task needs it
               projectId: convo.projectId ?? undefined,
               containerId: convo.containerId ?? undefined,
             }),
@@ -2445,7 +2439,6 @@ import { CHAT_EFFORTS, CHAT_MODELS } from '@lib/constants';
           }
           p.att = await uploadFile(file, info, false, p.thumb);
           p.status = 'ready';
-          if (info.kind === 'container' && !pressed(codeBtn)) setPressed(codeBtn, KEY_CODE, true);
         } catch (err) {
           p.status = 'error';
           p.error = (err as Error).message === 'encode' ? 'Görsel okunamadı' : (err as Error).message || 'Yüklenemedi';
@@ -2660,7 +2653,6 @@ import { CHAT_EFFORTS, CHAT_MODELS } from '@lib/constants';
       restorePicker(modelSelect, KEY_MODEL, CHAT_MODELS);
       restorePicker(effortSelect, KEY_EFFORT, CHAT_EFFORTS);
       restoreToggle(webBtn, KEY_WEB);
-      restoreToggle(codeBtn, KEY_CODE);
 
       // ─── Boot ──────────────────────────────────────────────────────────
       if ('serviceWorker' in navigator) {
