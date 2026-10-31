@@ -198,6 +198,18 @@ import { CHAT_EFFORTS, CHAT_MODELS } from '@lib/constants';
           </div>
         </footer>
       </section>
+
+      <!-- HTML preview: beside the chat on wide screens, slides over it on phones -->
+      <aside id="html-panel" class="html-panel" aria-label="HTML önizleme" inert>
+        <header class="html-panel-bar">
+          <span id="html-panel-title" class="html-panel-title"></span>
+          <button id="html-panel-save" type="button" class="link-btn">İndir</button>
+          <button id="html-panel-close" type="button" class="icon-btn" aria-label="Önizlemeyi kapat" title="Kapat">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18" /></svg>
+          </button>
+        </header>
+        <iframe id="html-panel-frame" class="html-panel-frame" title="HTML önizleme" sandbox="allow-scripts allow-modals" referrerpolicy="no-referrer"></iframe>
+      </aside>
     </div>
 
     <!-- Settings: account-wide (saved on the server) and this device's own -->
@@ -1031,6 +1043,45 @@ import { CHAT_EFFORTS, CHAT_MODELS } from '@lib/constants';
         return wrap;
       }
 
+      // ─── HTML preview ──────────────────────────────────────────────────
+      // Model output is untrusted. The sandbox has no allow-same-origin, so
+      // the page can't reach this site's storage (the password lives there);
+      // the policy lets CDN scripts load but stops it sending anything out.
+      const FRAME_POLICY = `<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'unsafe-inline' https:; style-src 'unsafe-inline' https:; img-src data: blob: https:; font-src data: https:; media-src data: blob: https:; connect-src 'none'; form-action 'none'">`;
+      const withPolicy = (html: string) =>
+        /<head[^>]*>/i.test(html)
+          ? html.replace(/<head[^>]*>/i, (tag) => tag + FRAME_POLICY)
+          : html.replace(/^(\s*<!doctype[^>]*>)?/i, (head) => head + FRAME_POLICY);
+
+      const htmlPanel = $<HTMLElement>('html-panel');
+      const htmlFrame = $<HTMLIFrameElement>('html-panel-frame');
+      const htmlTitle = $<HTMLSpanElement>('html-panel-title');
+      let panelDoc: { name: string; html: string; convo: string | null } | null = null;
+
+      function openPanel(name: string, html: string) {
+        panelDoc = { name, html, convo: activeId };
+        htmlTitle.textContent = name;
+        htmlFrame.srcdoc = withPolicy(html);
+        htmlPanel.classList.add('is-open');
+        htmlPanel.inert = false;
+        closeDrawer();
+      }
+      function closePanel() {
+        panelDoc = null;
+        htmlPanel.classList.remove('is-open');
+        htmlPanel.inert = true;
+        htmlFrame.removeAttribute('srcdoc');
+      }
+      $<HTMLButtonElement>('html-panel-close').addEventListener('click', closePanel);
+      $<HTMLButtonElement>('html-panel-save').addEventListener('click', () => {
+        if (!panelDoc) return;
+        const a = document.createElement('a');
+        a.href = URL.createObjectURL(new Blob([panelDoc.html], { type: 'text/html;charset=utf-8' }));
+        a.download = /\.html?$/i.test(panelDoc.name) ? panelDoc.name : `${panelDoc.name}.html`;
+        a.click();
+        setTimeout(() => URL.revokeObjectURL(a.href), 1000);
+      });
+
       // Generated files: images preview inline, everything downloads.
       const outputUrls = new Map<string, Promise<string>>();
       function outputUrl(f: OutputFile) {
@@ -1074,6 +1125,20 @@ import { CHAT_EFFORTS, CHAT_MODELS } from '@lib/constants';
               btn.textContent = `⚠ ${(err as Error).message}`;
             }
           });
+          if (/\.html?$/i.test(f.name)) {
+            const view = document.createElement('button');
+            view.type = 'button';
+            view.className = 'att-chip out-chip';
+            view.textContent = `▶ ${f.name}`;
+            view.addEventListener('click', async () => {
+              try {
+                openPanel(f.name, await (await fetch(await outputUrl(f))).text());
+              } catch (err) {
+                view.textContent = `⚠ ${(err as Error).message}`;
+              }
+            });
+            row.append(view);
+          }
           row.append(btn);
         }
         return row;
@@ -1213,6 +1278,15 @@ import { CHAT_EFFORTS, CHAT_MODELS } from '@lib/constants';
             setTimeout(() => (btn.textContent = 'Kopyala'), 1500);
           });
           pre.append(btn);
+          const code = pre.querySelector('code');
+          if (code && (code.classList.contains('language-html') || /^\s*<(!doctype html|html[\s>])/i.test(code.textContent ?? ''))) {
+            const view = document.createElement('button');
+            view.type = 'button';
+            view.className = 'copy-btn preview-btn';
+            view.textContent = 'Önizle';
+            view.addEventListener('click', () => openPanel('Önizleme', code.textContent ?? ''));
+            pre.append(view);
+          }
         });
       }
 
@@ -1226,6 +1300,7 @@ import { CHAT_EFFORTS, CHAT_MODELS } from '@lib/constants';
       function renderConversation() {
         const c = active();
         const msgs = c?.messages ?? [];
+        if (panelDoc && panelDoc.convo !== activeId) closePanel();
         const lastUser = msgs.map((m) => m.role).lastIndexOf('user');
         const nodes: HTMLElement[] = [];
         msgs.forEach((m, i) => {
@@ -1381,7 +1456,9 @@ import { CHAT_EFFORTS, CHAT_MODELS } from '@lib/constants';
       backdrop.addEventListener('click', closeDrawer);
       $<HTMLButtonElement>('drawer-close').addEventListener('click', collapseSidebar);
       document.addEventListener('keydown', (e) => {
-        if (e.key === 'Escape') closeDrawer();
+        if (e.key !== 'Escape' || document.querySelector('dialog[open]')) return;
+        if (panelDoc) closePanel();
+        else closeDrawer();
       });
 
       document.querySelectorAll<HTMLButtonElement>('[data-new-chat]').forEach((btn) =>
@@ -2786,6 +2863,62 @@ import { CHAT_EFFORTS, CHAT_MODELS } from '@lib/constants';
     }
   }
 
+  /* ─── HTML preview ───────────────────────────────────────────────── */
+  .html-panel {
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+    background: rgb(var(--bg-elev));
+  }
+  .html-panel-bar {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    height: 3.25rem;
+    padding: 0 0.75rem;
+    flex-shrink: 0;
+  }
+  .html-panel-title {
+    flex: 1;
+    min-width: 0;
+    font-size: 0.9rem;
+    color: rgb(var(--text-100));
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .html-panel-frame {
+    flex: 1;
+    width: 100%;
+    border: 0;
+    background: #fff;
+  }
+  @media (min-width: 900px) {
+    .html-panel {
+      display: none;
+      flex: 0 0 50%;
+      border-left: 1px solid rgb(var(--border) / 0.6);
+    }
+    .html-panel.is-open {
+      display: flex;
+    }
+  }
+  @media (max-width: 899px) {
+    .html-panel {
+      position: fixed;
+      inset: 0;
+      z-index: 40;
+      padding-top: env(safe-area-inset-top);
+      visibility: hidden;
+      transform: translateX(100%);
+      transition: transform 0.25s ease, visibility 0.25s;
+    }
+    .html-panel.is-open {
+      visibility: visible;
+      transform: none;
+    }
+  }
+
   /* ─── Composer ───────────────────────────────────────────────────── */
   .composer-wrap {
     flex-shrink: 0;
@@ -3296,6 +3429,11 @@ import { CHAT_EFFORTS, CHAT_MODELS } from '@lib/constants';
   .chat-md hr {
     border-color: rgb(var(--border));
   }
+  .copy-btn.preview-btn {
+    right: 5rem;
+    opacity: 1;
+    color: rgb(var(--text-100));
+  }
   .copy-btn {
     position: absolute;
     top: 0.45rem;
@@ -3654,7 +3792,8 @@ import { CHAT_EFFORTS, CHAT_MODELS } from '@lib/constants';
   }
 
   @media (prefers-reduced-motion: reduce) {
-    .sidebar { transition: none; }
+    .sidebar,
+    .html-panel { transition: none; }
     .typing i { animation: none; opacity: 0.7; }
   }
 </style>
