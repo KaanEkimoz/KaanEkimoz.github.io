@@ -80,14 +80,17 @@ import { CHAT_EFFORTS, CHAT_MODELS } from '@lib/constants';
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M12 3a6 6 0 0 0-6 6c0 2.2 1.2 3.6 2 4.5.6.7 1 1.5 1 2.5h6c0-1 .4-1.8 1-2.5.8-.9 2-2.3 2-4.5a6 6 0 0 0-6-6zM9.5 19h5M10.5 22h3" /></svg>
             <span>Hafıza</span>
           </button>
-          <button id="settings-btn" type="button" class="nav-item">
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M4 6h10M18 6h2M4 12h4M12 12h8M4 18h12M20 18h0" /><circle cx="16" cy="6" r="2" /><circle cx="10" cy="12" r="2" /><circle cx="18" cy="18" r="2" /></svg>
-            <span>Ayarlar</span>
-          </button>
         </nav>
 
         <div class="sidebar-section">Son sohbetler</div>
         <ul id="convo-list" class="convo-list"></ul>
+
+        <div class="sidebar-foot">
+          <button id="settings-btn" type="button" class="nav-item">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M4 6h10M18 6h2M4 12h4M12 12h8M4 18h12M20 18h0" /><circle cx="16" cy="6" r="2" /><circle cx="10" cy="12" r="2" /><circle cx="18" cy="18" r="2" /></svg>
+            <span>Ayarlar</span>
+          </button>
+        </div>
 
         <details class="account">
           <summary class="account-row">
@@ -130,6 +133,13 @@ import { CHAT_EFFORTS, CHAT_MODELS } from '@lib/constants';
 
         <footer class="composer-wrap">
           <div class="composer-inner">
+            <div class="composer-project">
+              <label class="text-select">
+                <span class="sr-only">Proje</span>
+                <select id="project-select"></select>
+              </label>
+              <button id="project-edit-btn" type="button" class="link-btn" hidden>Düzenle</button>
+            </div>
             <div id="attach-tray" class="attach-tray" hidden></div>
             <form id="composer" class="composer-card">
               <label for="input" class="sr-only">Mesaj</label>
@@ -169,13 +179,6 @@ import { CHAT_EFFORTS, CHAT_MODELS } from '@lib/constants';
               </div>
             </form>
             <div class="composer-under">
-              <div class="under-left">
-                <label class="text-select">
-                  <span class="sr-only">Proje</span>
-                  <select id="project-select"></select>
-                </label>
-                <button id="project-edit-btn" type="button" class="link-btn" hidden>Düzenle</button>
-              </div>
               <span id="meter" class="meter" title="Bağlam: modelin bu sohbette okuduğu toplam token. Ücret tahminidir."></span>
               <div class="under-right">
                 <label class="text-select text-select--strong">
@@ -355,6 +358,7 @@ import { CHAT_EFFORTS, CHAT_MODELS } from '@lib/constants';
       interface Message {
         role: Role;
         content: string;
+        at?: number; // when it was sent; older messages have none
         attachments?: Attachment[]; // user messages
         thinking?: string; // assistant: summarized thinking, display only
         sources?: Source[]; // assistant: web pages it cited
@@ -421,6 +425,7 @@ import { CHAT_EFFORTS, CHAT_MODELS } from '@lib/constants';
       const COMPACT_AT_MESSAGES = 120;
       const KEEP_AFTER_COMPACT = 6;
       const SYNC_EVERY_MS = 30_000; // re-check the server when the tab comes back
+      const SAVE_RETRY_MS = 20_000; // after a save that didn't reach the server
       const NOT_CONFIGURED = CHAT_WORKER_URL.includes('YOUR-SUBDOMAIN');
       const TYPING_HTML = '<span class="typing" aria-label="Yazıyor"><i></i><i></i><i></i></span>';
 
@@ -479,8 +484,6 @@ import { CHAT_EFFORTS, CHAT_MODELS } from '@lib/constants';
       const userName = $<HTMLSpanElement>('user-name');
       const userAvatar = $<HTMLSpanElement>('user-avatar');
       const sidebarSection = document.querySelector<HTMLElement>('.sidebar-section')!;
-      // Names for the greeting and the account row; the partner's stays
-      // generic until it's added here.
       // Fallback names until a person sets their own in Ayarlar.
       const USER_NAMES: Record<string, string> = { kaan: 'Kaan' };
       let displayName = '';
@@ -585,6 +588,25 @@ import { CHAT_EFFORTS, CHAT_MODELS } from '@lib/constants';
       const nf = new Intl.NumberFormat('tr-TR');
       const tokens = (n: number) => (n >= 1000 ? `${(n / 1000).toLocaleString('tr-TR', { maximumFractionDigits: 1 })}k` : nf.format(n));
       const money = (n: number) => `$${n.toLocaleString('tr-TR', { minimumFractionDigits: n < 0.1 ? 3 : 2, maximumFractionDigits: n < 0.1 ? 3 : 2 })}`;
+      const clock = new Intl.DateTimeFormat('tr-TR', { hour: '2-digit', minute: '2-digit' });
+      const dayMonth = new Intl.DateTimeFormat('tr-TR', { day: 'numeric', month: 'short' });
+      const fullDay = new Intl.DateTimeFormat('tr-TR', { day: 'numeric', month: 'short', year: 'numeric' });
+      // "14:32", "Dün", "12 Eki", "12 Eki 2025"; with `time` the older ones get the hour too.
+      function when(ts: number, time = false): string {
+        const d = new Date(ts);
+        const now = new Date();
+        const days = Math.round((new Date(now).setHours(0, 0, 0, 0) - new Date(ts).setHours(0, 0, 0, 0)) / 86_400_000);
+        if (days === 0) return clock.format(d);
+        const day = days === 1 ? 'Dün' : d.getFullYear() === now.getFullYear() ? dayMonth.format(d) : fullDay.format(d);
+        return time ? `${day} ${clock.format(d)}` : day;
+      }
+      function timeEl(ts: number): HTMLElement {
+        const el = document.createElement('time');
+        el.className = 'msg-time';
+        el.dateTime = new Date(ts).toISOString();
+        el.textContent = when(ts, true);
+        return el;
+      }
       // claude-opus-5-5 → Opus 5.5
       const modelName = (id: string) => {
         const [, family = id, ...v] = id.split('-');
@@ -651,7 +673,8 @@ import { CHAT_EFFORTS, CHAT_MODELS } from '@lib/constants';
       async function sync() {
         if (!user || syncing) return;
         syncing = true;
-        lastSync = Date.now();
+        const startedAt = Date.now();
+        lastSync = startedAt;
         setSyncStatus('Eşitleniyor…');
         try {
           const res = await api('/convos');
@@ -662,7 +685,10 @@ import { CHAT_EFFORTS, CHAT_MODELS } from '@lib/constants';
           const onServer = new Map(items.map((i) => [i.id, i]));
 
           // Gone from the server but saved there before = deleted elsewhere.
-          convos = convos.filter((c) => !(c.synced && !onServer.has(c.id)) || (streaming && c.id === activeId));
+          // (A chat saved after this list was read isn't in it yet.)
+          convos = convos.filter(
+            (c) => !(c.synced && !onServer.has(c.id) && c.updatedAt < startedAt) || (streaming && c.id === activeId),
+          );
           for (const item of items) {
             const local = convos.find((c) => c.id === item.id);
             if (!local) {
@@ -689,10 +715,25 @@ import { CHAT_EFFORTS, CHAT_MODELS } from '@lib/constants';
           setSyncStatus(convos.some((c) => !c.synced) ? 'Bazı sohbetler henüz kaydedilmedi.' : 'Tüm sohbetler hesabına kayıtlı.');
         } catch {
           setSyncStatus('Sunucuya ulaşılamadı; bu cihazdaki kopya gösteriliyor.');
+          retrySync();
         } finally {
           syncing = false;
         }
       }
+
+      // A failed save stays on this device, so try again until it lands.
+      let retryTimer = 0;
+      function retrySync() {
+        if (retryTimer) return;
+        retryTimer = window.setTimeout(() => {
+          retryTimer = 0;
+          if (streaming) retrySync();
+          else void sync();
+        }, SAVE_RETRY_MS);
+      }
+      addEventListener('online', () => {
+        if (user && convos.some((c) => !c.synced)) void sync();
+      });
 
       async function loadFull(c: Convo) {
         if (c.id === activeId) renderConversation();
@@ -742,8 +783,10 @@ import { CHAT_EFFORTS, CHAT_MODELS } from '@lib/constants';
             c.synced = true;
             persist();
           }
+          if (!res.ok && res.status !== 413) retrySync();
           return res.ok || res.status === 413;
         } catch {
+          retrySync();
           return false;
         }
       }
@@ -796,8 +839,6 @@ import { CHAT_EFFORTS, CHAT_MODELS } from '@lib/constants';
         opt('', 'Proje yok');
         for (const p of projects) opt(p.id, `📁 ${p.name}`);
         opt('__new', '+ Yeni proje');
-        projectSelect.value = currentProject ?? '';
-        projectEditBtn.hidden = !currentProject;
         sidebarSection.textContent = currentProject ? `${projectOf(currentProject)?.name ?? 'Proje'} sohbetleri` : 'Son sohbetler';
       }
 
@@ -805,13 +846,23 @@ import { CHAT_EFFORTS, CHAT_MODELS } from '@lib/constants';
         const p = projectOf(active()?.projectId ?? currentProject);
         projectLabel.hidden = !p;
         projectLabel.textContent = p ? ` · ${p.name}` : '';
+        projectSelect.value = p?.id ?? '';
+        projectEditBtn.hidden = !p;
       }
 
       projectSelect.addEventListener('change', () => {
         if (projectSelect.value === '__new') {
-          projectSelect.value = currentProject ?? '';
+          renderProjectLabel();
           openProjectDialog(null);
           return;
+        }
+        if (streaming) return renderProjectLabel();
+        // The picker sits above the composer: a change means "work there",
+        // so the open chat gives way to a new one in that project.
+        if (active()) {
+          activeId = null;
+          persist();
+          renderConversation();
         }
         currentProject = projectSelect.value || null;
         if (currentProject) save(projectKey(), currentProject);
@@ -820,7 +871,7 @@ import { CHAT_EFFORTS, CHAT_MODELS } from '@lib/constants';
         renderConvoList();
         renderProjectLabel();
       });
-      projectEditBtn.addEventListener('click', () => openProjectDialog(projectOf(currentProject)));
+      projectEditBtn.addEventListener('click', () => openProjectDialog(projectOf(projectSelect.value)));
 
       let editing: { id: string; files: Attachment[]; removed: string[]; uploading: number } | null = null;
 
@@ -957,7 +1008,7 @@ import { CHAT_EFFORTS, CHAT_MODELS } from '@lib/constants';
         return btn;
       }
 
-      function userEl(m: Message, isLast: boolean): HTMLElement {
+      function userEl(m: Message, isLast: boolean, unanswered: boolean): HTMLElement {
         const wrap = document.createElement('div');
         wrap.className = 'flex flex-col items-end';
         const bubble = document.createElement('div');
@@ -969,10 +1020,12 @@ import { CHAT_EFFORTS, CHAT_MODELS } from '@lib/constants';
           bubble.append(text);
         }
         wrap.append(bubble);
-        if (isLast) {
+        if (isLast || m.at) {
           const actions = document.createElement('div');
           actions.className = 'msg-actions';
-          actions.append(actionBtn('Düzenle', () => editLast()));
+          if (m.at) actions.append(timeEl(m.at));
+          if (isLast) actions.append(actionBtn('Düzenle', () => editLast()));
+          if (unanswered) actions.append(actionBtn('Yanıt iste', () => void retryReply()));
           wrap.append(actions);
         }
         return wrap;
@@ -1114,6 +1167,7 @@ import { CHAT_EFFORTS, CHAT_MODELS } from '@lib/constants';
         view.finish();
         const actions = document.createElement('div');
         actions.className = 'msg-actions';
+        if (m.at) actions.append(timeEl(m.at));
         actions.append(
           actionBtn('Kopyala', async (btn) => {
             try {
@@ -1176,7 +1230,7 @@ import { CHAT_EFFORTS, CHAT_MODELS } from '@lib/constants';
         const nodes: HTMLElement[] = [];
         msgs.forEach((m, i) => {
           if (c?.summary && i === c.summary.upto) nodes.push(summaryEl(c));
-          nodes.push(m.role === 'user' ? userEl(m, i === lastUser && i >= msgs.length - 2) : assistantEl(m, i === msgs.length - 1));
+          nodes.push(m.role === 'user' ? userEl(m, i === lastUser && i >= msgs.length - 2, i === msgs.length - 1) : assistantEl(m, i === msgs.length - 1));
         });
         list.replaceChildren(...nodes);
         if (c && c.messages === null) list.append(noteEl('Sohbet yükleniyor…'));
@@ -1227,7 +1281,13 @@ import { CHAT_EFFORTS, CHAT_MODELS } from '@lib/constants';
           open.type = 'button';
           open.className = `convo-item ${c.id === activeId ? 'is-active' : ''}`;
           const p = !currentProject && projectOf(c.projectId);
-          open.textContent = `${p ? '📁 ' : ''}${c.title || 'Yeni sohbet'}`;
+          const title = document.createElement('span');
+          title.className = 'convo-title';
+          title.textContent = c.title || 'Yeni sohbet';
+          const sub = document.createElement('span');
+          sub.className = 'convo-sub';
+          sub.textContent = [p && `📁 ${p.name}`, when(c.updatedAt)].filter(Boolean).join(' · ');
+          open.append(title, sub);
           open.addEventListener('click', () => {
             if (streaming) return;
             activeId = c.id;
@@ -1636,7 +1696,7 @@ import { CHAT_EFFORTS, CHAT_MODELS } from '@lib/constants';
           convos.unshift(convo);
           activeId = convo.id;
         }
-        const userMsg: Message = { role: 'user', content: text };
+        const userMsg: Message = { role: 'user', content: text, at: Date.now() };
         if (attachments.length) userMsg.attachments = attachments;
         convo.messages!.push(userMsg);
         touch(convo);
@@ -1655,6 +1715,14 @@ import { CHAT_EFFORTS, CHAT_MODELS } from '@lib/constants';
         c.messages.pop();
         dropStaleSummary(c);
         touch(c);
+        renderConversation();
+        await respond(c, null);
+      }
+
+      // A message left without a reply (connection dropped, app closed).
+      async function retryReply() {
+        const c = active();
+        if (streaming || c?.messages?.at(-1)?.role !== 'user') return;
         renderConversation();
         await respond(c, null);
       }
@@ -1708,6 +1776,7 @@ import { CHAT_EFFORTS, CHAT_MODELS } from '@lib/constants';
 
         let stopReason: string | null = null;
         let failure = '';
+        let dropped = false;
         let frame = 0;
         const steps = { searches: [] as string[], fetches: [] as string[], code: 0, memoryRead: 0, memoryWrite: 0 };
         const tools = new Map<number, { name: string; json: string }>();
@@ -1832,7 +1901,10 @@ import { CHAT_EFFORTS, CHAT_MODELS } from '@lib/constants';
             }
           }
         } catch (err) {
-          if ((err as Error).name !== 'AbortError') failure = 'Bağlantı koptu. Tekrar dene.';
+          if ((err as Error).name !== 'AbortError') {
+            failure = 'Bağlantı koptu. Tekrar dene.';
+            dropped = true;
+          }
         } finally {
           streaming = null;
           setStreaming(false);
@@ -1844,6 +1916,7 @@ import { CHAT_EFFORTS, CHAT_MODELS } from '@lib/constants';
         if (msg.content.trim() || msg.files?.length) {
           if (sources.length) msg.sources = sources.slice(0, 12);
           if (stepList.length) msg.steps = stepList;
+          msg.at = Date.now();
           convo.messages!.push(msg);
           touch(convo);
           renderConversation();
@@ -1856,9 +1929,11 @@ import { CHAT_EFFORTS, CHAT_MODELS } from '@lib/constants';
           refreshUsage();
           void maybeCompact(convo);
         } else {
-          if (draft) {
+          if (draft && !dropped) {
             // Nothing came back: drop the unanswered message and put it back
-            // in the composer so it can be re-sent with one tap.
+            // in the composer so it can be re-sent with one tap. A dropped
+            // connection keeps it: phones cut streams when the app leaves the
+            // foreground, and that must not delete the chat.
             convo.messages!.pop();
             if (convo.messages!.length === 0) removeConvo(convo);
             else touch(convo);
@@ -2167,41 +2242,81 @@ import { CHAT_EFFORTS, CHAT_MODELS } from '@lib/constants';
       };
       const SpeechRecognitionCtor = (window as unknown as Record<string, new () => Recognition>).SpeechRecognition ??
         (window as unknown as Record<string, new () => Recognition>).webkitSpeechRecognition;
+      const MIC_INSTANT_MS = 1000; // ended this fast with nothing heard: something's wrong
+      const MIC_QUIET_LIMIT = 3; // silent sessions in a row before it gives up
       let recognition: Recognition | null = null;
       micBtn.hidden = !SpeechRecognitionCtor;
 
+      let dictating = false; // stays on across the restarts below
+
       function stopDictation() {
+        dictating = false;
         recognition?.stop();
       }
-      micBtn.addEventListener('click', () => {
-        if (recognition) return stopDictation();
-        const rec = new SpeechRecognitionCtor();
-        rec.lang = 'tr-TR';
-        rec.continuous = true;
-        rec.interimResults = true;
-        const base = input.value ? `${input.value.replace(/\s+$/, '')} ` : '';
+      const MIC_ERRORS: Record<string, string> = {
+        'not-allowed': 'Mikrofon izni verilmedi. Tarayıcının site ayarlarından izin ver.',
+        'service-not-allowed': 'Bu tarayıcı sesle yazmaya izin vermiyor. Klavyenin mikrofonunu kullanabilirsin.',
+        'audio-capture': 'Mikrofon bulunamadı ya da başka bir uygulama kullanıyor.',
+        network: 'Ses tanıma servisine ulaşılamadı.',
+        'language-not-supported': 'Bu tarayıcı Türkçe ses tanımayı desteklemiyor.',
+      };
+      // Browsers end a recognition session on their own (phones after every
+      // sentence), so it restarts until the person stops it. A session that
+      // dies at once with nothing heard is reported instead of looping.
+      function listen(base: string) {
         let final = '';
-        rec.onresult = (e) => {
-          let interim = '';
-          for (let i = e.resultIndex; i < e.results.length; i++) {
-            const r = e.results[i];
-            if (r.isFinal) final += r[0].transcript;
-            else interim += r[0].transcript;
+        let quiet = 0;
+        const session = () => {
+          const rec = new SpeechRecognitionCtor();
+          rec.lang = 'tr-TR';
+          rec.continuous = !coarse;
+          rec.interimResults = true;
+          const startedAt = Date.now();
+          let heard = false;
+          let failed = false;
+          rec.onresult = (e) => {
+            heard = true;
+            quiet = 0;
+            let interim = '';
+            for (let i = e.resultIndex; i < e.results.length; i++) {
+              const r = e.results[i];
+              if (r.isFinal) final += `${final && !final.endsWith(' ') ? ' ' : ''}${r[0].transcript.trim()}`;
+              else interim += r[0].transcript;
+            }
+            input.value = base + final + (final && interim ? ' ' : '') + interim;
+            autosize();
+          };
+          rec.onerror = (e) => {
+            if (e.error === 'no-speech' || e.error === 'aborted') return;
+            failed = true;
+            flashTray(MIC_ERRORS[e.error] ?? 'Sesle yazma başlatılamadı.');
+          };
+          rec.onend = () => {
+            recognition = null;
+            if (!heard) quiet += 1;
+            const instant = !heard && Date.now() - startedAt < MIC_INSTANT_MS;
+            if (dictating && !failed && !instant && quiet < MIC_QUIET_LIMIT) return session();
+            if (dictating && instant && !failed) flashTray('Mikrofon hemen kapandı. Tarayıcının site ayarlarındaki izni kontrol et.');
+            dictating = false;
+            micBtn.setAttribute('aria-pressed', 'false');
+            input.focus();
+          };
+          recognition = rec;
+          try {
+            rec.start();
+          } catch {
+            recognition = null;
+            dictating = false;
+            micBtn.setAttribute('aria-pressed', 'false');
           }
-          input.value = base + final + interim;
-          autosize();
         };
-        rec.onerror = (e) => {
-          if (e.error === 'not-allowed') flashTray('Mikrofon izni verilmedi.');
-        };
-        rec.onend = () => {
-          recognition = null;
-          micBtn.setAttribute('aria-pressed', 'false');
-          input.focus();
-        };
-        recognition = rec;
+        session();
+      }
+      micBtn.addEventListener('click', () => {
+        if (dictating) return stopDictation();
+        dictating = true;
         micBtn.setAttribute('aria-pressed', 'true');
-        rec.start();
+        listen(input.value ? `${input.value.replace(/\s+$/, '')} ` : '');
       });
 
       // Parse a text/event-stream body into JSON event objects.
@@ -2504,15 +2619,25 @@ import { CHAT_EFFORTS, CHAT_MODELS } from '@lib/constants';
     background: rgb(var(--hover) / 0.06);
   }
   .convo-item {
+    display: flex;
+    flex-direction: column;
+    gap: 0.05rem;
     flex: 1;
     min-width: 0;
     text-align: left;
-    padding: 0.45rem 0.65rem;
+    padding: 0.4rem 0.65rem;
     font-size: 0.875rem;
     color: rgb(var(--text-200));
+  }
+  .convo-title,
+  .convo-sub {
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
+  }
+  .convo-sub {
+    font-size: 0.7rem;
+    color: rgb(var(--text-300));
   }
   .convo-list > li:has(.convo-item.is-active) {
     background: rgb(var(--hover) / 0.09);
@@ -2539,6 +2664,10 @@ import { CHAT_EFFORTS, CHAT_MODELS } from '@lib/constants';
     }
   }
 
+  .sidebar-foot {
+    padding: 0.35rem 0.5rem;
+    border-top: 1px solid rgb(var(--border) / 0.6);
+  }
   .account {
     position: relative;
     border-top: 1px solid rgb(var(--border) / 0.6);
@@ -2666,6 +2795,13 @@ import { CHAT_EFFORTS, CHAT_MODELS } from '@lib/constants';
     max-width: 46rem;
     margin: 0 auto;
   }
+  .composer-project {
+    display: flex;
+    align-items: center;
+    gap: 0.25rem;
+    padding: 0 0.35rem 0.4rem;
+    font-size: 0.85rem;
+  }
   .composer-card {
     display: flex;
     flex-direction: column;
@@ -2788,7 +2924,6 @@ import { CHAT_EFFORTS, CHAT_MODELS } from '@lib/constants';
     padding: 0.5rem 0.35rem 0;
     font-size: 0.85rem;
   }
-  .under-left,
   .under-right {
     display: flex;
     align-items: center;
@@ -2946,6 +3081,14 @@ import { CHAT_EFFORTS, CHAT_MODELS } from '@lib/constants';
     gap: 0.25rem;
     margin-top: 0.35rem;
     opacity: 0.75;
+  }
+  .msg-actions {
+    align-items: center;
+  }
+  .msg-time {
+    padding: 0.2rem 0.25rem;
+    font-size: 0.72rem;
+    color: rgb(var(--text-300));
   }
   .msg-action {
     padding: 0.2rem 0.5rem;
