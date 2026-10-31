@@ -104,18 +104,19 @@ const FALLBACK_BETA = 'server-side-fallback-2026-07-01';
 const WEB_SEARCH_TOOL = {
   type: 'web_search_20250305',
   name: 'web_search',
-  max_uses: 5,
   user_location: { type: 'approximate', country: 'TR', timezone: 'Europe/Istanbul' },
 };
 const WEB_FETCH_TOOL = {
   type: 'web_fetch_20250910',
   name: 'web_fetch',
-  max_uses: 5,
   max_content_tokens: 50_000,
   citations: { enabled: true },
 };
-// A link in the chat turns web_fetch on even with the Web button off:
-// reading a page the person shared costs only tokens.
+// Search is always offered; the Araştırma button only raises these limits.
+const NORMAL_LIMITS = { searches: 3, fetches: 5 };
+const DEEP_LIMITS = { searches: 15, fetches: 10 };
+// A link in the chat turns web_fetch on even without web: reading a page
+// the person shared costs only tokens.
 const LINK_RE = /\bhttps?:\/\/\S|\bwww\.\S|\b[a-z0-9-]+\.(?:com|net|org|io|dev|app|ai|co|edu|gov|tr)\b/i;
 const CODE_TOOL = { type: 'code_execution_20250825', name: 'code_execution' };
 // Client tool: Claude asks, this Worker runs it against D1.
@@ -419,6 +420,7 @@ async function readChatRequest(request, user, env) {
     model,
     effort,
     web: data.web === true,
+    deep: data.deep === true,
     links: messages.some((m) => m.role === 'user' && hasLink(m.content)),
     // Office attachments need the sandbox to be read at all.
     code: data.code === true || counts.container,
@@ -496,8 +498,9 @@ async function runTurn(req, user, env, ctx, cors) {
   const settings = await loadSettings(user, env);
   const memoryOn = settings.memory && !!env.DB;
   const tools = [];
-  if (req.web) tools.push(WEB_SEARCH_TOOL);
-  if (req.web || req.links) tools.push(WEB_FETCH_TOOL);
+  const limits = req.deep ? DEEP_LIMITS : NORMAL_LIMITS;
+  if (req.web) tools.push({ ...WEB_SEARCH_TOOL, max_uses: limits.searches });
+  if (req.web || req.links) tools.push({ ...WEB_FETCH_TOOL, max_uses: limits.fetches });
   if (req.code) tools.push(CODE_TOOL);
   if (memoryOn) tools.push(MEMORY_TOOL);
 
@@ -777,7 +780,11 @@ function systemPrompt({ name, instructions }, req, memory) {
   if (name) parts.push(`The person you're talking to is called ${name}.`);
 
   if (req.web) {
-    parts.push('You can search the web. Use it for anything current.');
+    parts.push(
+      req.deep
+        ? 'The person turned on research mode: treat this as a research task. Search from several angles, read the best sources in full, compare them, and answer with a thorough, organized report that cites them.'
+        : "You can search the web. Use it when the answer depends on current or specific facts you aren't sure of; a search or two is usually enough.",
+    );
   }
   if (req.web || req.links) {
     parts.push(
@@ -786,7 +793,7 @@ function systemPrompt({ name, instructions }, req, memory) {
   }
   if (req.code) {
     parts.push(
-      'You can run code in a sandbox (Python with pandas, matplotlib, openpyxl, python-docx, python-pptx, reportlab and more; no internet). ' +
+      'You can run code in a sandbox (Python with pandas, matplotlib, openpyxl, python-docx, python-pptx, reportlab and more). The sandbox itself is offline, which does not limit web_search or web_fetch: never tell the person you have no internet because of it. ' +
         'When the person wants a file (spreadsheet, document, slides, PDF, chart image), create it and save it at the top level of $OUTPUT_DIR: only files saved there reach them as downloads. ' +
         'Uploaded files are in the sandbox too.',
     );
