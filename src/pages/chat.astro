@@ -155,9 +155,9 @@ import { CHAT_EFFORTS, CHAT_MODELS } from '@lib/constants';
                     accept="image/png,image/jpeg,image/gif,image/webp,application/pdf,text/plain,.txt,.md,.csv,.json,.xlsx,.xls,.docx,.pptx"
                     hidden
                   />
-                  <button id="web-btn" type="button" class="chip-btn" aria-pressed="false" title="Web'de arasın (arama başına ücretli). Paylaştığın bağlantıları bu düğme kapalıyken de okur.">
+                  <button id="web-btn" type="button" class="chip-btn" aria-pressed="false" title="Detaylı araştırma: çok kaynağa bakıp kapsamlı rapor yazar, daha uzun sürer ve daha pahalıdır. Normal aramayı Claude bu düğme kapalıyken de gerektiğinde yapar.">
                     <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><circle cx="12" cy="12" r="9" /><path d="M3 12h18M12 3a14 14 0 0 1 0 18M12 3a14 14 0 0 0 0 18" /></svg>
-                    <span>Web</span>
+                    <span>Araştırma</span>
                   </button>
                 </div>
                 <div class="composer-actions">
@@ -411,7 +411,7 @@ import { CHAT_EFFORTS, CHAT_MODELS } from '@lib/constants';
       const KEY_LEGACY_ACTIVE = 'fx-chat-active';
       const KEY_MODEL = 'fx-chat-model';
       const KEY_EFFORT = 'fx-chat-effort';
-      const KEY_WEB = 'fx-chat-web';
+      const KEY_RESEARCH = 'fx-chat-research';
       // Each device asks for the password again after this long. The Worker
       // still accepts it afterwards; this only makes the browser forget it.
       const TOKEN_MAX_AGE_MS = 30 * 24 * 60 * 60 * 1000;
@@ -2111,7 +2111,8 @@ import { CHAT_EFFORTS, CHAT_MODELS } from '@lib/constants';
               messages: apiMessages(convo),
               model: modelSelect.value,
               effort: effortSelect.value,
-              web: pressed(webBtn),
+              web: true, // always offered; Claude searches when the task needs it
+              deep: pressed(webBtn),
               code: true, // always offered; Claude runs code when the task needs it
               projectId: convo.projectId ?? undefined,
               containerId: convo.containerId ?? undefined,
@@ -2652,7 +2653,7 @@ import { CHAT_EFFORTS, CHAT_MODELS } from '@lib/constants';
       }
       restorePicker(modelSelect, KEY_MODEL, CHAT_MODELS);
       restorePicker(effortSelect, KEY_EFFORT, CHAT_EFFORTS);
-      restoreToggle(webBtn, KEY_WEB);
+      restoreToggle(webBtn, KEY_RESEARCH);
 
       // ─── Boot ──────────────────────────────────────────────────────────
       if ('serviceWorker' in navigator) {
