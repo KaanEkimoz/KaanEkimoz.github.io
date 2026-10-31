@@ -95,7 +95,7 @@ Yeni bir `migrations/000N_*.sql` eklendiğinde aynı komut yalnızca eksik olanl
 | Model / güç seçimi | Yazı kutusunun üstü | `MODELS`, `EFFORTS` |
 | Web araması | "Web" düğmesi | `WEB_SEARCH_TOOL` (arama başına $0,01) |
 | Bağlantı okuma | Sohbette link varsa kendiliğinden; "Web" açıkken her zaman | `WEB_FETCH_TOOL`, `LINK_RE` (ücretsiz, yalnızca token) |
-| Kod çalıştırma, dosya üretme (Excel/Word/PDF/grafik) | "Kod" düğmesi; Office dosyası eklenince kendiliğinden açılır | `CODE_TOOL`; çıktılar `outputs` tablosunda kişiye bağlı, `/outputs/<id>` ile iner. Ayda 1.550 konteyner-saati ücretsiz, sonra saatte $0,05 |
+| Kod çalıştırma, dosya üretme (Excel/Word/PDF/grafik) | Her istekte açık; Claude gerektiğinde kullanır | `CODE_TOOL`; çıktılar `outputs` tablosunda kişiye bağlı, `/outputs/<id>` ile iner. Ayda 1.550 konteyner-saati ücretsiz, sonra saatte $0,05 |
 | Hafıza | Menü → Hafıza (görüntüle/sil); Kişisel talimatlar → aç/kapa | `MEMORY_TOOL` + `runMemory()`; `memories` tablosu. Worker araç döngüsünü kendisi yürütür |
 | Projeler (kalıcı dosya + talimat) | Menüdeki proje seçici | `projects` tablosu; proje dosyaları süresiz, proje silinince silinir |
 | Uzun sohbet | ~120k token ya da 120 mesajda eski kısım otomatik özetlenir | `/compact` (Sonnet 5.5) |
