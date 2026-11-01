@@ -109,17 +109,6 @@ import { CHAT_EFFORTS, CHAT_MODELS } from '@lib/constants';
         </details>
       </aside>
 
-      <!-- Project sources -->
-      <aside id="sources-rail" class="sources-rail" aria-label="Proje kaynakları" hidden>
-        <div class="sources-head">
-          <span id="sources-title" class="sources-title"></span>
-          <button id="sources-close" type="button" class="icon-btn sources-close" aria-label="Kaynakları kapat" title="Kapat">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18" /></svg>
-          </button>
-        </div>
-        <div id="sources-list" class="sources-list"></div>
-      </aside>
-
       <!-- Conversation -->
       <section id="chat-main" class="chat-main is-empty">
         <header class="topbar">
@@ -128,7 +117,7 @@ import { CHAT_EFFORTS, CHAT_MODELS } from '@lib/constants';
           </button>
           <span id="chat-title" class="topbar-title"></span>
           <span id="project-label" class="project-label" hidden></span>
-          <button id="sources-btn" type="button" class="icon-btn sources-btn" aria-label="Proje kaynakları" title="Proje kaynakları" hidden>
+          <button id="sources-btn" type="button" class="icon-btn sources-btn" aria-label="Proje detayları" title="Proje detayları" hidden>
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M6 3h9l4 4v14H6zM14 3v5h5M9 13h7M9 17h5" /></svg>
           </button>
           <button id="project-file-btn" type="button" class="chip-btn project-file-btn" title="Bu projeye kalıcı dosya ekle" hidden>
@@ -215,6 +204,17 @@ import { CHAT_EFFORTS, CHAT_MODELS } from '@lib/constants';
       </section>
 
       <!-- HTML preview: beside the chat on wide screens, slides over it on phones -->
+      <!-- Project details -->
+      <aside id="sources-rail" class="sources-rail" aria-label="Proje detayları" hidden>
+        <div class="sources-head">
+          <span id="sources-title" class="sources-title"></span>
+          <button id="sources-close" type="button" class="icon-btn sources-close" aria-label="Proje detaylarını kapat" title="Kapat">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18" /></svg>
+          </button>
+        </div>
+        <div id="sources-list" class="sources-list"></div>
+      </aside>
+
       <aside id="html-panel" class="html-panel" aria-label="HTML önizleme" inert>
         <header class="html-panel-bar">
           <span id="html-panel-title" class="html-panel-title"></span>
@@ -902,19 +902,93 @@ import { CHAT_EFFORTS, CHAT_MODELS } from '@lib/constants';
       let quickProject: Project | null = null;
       let quickUploads = 0;
 
-      function sourceGroup(title: string, files: { name: string; expiresAt?: string | null }[]) {
+      const PANEL_ICONS = {
+        instructions: '<path d="M5 4h14v11l-5 5H5zM14 20v-5h5" />',
+        sources: '<path d="M6 3h9l4 4v14H6zM14 3v5h5" />',
+        context: '<path d="M4 18a8 8 0 1 1 16 0M12 18l4-6" />',
+        memory: '<path d="M12 5a4 4 0 0 0-7 3 4 4 0 0 0 0 7 4 4 0 0 0 7 4zM12 5a4 4 0 0 1 7 3 4 4 0 0 1 0 7 4 4 0 0 1-7 4z" />',
+      };
+      const panelOpen = new Set(['sources']);
+      let panelClosed = false;
+      let projectNotes: { id: string; files: { path: string; content: string }[]; general: number } | null = null;
+
+      async function loadProjectNotes(p: Project) {
+        try {
+          const res = await api('/memory');
+          if (!res.ok) return;
+          const { files } = (await res.json()) as { files: { path: string; content: string }[] };
+          const prefix = `/memories/projects/${p.id}/`;
+          projectNotes = {
+            id: p.id,
+            files: files.filter((f) => f.path.startsWith(prefix)),
+            general: files.filter((f) => !f.path.startsWith('/memories/projects/')).length,
+          };
+          renderSources();
+        } catch {}
+      }
+
+      function panelRow(
+        key: keyof typeof PANEL_ICONS,
+        label: string,
+        sub: string,
+        action: { label: string; run: () => void } | null,
+        body: () => (HTMLElement | string)[],
+      ) {
+        const row = document.createElement('div');
+        row.className = 'panel-row';
+        const head = document.createElement('button');
+        head.type = 'button';
+        head.className = 'panel-row-head';
+        const open = panelOpen.has(key);
+        head.setAttribute('aria-expanded', String(open));
+        const icon = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+        icon.setAttribute('viewBox', '0 0 24 24');
+        icon.setAttribute('aria-hidden', 'true');
+        icon.innerHTML = PANEL_ICONS[key];
+        const name = document.createElement('span');
+        name.className = 'panel-row-name';
+        name.textContent = label;
+        const detail = document.createElement('span');
+        detail.className = 'panel-row-sub';
+        detail.textContent = sub;
+        head.append(icon, name, detail);
+        head.addEventListener('click', () => {
+          if (!panelOpen.delete(key)) panelOpen.add(key);
+          renderSources();
+        });
+        row.append(head);
+        if (action) {
+          const btn = document.createElement('button');
+          btn.type = 'button';
+          btn.className = 'panel-row-action';
+          btn.textContent = action.label;
+          btn.addEventListener('click', action.run);
+          row.append(btn);
+        }
+        if (open) {
+          const content = document.createElement('div');
+          content.className = 'panel-row-body';
+          content.append(...body());
+          row.append(content);
+        }
+        return row;
+      }
+
+      function fileRows(title: string, files: { name: string; expiresAt?: string | null }[]) {
         const label = document.createElement('div');
         label.className = 'sources-label';
         label.textContent = title;
-        sourcesList.append(label);
-        for (const f of files) {
-          const row = document.createElement('div');
-          row.className = 'source-row';
-          row.title = f.name;
-          row.textContent = f.name;
-          if (isExpired(f as Attachment)) row.classList.add('is-expired');
-          sourcesList.append(row);
-        }
+        return [
+          label,
+          ...files.map((f) => {
+            const row = document.createElement('div');
+            row.className = 'source-row';
+            row.title = f.name;
+            row.textContent = f.name;
+            if (isExpired(f as Attachment)) row.classList.add('is-expired');
+            return row;
+          }),
+        ];
       }
 
       function renderSources() {
@@ -922,18 +996,44 @@ import { CHAT_EFFORTS, CHAT_MODELS } from '@lib/constants';
         sourcesRail.hidden = !p;
         sourcesBtn.hidden = !p;
         projectFileBtn.hidden = !p;
+        sourcesRail.classList.toggle('is-closed', panelClosed);
         if (!p) {
           sourcesRail.classList.remove('is-open');
           return;
         }
+        if (projectNotes?.id !== p.id) {
+          projectNotes = { id: p.id, files: [], general: 0 };
+          void loadProjectNotes(p);
+        }
         $<HTMLSpanElement>('sources-title').textContent = `${projectIcon(p)} ${projectTitle(p)}`;
-        sourcesList.replaceChildren();
-        sourceGroup('Proje dosyaları', p.files);
-        if (!p.files.length) sourcesList.append(noteEl('Henüz dosya yok. Eklediklerin bu projedeki her sohbette hazır olur.'));
-        if (quickUploads) sourcesList.append(noteEl('Yükleniyor…'));
+        const c = active();
         const seen = new Set(p.files.map((f) => f.ref));
-        const inChat = (active()?.messages ?? []).flatMap((m) => m.attachments ?? []).filter((a) => !seen.has(a.ref) && seen.add(a.ref));
-        if (inChat.length) sourceGroup('Bu sohbetteki dosyalar', inChat);
+        const inChat = (c?.messages ?? []).flatMap((m) => m.attachments ?? []).filter((a) => !seen.has(a.ref) && seen.add(a.ref));
+        const ctx = c?.context ?? 0;
+        const notes = projectNotes!;
+        sourcesList.replaceChildren(
+          panelRow('instructions', 'Talimatlar', '', { label: 'Düzenle', run: () => openProjectDialog(p) }, () => {
+            const text = document.createElement('p');
+            text.className = 'panel-text';
+            text.textContent = p.instructions || 'Henüz talimat yok.';
+            return [text];
+          }),
+          panelRow('sources', 'Kaynaklar', `${p.files.length + inChat.length} dosya`, { label: 'Ekle', run: () => addProjectFiles(p) }, () => [
+            ...(p.files.length ? fileRows('Proje dosyaları', p.files) : [noteEl('Eklediğin dosyalar bu projedeki her sohbette hazır olur.')]),
+            ...(quickUploads ? [noteEl('Yükleniyor…')] : []),
+            ...(inChat.length ? fileRows('Bu sohbetteki dosyalar', inChat) : []),
+          ]),
+          panelRow('context', 'Bağlam', `${tokens(ctx)} / 1M`, null, () => [
+            contextBar(ctx),
+            contextLine('Mesaj', String(c?.messages?.length ?? 0)),
+            ...(c?.summary ? [contextLine('Özetlenen mesaj', String(c.summary.upto))] : []),
+          ]),
+          panelRow('memory', 'Hafıza', `${notes.files.length} not`, null, () => [
+            ...notes.files.map((f) => memoryItem(f, () => loadProjectNotes(p))),
+            ...(notes.files.length ? [] : [noteEl('Bu proje için henüz not yok.')]),
+            contextLine('Genel hafıza', `${notes.general} not`),
+          ]),
+        );
       }
 
       function addProjectFiles(p: Project) {
@@ -977,11 +1077,15 @@ import { CHAT_EFFORTS, CHAT_MODELS } from '@lib/constants';
         renderSources();
       });
 
-      sourcesBtn.addEventListener('click', (e) => {
-        e.stopPropagation();
-        sourcesRail.classList.toggle('is-open');
-      });
-      $<HTMLButtonElement>('sources-close').addEventListener('click', () => sourcesRail.classList.remove('is-open'));
+      const wideChat = matchMedia('(min-width: 1100px)');
+      function toggleProjectPanel() {
+        if (wideChat.matches) {
+          panelClosed = !panelClosed;
+          renderSources();
+        } else sourcesRail.classList.toggle('is-open');
+      }
+      sourcesBtn.addEventListener('click', toggleProjectPanel);
+      $<HTMLButtonElement>('sources-close').addEventListener('click', toggleProjectPanel);
 
       function closeContext() {
         contextPanel.hidden = true;
@@ -999,16 +1103,18 @@ import { CHAT_EFFORTS, CHAT_MODELS } from '@lib/constants';
         return row;
       }
 
-      async function renderContext() {
-        const c = active();
-        const p = openProject();
-        const ctx = c?.context ?? 0;
-        const pct = Math.min(100, (ctx / CONTEXT_WINDOW) * 100);
+      function contextBar(ctx: number) {
         const bar = document.createElement('div');
         bar.className = 'context-bar';
         const fill = document.createElement('span');
-        fill.style.width = `${pct}%`;
+        fill.style.width = `${Math.min(100, (ctx / CONTEXT_WINDOW) * 100)}%`;
         bar.append(fill);
+        return bar;
+      }
+
+      async function renderContext() {
+        const c = active();
+        const ctx = c?.context ?? 0;
         const heading = (text: string) => {
           const el = document.createElement('div');
           el.className = 'sources-label';
@@ -1018,30 +1124,24 @@ import { CHAT_EFFORTS, CHAT_MODELS } from '@lib/constants';
         const memoryBox = document.createElement('div');
         memoryBox.className = 'context-memory';
         memoryBox.append(noteEl('Yükleniyor…'));
-        const fileCount = (c?.messages ?? []).reduce((n, m) => n + (m.attachments?.length ?? 0), 0) + (p?.files.length ?? 0);
         contextPanel.replaceChildren(
           heading('Bağlam'),
-          bar,
+          contextBar(ctx),
           contextLine('Kullanılan', `${tokens(ctx)} / 1M`),
           contextLine('Mesaj', String(c?.messages?.length ?? 0)),
           ...(c?.summary ? [contextLine('Özetlenen mesaj', String(c.summary.upto))] : []),
-          contextLine('Dosya', String(fileCount)),
-          heading(p ? 'Proje hafızası' : 'Hafıza'),
+          contextLine('Dosya', String((c?.messages ?? []).reduce((n, m) => n + (m.attachments?.length ?? 0), 0))),
+          heading('Hafıza'),
           memoryBox,
         );
         try {
           const res = await api('/memory');
           if (!res.ok) throw new Error(await errorMessage(res));
           const { files } = (await res.json()) as { files: { path: string; content: string }[] };
-          const prefix = `/memories/projects/${p?.id}/`;
-          const shown = files.filter((f) => (p ? f.path.startsWith(prefix) : !f.path.startsWith('/memories/projects/')));
+          const shown = files.filter((f) => !f.path.startsWith('/memories/projects/'));
           memoryBox.replaceChildren();
-          if (!shown.length) memoryBox.append(noteEl(p ? 'Bu proje için henüz not yok.' : 'Henüz bir not yok.'));
+          if (!shown.length) memoryBox.append(noteEl('Henüz bir not yok.'));
           for (const f of shown) memoryBox.append(memoryItem(f, renderContext));
-          if (p) {
-            const general = files.filter((f) => !f.path.startsWith('/memories/projects/')).length;
-            memoryBox.append(contextLine('Genel hafıza', `${general} not`));
-          }
         } catch (err) {
           memoryBox.replaceChildren(noteEl((err as Error).message || 'Yüklenemedi.', 'error'));
         }
@@ -1049,6 +1149,12 @@ import { CHAT_EFFORTS, CHAT_MODELS } from '@lib/constants';
 
       contextBtn.addEventListener('click', (e) => {
         e.stopPropagation();
+        if (openProject()) {
+          panelOpen.add('context');
+          if (wideChat.matches) panelClosed = false;
+          else sourcesRail.classList.add('is-open');
+          return renderSources();
+        }
         if (!contextPanel.hidden) return closeContext();
         contextPanel.hidden = false;
         contextBtn.setAttribute('aria-expanded', 'true');
@@ -1561,6 +1667,7 @@ import { CHAT_EFFORTS, CHAT_MODELS } from '@lib/constants';
         const c = active();
         contextBtn.hidden = !c?.messages?.length;
         contextBtn.textContent = `${tokens(c?.context ?? 0)} / 1M`;
+        renderSources();
         if (contextBtn.hidden) closeContext();
         if (!c?.messages?.length) {
           meter.textContent = '';
@@ -3267,12 +3374,12 @@ import { CHAT_EFFORTS, CHAT_MODELS } from '@lib/constants';
     transform: none;
   }
   .sources-rail {
-    width: 15rem;
+    width: 20rem;
     flex-shrink: 0;
     display: flex;
     flex-direction: column;
     min-height: 0;
-    border-right: 1px solid rgb(var(--border) / 0.6);
+    border-left: 1px solid rgb(var(--border) / 0.6);
   }
   .sources-rail[hidden] {
     display: none;
@@ -3297,7 +3404,61 @@ import { CHAT_EFFORTS, CHAT_MODELS } from '@lib/constants';
   .sources-list {
     flex: 1;
     overflow-y: auto;
-    padding: 0 0.75rem 1rem;
+    padding: 0 1rem 1rem;
+  }
+  .panel-row {
+    position: relative;
+    border-bottom: 1px solid rgb(var(--border) / 0.6);
+  }
+  .panel-row:last-child {
+    border-bottom: 0;
+  }
+  .panel-row-head {
+    display: flex;
+    align-items: center;
+    gap: 0.65rem;
+    width: 100%;
+    min-height: 3rem;
+    padding-right: 3.75rem;
+    text-align: left;
+    font-size: 0.875rem;
+    color: rgb(var(--text-100));
+  }
+  .panel-row-head svg {
+    flex-shrink: 0;
+    width: 1.1rem;
+    height: 1.1rem;
+    fill: none;
+    stroke: rgb(var(--text-200));
+    stroke-width: 1.6;
+    stroke-linejoin: round;
+    stroke-linecap: round;
+  }
+  .panel-row-sub {
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    font-size: 0.75rem;
+    color: rgb(var(--text-300));
+  }
+  .panel-row-action {
+    position: absolute;
+    top: 0.9rem;
+    right: 0;
+    font-size: 0.82rem;
+    color: rgb(var(--text-100));
+  }
+  .panel-row-action:hover {
+    color: rgb(var(--accent-1));
+  }
+  .panel-row-body {
+    padding: 0 0 0.85rem;
+  }
+  .panel-text {
+    white-space: pre-wrap;
+    font-size: 0.82rem;
+    color: rgb(var(--text-200));
   }
   .sources-label {
     margin: 0.75rem 0 0.35rem;
@@ -3477,10 +3638,6 @@ import { CHAT_EFFORTS, CHAT_MODELS } from '@lib/constants';
     .drawer-backdrop {
       display: none !important;
     }
-    .topbar .sources-btn,
-    .sources-head .sources-close {
-      display: none;
-    }
     .chat-body.sidebar-collapsed .sidebar {
       margin-left: -17.5rem;
     }
@@ -3493,6 +3650,29 @@ import { CHAT_EFFORTS, CHAT_MODELS } from '@lib/constants';
       display: inline-flex;
     }
   }
+  @media (min-width: 1100px) {
+    .sources-rail.is-closed {
+      display: none;
+    }
+  }
+  /* The project panel slides in over the chat when there's no room for it. */
+  @media (max-width: 1099px) {
+    .sources-rail {
+      position: fixed;
+      inset: 0 0 0 auto;
+      z-index: 40;
+      width: min(85vw, 20rem);
+      background: rgb(var(--bg-base));
+      transform: translateX(100%);
+    }
+    .sources-rail.is-open {
+      transform: translateX(0);
+      box-shadow: 0 0 40px rgb(0 0 0 / 0.35);
+    }
+  }
+  .chat-app:has(.html-panel.is-open) .sources-rail {
+    display: none;
+  }
   /* Phones and small windows: sidebar slides in over the chat. */
   @media (max-width: 899px) {
     .sidebar {
@@ -3503,18 +3683,6 @@ import { CHAT_EFFORTS, CHAT_MODELS } from '@lib/constants';
       transform: translateX(-100%);
     }
     .sidebar.is-open {
-      transform: translateX(0);
-      box-shadow: 0 0 40px rgb(0 0 0 / 0.35);
-    }
-    .sources-rail {
-      position: fixed;
-      inset: 0 auto 0 0;
-      z-index: 40;
-      width: min(85vw, 19rem);
-      background: rgb(var(--bg-base));
-      transform: translateX(-100%);
-    }
-    .sources-rail.is-open {
       transform: translateX(0);
       box-shadow: 0 0 40px rgb(0 0 0 / 0.35);
     }
