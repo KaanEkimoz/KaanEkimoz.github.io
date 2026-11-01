@@ -109,6 +109,17 @@ import { CHAT_EFFORTS, CHAT_MODELS } from '@lib/constants';
         </details>
       </aside>
 
+      <!-- Project sources -->
+      <aside id="sources-rail" class="sources-rail" aria-label="Proje kaynakları" hidden>
+        <div class="sources-head">
+          <span id="sources-title" class="sources-title"></span>
+          <button id="sources-close" type="button" class="icon-btn sources-close" aria-label="Kaynakları kapat" title="Kapat">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18" /></svg>
+          </button>
+        </div>
+        <div id="sources-list" class="sources-list"></div>
+      </aside>
+
       <!-- Conversation -->
       <section id="chat-main" class="chat-main is-empty">
         <header class="topbar">
@@ -117,9 +128,18 @@ import { CHAT_EFFORTS, CHAT_MODELS } from '@lib/constants';
           </button>
           <span id="chat-title" class="topbar-title"></span>
           <span id="project-label" class="project-label" hidden></span>
+          <button id="sources-btn" type="button" class="icon-btn sources-btn" aria-label="Proje kaynakları" title="Proje kaynakları" hidden>
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M6 3h9l4 4v14H6zM14 3v5h5M9 13h7M9 17h5" /></svg>
+          </button>
+          <button id="project-file-btn" type="button" class="chip-btn project-file-btn" title="Bu projeye kalıcı dosya ekle" hidden>
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M12 5v14M5 12h14" /></svg>
+            <span>Dosya ekle</span>
+          </button>
+          <button id="context-btn" type="button" class="chip-btn context-btn" aria-expanded="false" aria-controls="context-panel" title="Bağlam ve hafıza" hidden></button>
           <button type="button" class="icon-btn topbar-new" aria-label="Yeni sohbet" title="Yeni sohbet" data-new-chat>
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M12 20h9M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4z" /></svg>
           </button>
+          <div id="context-panel" class="context-panel" hidden></div>
         </header>
 
         <main id="scroller" class="scroller">
@@ -317,6 +337,7 @@ import { CHAT_EFFORTS, CHAT_MODELS } from '@lib/constants';
           <span class="text-sm text-text-200">Dosyalar (her sohbetin başına eklenir, en fazla 30)</span>
           <div id="project-files" class="flex flex-wrap gap-2"></div>
           <button id="project-add-file" type="button" class="pill-btn">Dosya ekle</button>
+          <input id="project-quick-input" type="file" multiple hidden accept="image/png,image/jpeg,image/gif,image/webp,application/pdf,text/plain,.txt,.md,.csv,.json,.xlsx,.xls,.docx,.pptx" />
           <input id="project-file-input" type="file" multiple hidden accept="image/png,image/jpeg,image/gif,image/webp,application/pdf,text/plain,.txt,.md,.csv,.json,.xlsx,.xls,.docx,.pptx" />
         </div>
         <p id="project-error" class="text-sm text-accent-2 hidden" role="alert"></p>
@@ -485,6 +506,13 @@ import { CHAT_EFFORTS, CHAT_MODELS } from '@lib/constants';
       const projectInstructions = $<HTMLTextAreaElement>('project-instructions');
       const projectFilesEl = $<HTMLDivElement>('project-files');
       const projectFileInput = $<HTMLInputElement>('project-file-input');
+      const quickFileInput = $<HTMLInputElement>('project-quick-input');
+      const sourcesRail = $<HTMLElement>('sources-rail');
+      const sourcesList = $<HTMLDivElement>('sources-list');
+      const sourcesBtn = $<HTMLButtonElement>('sources-btn');
+      const projectFileBtn = $<HTMLButtonElement>('project-file-btn');
+      const contextBtn = $<HTMLButtonElement>('context-btn');
+      const contextPanel = $<HTMLDivElement>('context-panel');
       const projectError = $<HTMLParagraphElement>('project-error');
       const gate = $<HTMLDivElement>('gate');
       const gateForm = $<HTMLFormElement>('gate-form');
@@ -863,10 +891,179 @@ import { CHAT_EFFORTS, CHAT_MODELS } from '@lib/constants';
       function renderProjectLabel() {
         const p = projectOf(active()?.projectId ?? currentProject);
         projectLabel.hidden = !p;
-        projectLabel.textContent = p ? ` · ${projectTitle(p)}` : '';
+        projectLabel.textContent = p ? `${projectIcon(p)} ${projectTitle(p)}` : '';
         projectSelect.value = p?.id ?? '';
         projectEditBtn.hidden = !p;
+        renderSources();
       }
+
+      // ─── Project sources and context ─────────────────────────────────
+      const openProject = () => projectOf(active()?.projectId ?? currentProject);
+      let quickProject: Project | null = null;
+      let quickUploads = 0;
+
+      function sourceGroup(title: string, files: { name: string; expiresAt?: string | null }[]) {
+        const label = document.createElement('div');
+        label.className = 'sources-label';
+        label.textContent = title;
+        sourcesList.append(label);
+        for (const f of files) {
+          const row = document.createElement('div');
+          row.className = 'source-row';
+          row.title = f.name;
+          row.textContent = f.name;
+          if (isExpired(f as Attachment)) row.classList.add('is-expired');
+          sourcesList.append(row);
+        }
+      }
+
+      function renderSources() {
+        const p = openProject();
+        sourcesRail.hidden = !p;
+        sourcesBtn.hidden = !p;
+        projectFileBtn.hidden = !p;
+        if (!p) {
+          sourcesRail.classList.remove('is-open');
+          return;
+        }
+        $<HTMLSpanElement>('sources-title').textContent = `${projectIcon(p)} ${projectTitle(p)}`;
+        sourcesList.replaceChildren();
+        sourceGroup('Proje dosyaları', p.files);
+        if (!p.files.length) sourcesList.append(noteEl('Henüz dosya yok. Eklediklerin bu projedeki her sohbette hazır olur.'));
+        if (quickUploads) sourcesList.append(noteEl('Yükleniyor…'));
+        const seen = new Set(p.files.map((f) => f.ref));
+        const inChat = (active()?.messages ?? []).flatMap((m) => m.attachments ?? []).filter((a) => !seen.has(a.ref) && seen.add(a.ref));
+        if (inChat.length) sourceGroup('Bu sohbetteki dosyalar', inChat);
+      }
+
+      function addProjectFiles(p: Project) {
+        quickProject = p;
+        quickFileInput.click();
+      }
+      projectFileBtn.addEventListener('click', () => {
+        const p = openProject();
+        if (p) addProjectFiles(p);
+      });
+      quickFileInput.addEventListener('change', async () => {
+        const p = quickProject;
+        const files = Array.from(quickFileInput.files ?? []);
+        quickFileInput.value = '';
+        if (!p || !files.length) return;
+        const added: Attachment[] = [];
+        quickUploads += files.length;
+        renderSources();
+        for (const file of files) {
+          const info = classify(file);
+          try {
+            if (!info) throw new Error('Desteklenmeyen tür');
+            added.push(await uploadFile(file, info, true));
+          } catch (err) {
+            alert(`${file.name}: ${(err as Error).message}`);
+          }
+          quickUploads -= 1;
+        }
+        if (added.length) {
+          const res = await api(`/projects/${p.id}`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ name: p.name, instructions: p.instructions, files: [...p.files, ...added] }),
+          }).catch(() => null);
+          if (res?.ok) await loadProjects();
+          else {
+            deleteFiles(added.map((a) => a.ref));
+            alert(res ? await errorMessage(res) : 'Dosyalar projeye eklenemedi.');
+          }
+        }
+        renderSources();
+      });
+
+      sourcesBtn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        sourcesRail.classList.toggle('is-open');
+      });
+      $<HTMLButtonElement>('sources-close').addEventListener('click', () => sourcesRail.classList.remove('is-open'));
+
+      function closeContext() {
+        contextPanel.hidden = true;
+        contextBtn.setAttribute('aria-expanded', 'false');
+      }
+
+      function contextLine(label: string, value: string) {
+        const row = document.createElement('div');
+        row.className = 'context-line';
+        const name = document.createElement('span');
+        name.textContent = label;
+        const val = document.createElement('span');
+        val.textContent = value;
+        row.append(name, val);
+        return row;
+      }
+
+      async function renderContext() {
+        const c = active();
+        const p = openProject();
+        const ctx = c?.context ?? 0;
+        const pct = Math.min(100, (ctx / CONTEXT_WINDOW) * 100);
+        const bar = document.createElement('div');
+        bar.className = 'context-bar';
+        const fill = document.createElement('span');
+        fill.style.width = `${pct}%`;
+        bar.append(fill);
+        const heading = (text: string) => {
+          const el = document.createElement('div');
+          el.className = 'sources-label';
+          el.textContent = text;
+          return el;
+        };
+        const memoryBox = document.createElement('div');
+        memoryBox.className = 'context-memory';
+        memoryBox.append(noteEl('Yükleniyor…'));
+        const fileCount = (c?.messages ?? []).reduce((n, m) => n + (m.attachments?.length ?? 0), 0) + (p?.files.length ?? 0);
+        contextPanel.replaceChildren(
+          heading('Bağlam'),
+          bar,
+          contextLine('Kullanılan', `${tokens(ctx)} / 1M`),
+          contextLine('Mesaj', String(c?.messages?.length ?? 0)),
+          ...(c?.summary ? [contextLine('Özetlenen mesaj', String(c.summary.upto))] : []),
+          contextLine('Dosya', String(fileCount)),
+          heading(p ? 'Proje hafızası' : 'Hafıza'),
+          memoryBox,
+        );
+        try {
+          const res = await api('/memory');
+          if (!res.ok) throw new Error(await errorMessage(res));
+          const { files } = (await res.json()) as { files: { path: string; content: string }[] };
+          const prefix = `/memories/projects/${p?.id}/`;
+          const shown = files.filter((f) => (p ? f.path.startsWith(prefix) : !f.path.startsWith('/memories/projects/')));
+          memoryBox.replaceChildren();
+          if (!shown.length) memoryBox.append(noteEl(p ? 'Bu proje için henüz not yok.' : 'Henüz bir not yok.'));
+          for (const f of shown) memoryBox.append(memoryItem(f, renderContext));
+          if (p) {
+            const general = files.filter((f) => !f.path.startsWith('/memories/projects/')).length;
+            memoryBox.append(contextLine('Genel hafıza', `${general} not`));
+          }
+        } catch (err) {
+          memoryBox.replaceChildren(noteEl((err as Error).message || 'Yüklenemedi.', 'error'));
+        }
+      }
+
+      contextBtn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        if (!contextPanel.hidden) return closeContext();
+        contextPanel.hidden = false;
+        contextBtn.setAttribute('aria-expanded', 'true');
+        void renderContext();
+      });
+      document.addEventListener('pointerdown', (e) => {
+        const target = e.target as Node;
+        if (!contextPanel.hidden && !contextPanel.contains(target) && !contextBtn.contains(target)) closeContext();
+        if (sourcesRail.classList.contains('is-open') && !sourcesRail.contains(target) && !sourcesBtn.contains(target)) {
+          sourcesRail.classList.remove('is-open');
+        }
+      });
+      document.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape') closeContext();
+      });
 
       projectSelect.addEventListener('change', () => {
         if (projectSelect.value === '__new') {
@@ -982,13 +1179,18 @@ import { CHAT_EFFORTS, CHAT_MODELS } from '@lib/constants';
         }
       });
       $<HTMLButtonElement>('project-cancel').addEventListener('click', () => projectDialog.close());
-      $<HTMLButtonElement>('project-delete').addEventListener('click', async () => {
-        if (!editing || !confirm('Proje ve dosyaları silinsin mi? Sohbetler kalır.')) return;
-        await api(`/projects/${editing.id}`, { method: 'DELETE' }).catch(() => {});
-        if (currentProject === editing.id) currentProject = null;
-        convos.forEach((c) => c.projectId === editing!.id && (c.projectId = null));
-        projectDialog.close();
+      async function deleteProject(id: string) {
+        if (!confirm('Proje, dosyaları ve hafızası silinsin mi? Sohbetler kalır.')) return false;
+        await api(`/projects/${id}`, { method: 'DELETE' }).catch(() => {});
+        if (currentProject === id) currentProject = null;
+        convos.forEach((c) => c.projectId === id && (c.projectId = null));
         await loadProjects();
+        renderConversation();
+        renderConvoList();
+        return true;
+      }
+      $<HTMLButtonElement>('project-delete').addEventListener('click', async () => {
+        if (editing && (await deleteProject(editing.id))) projectDialog.close();
       });
       projectForm.addEventListener('submit', async (e) => {
         e.preventDefault();
@@ -1357,6 +1559,9 @@ import { CHAT_EFFORTS, CHAT_MODELS } from '@lib/constants';
 
       function renderMeter() {
         const c = active();
+        contextBtn.hidden = !c?.messages?.length;
+        contextBtn.textContent = `${tokens(c?.context ?? 0)} / 1M`;
+        if (contextBtn.hidden) closeContext();
         if (!c?.messages?.length) {
           meter.textContent = '';
           return;
@@ -1374,7 +1579,7 @@ import { CHAT_EFFORTS, CHAT_MODELS } from '@lib/constants';
 
       const readSet = (key: string) => new Set(load<string[]>(key, []));
 
-      function convoRow(c: Convo, pinned: boolean, nested: boolean): HTMLLIElement {
+      function convoRow(c: Convo, nested: boolean): HTMLLIElement {
         const li = document.createElement('li');
         li.className = `group flex items-center${nested ? ' convo-nested' : ''}`;
         const open = document.createElement('button');
@@ -1382,10 +1587,11 @@ import { CHAT_EFFORTS, CHAT_MODELS } from '@lib/constants';
         open.className = `convo-item ${c.id === activeId ? 'is-active' : ''}`;
         const title = document.createElement('span');
         title.className = 'convo-title';
-        title.textContent = c.title || 'Yeni sohbet';
+        const owner = projectOf(c.projectId);
+        title.textContent = `${owner ? `${projectIcon(owner)} ` : ''}${c.title || 'Yeni sohbet'}`;
         const sub = document.createElement('span');
         sub.className = 'convo-sub';
-        sub.textContent = `${pinned ? '📌 ' : ''}${when(c.updatedAt)}`;
+        sub.textContent = when(c.updatedAt);
         open.append(title, sub);
         open.addEventListener('click', () => {
           if (streaming) return;
@@ -1410,12 +1616,37 @@ import { CHAT_EFFORTS, CHAT_MODELS } from '@lib/constants';
         return li;
       }
 
-      function sectionLabel(text: string, onAdd?: () => void): HTMLLIElement {
+      function toggleFolded(key: string) {
+        const set = readSet(foldedKey());
+        if (!set.delete(key)) set.add(key);
+        save(foldedKey(), [...set]);
+        renderConvoList();
+      }
+
+      const chevron = () => {
+        const el = document.createElement('span');
+        el.className = 'chevron';
+        el.setAttribute('aria-hidden', 'true');
+        el.textContent = '›';
+        return el;
+      };
+
+      function sectionLabel(text: string, fold?: { key: string; closed: boolean }, onAdd?: () => void): HTMLLIElement {
         const li = document.createElement('li');
         li.className = 'sidebar-section';
-        const label = document.createElement('span');
-        label.textContent = text;
-        li.append(label);
+        if (fold) {
+          const toggle = document.createElement('button');
+          toggle.type = 'button';
+          toggle.className = 'section-toggle';
+          toggle.setAttribute('aria-expanded', String(!fold.closed));
+          toggle.append(chevron(), text);
+          toggle.addEventListener('click', () => toggleFolded(fold.key));
+          li.append(toggle);
+        } else {
+          const label = document.createElement('span');
+          label.textContent = text;
+          li.append(label);
+        }
         if (onAdd) {
           const add = document.createElement('button');
           add.type = 'button';
@@ -1441,12 +1672,17 @@ import { CHAT_EFFORTS, CHAT_MODELS } from '@lib/constants';
         const name = document.createElement('span');
         name.className = 'convo-title';
         name.textContent = projectTitle(p);
-        toggle.append(icon, name);
-        toggle.addEventListener('click', () => {
-          const set = readSet(foldedKey());
-          if (!set.delete(p.id)) set.add(p.id);
-          save(foldedKey(), [...set]);
-          renderConvoList();
+        toggle.append(chevron(), icon, name);
+        toggle.addEventListener('click', () => toggleFolded(p.id));
+        const more = document.createElement('button');
+        more.type = 'button';
+        more.className = 'convo-more';
+        more.setAttribute('aria-label', `${projectTitle(p)} seçenekleri`);
+        more.setAttribute('aria-haspopup', 'menu');
+        more.textContent = '⋯';
+        more.addEventListener('click', (e) => {
+          e.stopPropagation();
+          openProjectMenu(p, more);
         });
         const add = document.createElement('button');
         add.type = 'button';
@@ -1465,7 +1701,7 @@ import { CHAT_EFFORTS, CHAT_MODELS } from '@lib/constants';
           closeDrawer();
           input.focus();
         });
-        li.append(toggle, add);
+        li.append(toggle, more, add);
         return li;
       }
 
@@ -1476,7 +1712,6 @@ import { CHAT_EFFORTS, CHAT_MODELS } from '@lib/constants';
           !q || `${c.title} ${(c.messages ?? []).map((m) => m.content).join(' ')}`.toLocaleLowerCase('tr').includes(q);
         const pins = readSet(pinsKey());
         const folded = readSet(foldedKey());
-        const inOrder = (list: Convo[]) => [...list].sort((a, b) => Number(pins.has(b.id)) - Number(pins.has(a.id)));
         const shown = convos.filter(matches);
         const note = (text: string) => {
           const li = document.createElement('li');
@@ -1485,22 +1720,33 @@ import { CHAT_EFFORTS, CHAT_MODELS } from '@lib/constants';
           return li;
         };
 
+        const pinned = shown.filter((c) => pins.has(c.id));
+        if (pinned.length) convoList.append(sectionLabel('Sabitlenenler'));
+        for (const c of pinned) convoList.append(convoRow(c, false));
+        const unpinned = shown.filter((c) => !pins.has(c.id));
+
         const groups = projects
-          .map((p) => ({ p, rows: inOrder(shown.filter((c) => c.projectId === p.id)) }))
+          .map((p) => ({ p, rows: unpinned.filter((c) => c.projectId === p.id) }))
           .filter((g) => !q || g.rows.length);
-        if (!q || groups.length) convoList.append(sectionLabel('Projeler', () => openProjectDialog(null)));
-        if (!q && !groups.length) convoList.append(note('Henüz proje yok.'));
-        for (const { p, rows } of groups) {
-          const closed = !q && folded.has(p.id);
-          convoList.append(projectRow(p, closed));
-          if (closed) continue;
-          if (!rows.length) convoList.append(note('Henüz sohbet yok.'));
-          for (const c of rows) convoList.append(convoRow(c, pins.has(c.id), true));
+        const projectsClosed = !q && folded.has('section:projects');
+        if (!q || groups.length) {
+          convoList.append(sectionLabel('Projeler', { key: 'section:projects', closed: projectsClosed }, () => openProjectDialog(null)));
+        }
+        if (!q && !groups.length && !projectsClosed) convoList.append(note('Henüz proje yok.'));
+        if (!projectsClosed) {
+          for (const { p, rows } of groups) {
+            const closed = !q && folded.has(p.id);
+            convoList.append(projectRow(p, closed));
+            if (closed) continue;
+            if (!rows.length) convoList.append(note('Henüz sohbet yok.'));
+            for (const c of rows) convoList.append(convoRow(c, true));
+          }
         }
 
-        const loose = inOrder(shown.filter((c) => !projectOf(c.projectId)));
-        if (!q || loose.length) convoList.append(sectionLabel('Son sohbetler'));
-        for (const c of loose) convoList.append(convoRow(c, pins.has(c.id), false));
+        const loose = unpinned.filter((c) => !projectOf(c.projectId));
+        const recentClosed = !q && folded.has('section:recent');
+        if (!q || loose.length) convoList.append(sectionLabel('Son sohbetler', { key: 'section:recent', closed: recentClosed }));
+        if (!recentClosed) for (const c of loose) convoList.append(convoRow(c, false));
         if (!shown.length) convoList.append(note(q ? 'Eşleşen sohbet yok.' : 'Henüz sohbet yok.'));
       }
 
@@ -1514,10 +1760,8 @@ import { CHAT_EFFORTS, CHAT_MODELS } from '@lib/constants';
         if (c.messages === null) await loadFull(c);
         return c;
       }
-      function openConvoMenu(c: Convo, anchor: HTMLElement) {
+      function openMenu(anchor: HTMLElement, fill: (item: (label: string, run: () => void, danger?: boolean) => void) => void) {
         closeConvoMenu();
-        const pins = readSet(pinsKey());
-        const pinned = pins.has(c.id);
         const menu = document.createElement('div');
         menu.className = 'convo-menu';
         menu.setAttribute('role', 'menu');
@@ -1533,21 +1777,7 @@ import { CHAT_EFFORTS, CHAT_MODELS } from '@lib/constants';
           });
           menu.append(btn);
         };
-        item(pinned ? 'Sabitlemeyi kaldır' : 'Sabitle', () => {
-          if (!pins.delete(c.id)) pins.add(c.id);
-          save(pinsKey(), [...pins]);
-          renderConvoList();
-        });
-        item('Yeniden adlandır', () => void renameConvo(c));
-        if (c.id !== activeId) item('Yanda aç', () => void openSplit(c));
-        item('.md olarak indir', () => void fullConvo(c).then(exportConvo));
-        item('Sil', () => {
-          if (streaming && c.id === activeId) return;
-          if (!confirm('Bu sohbet silinsin mi? Tüm cihazlarından silinir.')) return;
-          removeConvo(c);
-          renderConversation();
-          renderConvoList();
-        }, true);
+        fill(item);
         document.body.append(menu);
         const box = anchor.getBoundingClientRect();
         const left = Math.min(box.left, innerWidth - menu.offsetWidth - 8);
@@ -1555,6 +1785,36 @@ import { CHAT_EFFORTS, CHAT_MODELS } from '@lib/constants';
         menu.style.left = `${Math.max(8, left)}px`;
         menu.style.top = `${Math.max(8, top)}px`;
         convoMenu = menu;
+      }
+
+      function openConvoMenu(c: Convo, anchor: HTMLElement) {
+        const pins = readSet(pinsKey());
+        const pinned = pins.has(c.id);
+        openMenu(anchor, (item) => {
+          item(pinned ? 'Sabitlemeyi kaldır' : 'Sabitle', () => {
+            if (!pins.delete(c.id)) pins.add(c.id);
+            save(pinsKey(), [...pins]);
+            renderConvoList();
+          });
+          item('Yeniden adlandır', () => void renameConvo(c));
+          if (c.id !== activeId) item('Yanda aç', () => void openSplit(c));
+          item('.md olarak indir', () => void fullConvo(c).then(exportConvo));
+          item('Sil', () => {
+            if (streaming && c.id === activeId) return;
+            if (!confirm('Bu sohbet silinsin mi? Tüm cihazlarından silinir.')) return;
+            removeConvo(c);
+            renderConversation();
+            renderConvoList();
+          }, true);
+        });
+      }
+
+      function openProjectMenu(p: Project, anchor: HTMLElement) {
+        openMenu(anchor, (item) => {
+          item('Proje detayları', () => openProjectDialog(p));
+          item('Dosya ekle', () => addProjectFiles(p));
+          item('Sil', () => void deleteProject(p.id), true);
+        });
       }
       document.addEventListener('click', (e) => {
         if (convoMenu && !convoMenu.contains(e.target as Node)) closeConvoMenu();
@@ -1829,6 +2089,28 @@ import { CHAT_EFFORTS, CHAT_MODELS } from '@lib/constants';
       });
 
       // ─── Memory viewer ─────────────────────────────────────────────────
+      function memoryItem(f: { path: string; content: string }, refresh: () => Promise<void>) {
+        const item = document.createElement('div');
+        item.className = 'memory-item';
+        const head = document.createElement('div');
+        head.className = 'memory-head';
+        const name = document.createElement('span');
+        const [, projectId, rest] = /^\/memories\/projects\/([^/]+)\/(.*)$/.exec(f.path) ?? [];
+        const owner = projects.find((p) => p.id === projectId);
+        name.textContent = owner ? `${projectIcon(owner)} ${rest}` : f.path.replace(/^\/memories\//, '');
+        const del = actionBtn('Sil', async () => {
+          if (!confirm(`"${name.textContent}" notu silinsin mi?`)) return;
+          await api(`/memory?path=${encodeURIComponent(f.path)}`, { method: 'DELETE' }).catch(() => {});
+          void refresh();
+        });
+        head.append(name, del);
+        const body = document.createElement('pre');
+        body.className = 'memory-body';
+        body.textContent = f.content;
+        item.append(head, body);
+        return item;
+      }
+
       async function renderMemory() {
         memoryList.replaceChildren(noteEl('Yükleniyor…'));
         try {
@@ -1837,25 +2119,7 @@ import { CHAT_EFFORTS, CHAT_MODELS } from '@lib/constants';
           const { files } = (await res.json()) as { files: { path: string; content: string }[] };
           memoryList.replaceChildren();
           if (!files.length) memoryList.append(noteEl('Henüz bir not yok. Claude önemli bir şey öğrendiğinde buraya yazar.'));
-          for (const f of files) {
-            const item = document.createElement('div');
-            item.className = 'memory-item';
-            const head = document.createElement('div');
-            head.className = 'memory-head';
-            const name = document.createElement('span');
-            name.textContent = f.path.replace(/^\/memories\//, '');
-            const del = actionBtn('Sil', async () => {
-              if (!confirm(`"${name.textContent}" notu silinsin mi?`)) return;
-              await api(`/memory?path=${encodeURIComponent(f.path)}`, { method: 'DELETE' }).catch(() => {});
-              void renderMemory();
-            });
-            head.append(name, del);
-            const body = document.createElement('pre');
-            body.className = 'memory-body';
-            body.textContent = f.content;
-            item.append(head, body);
-            memoryList.append(item);
-          }
+          for (const f of files) memoryList.append(memoryItem(f, renderMemory));
         } catch (err) {
           memoryList.replaceChildren(noteEl((err as Error).message || 'Yüklenemedi.', 'error'));
         }
@@ -2753,6 +3017,7 @@ import { CHAT_EFFORTS, CHAT_MODELS } from '@lib/constants';
     flex-direction: column;
   }
   .topbar {
+    position: relative;
     display: flex;
     align-items: center;
     gap: 0.5rem;
@@ -2770,7 +3035,11 @@ import { CHAT_EFFORTS, CHAT_MODELS } from '@lib/constants';
     color: rgb(var(--text-100));
   }
   .project-label {
-    flex-shrink: 0;
+    flex-shrink: 1;
+    max-width: 10rem;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
     font-size: 0.78rem;
     padding: 0.15rem 0.55rem;
     border-radius: 999px;
@@ -2979,6 +3248,120 @@ import { CHAT_EFFORTS, CHAT_MODELS } from '@lib/constants';
     text-align: left;
     color: rgb(var(--text-100));
   }
+  .section-toggle {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.3rem;
+    font: inherit;
+    color: inherit;
+  }
+  .chevron {
+    display: inline-block;
+    width: 0.7rem;
+    text-align: center;
+    color: rgb(var(--text-300));
+    transform: rotate(90deg);
+    transition: transform 0.12s ease;
+  }
+  [aria-expanded='false'] > .chevron {
+    transform: none;
+  }
+  .sources-rail {
+    width: 15rem;
+    flex-shrink: 0;
+    display: flex;
+    flex-direction: column;
+    min-height: 0;
+    border-right: 1px solid rgb(var(--border) / 0.6);
+  }
+  .sources-rail[hidden] {
+    display: none;
+  }
+  .sources-head {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    height: 3.25rem;
+    padding: 0 0.75rem;
+    flex-shrink: 0;
+  }
+  .sources-title {
+    flex: 1;
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    font-size: 0.875rem;
+    color: rgb(var(--text-100));
+  }
+  .sources-list {
+    flex: 1;
+    overflow-y: auto;
+    padding: 0 0.75rem 1rem;
+  }
+  .sources-label {
+    margin: 0.75rem 0 0.35rem;
+    font-size: 0.72rem;
+    color: rgb(var(--text-300));
+  }
+  .source-row {
+    padding: 0.3rem 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    font-size: 0.82rem;
+    color: rgb(var(--text-200));
+  }
+  .source-row.is-expired {
+    text-decoration: line-through;
+    color: rgb(var(--text-300));
+  }
+  .project-file-btn {
+    flex-shrink: 0;
+  }
+  .context-btn {
+    flex-shrink: 0;
+    white-space: nowrap;
+  }
+  .context-panel {
+    position: absolute;
+    top: 3rem;
+    right: 0.75rem;
+    z-index: 25;
+    width: min(21rem, calc(100vw - 1.5rem));
+    max-height: min(70vh, 34rem);
+    overflow-y: auto;
+    padding: 0.25rem 0.9rem 0.9rem;
+    border-radius: 0.8rem;
+    background: rgb(var(--bg-elev-2));
+    border: 1px solid rgb(var(--border));
+    box-shadow: 0 8px 24px rgb(0 0 0 / 0.25);
+  }
+  .context-bar {
+    height: 0.35rem;
+    margin-bottom: 0.5rem;
+    overflow: hidden;
+    border-radius: 999px;
+    background: rgb(var(--border));
+  }
+  .context-bar span {
+    display: block;
+    height: 100%;
+    background: rgb(var(--accent-1));
+  }
+  .context-line {
+    display: flex;
+    justify-content: space-between;
+    gap: 1rem;
+    padding: 0.15rem 0;
+    font-size: 0.82rem;
+    color: rgb(var(--text-200));
+  }
+  .context-memory {
+    display: flex;
+    flex-direction: column;
+    gap: 0.6rem;
+  }
   .project-toggle[aria-expanded='false'] {
     color: rgb(var(--text-200));
   }
@@ -3094,6 +3477,10 @@ import { CHAT_EFFORTS, CHAT_MODELS } from '@lib/constants';
     .drawer-backdrop {
       display: none !important;
     }
+    .topbar .sources-btn,
+    .sources-head .sources-close {
+      display: none;
+    }
     .chat-body.sidebar-collapsed .sidebar {
       margin-left: -17.5rem;
     }
@@ -3118,6 +3505,22 @@ import { CHAT_EFFORTS, CHAT_MODELS } from '@lib/constants';
     .sidebar.is-open {
       transform: translateX(0);
       box-shadow: 0 0 40px rgb(0 0 0 / 0.35);
+    }
+    .sources-rail {
+      position: fixed;
+      inset: 0 auto 0 0;
+      z-index: 40;
+      width: min(85vw, 19rem);
+      background: rgb(var(--bg-base));
+      transform: translateX(-100%);
+    }
+    .sources-rail.is-open {
+      transform: translateX(0);
+      box-shadow: 0 0 40px rgb(0 0 0 / 0.35);
+    }
+    .project-file-btn span,
+    .project-label {
+      display: none;
     }
     .drawer-backdrop {
       position: fixed;

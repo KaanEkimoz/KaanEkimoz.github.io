@@ -498,6 +498,7 @@ async function fileBlock(file, env) {
 async function runTurn(req, user, env, ctx, cors) {
   const settings = await loadSettings(user, env);
   const memoryOn = settings.memory && !!env.DB;
+  const memoryScope = req.project?.id ?? null;
   const tools = [];
   const limits = req.deep ? DEEP_LIMITS : NORMAL_LIMITS;
   if (req.web) tools.push({ ...WEB_SEARCH_TOOL, max_uses: limits.searches });
@@ -508,7 +509,7 @@ async function runTurn(req, user, env, ctx, cors) {
   const body = {
     model: req.model,
     max_tokens: EFFORTS[req.effort],
-    system: systemPrompt(settings, req, memoryOn ? await memoryFiles(user, env) : null),
+    system: systemPrompt(settings, req, memoryOn ? await memoryFiles(user, env, memoryScope) : null),
     messages: req.messages,
     // Thinking stays adaptive; "summarized" lets the page show what the
     // model was thinking about (the raw chain of thought is never sent).
@@ -588,7 +589,7 @@ async function runTurn(req, user, env, ctx, cors) {
               if (block.type !== 'tool_use') continue;
               const result =
                 block.name === 'memory' && memoryOn
-                  ? await runMemory(user, block.input ?? {}, env)
+                  ? await runMemory(user, block.input ?? {}, env, memoryScope)
                   : { text: `Error: unknown tool ${block.name}`, error: true };
               results.push({ type: 'tool_result', tool_use_id: block.id, content: result.text, ...(result.error ? { is_error: true } : {}) });
             }
@@ -819,6 +820,7 @@ function systemPrompt({ name, instructions }, req, memory) {
   if (req.project) {
     parts.push(
       `This chat belongs to the project "${req.project.name}". Its files are attached at the start of the conversation.` +
+        (memory ? ` Notes that only matter for this project go under ${projectMemoryDir(req.project.id)}/; notes about the person in general stay elsewhere in /memories.` : '') +
         (req.project.instructions ? `\nProject instructions:\n<project_instructions>\n${req.project.instructions}\n</project_instructions>` : ''),
     );
   }
@@ -1105,6 +1107,7 @@ async function deleteProject(user, id, env, cors) {
       if (fileId) await anthropicDeleteFile(fileId, env);
     }
     await env.DB.prepare('DELETE FROM projects WHERE user = ? AND id = ?').bind(user, id).run();
+    await memoryDelete(user, projectMemoryDir(id), env);
     await env.DB.prepare('UPDATE conversations SET project_id = NULL WHERE user = ? AND project_id = ?').bind(user, id).run();
   }
   return new Response(null, { status: 204, headers: cors });
@@ -1123,11 +1126,19 @@ function normalizeMemoryPath(path) {
   return `/${segs.join('/')}`;
 }
 
-async function memoryFiles(user, env) {
+const PROJECT_MEMORY_DIR = '/memories/projects';
+const projectMemoryDir = (id) => `${PROJECT_MEMORY_DIR}/${id}`;
+
+// `scope` limits what a chat sees: a project id for that project's notes
+// plus the general ones, null for general only, undefined for everything.
+async function memoryFiles(user, env, scope) {
   const { results } = await env.DB.prepare('SELECT path, content, updated_at FROM memories WHERE user = ? ORDER BY path')
     .bind(user)
     .all();
-  return results.map((r) => ({ path: r.path, content: r.content, updatedAt: r.updated_at }));
+  const files = results.map((r) => ({ path: r.path, content: r.content, updatedAt: r.updated_at }));
+  if (scope === undefined) return files;
+  const own = scope ? `${projectMemoryDir(scope)}/` : null;
+  return files.filter((f) => !f.path.startsWith(`${PROJECT_MEMORY_DIR}/`) || (own && f.path.startsWith(own)));
 }
 
 async function memoryPut(user, path, content, env) {
@@ -1147,13 +1158,13 @@ async function memoryDelete(user, path, env) {
 
 const humanSize = (n) => (n < 1024 ? `${n}` : n < 1024 * 1024 ? `${(n / 1024).toFixed(1)}K` : `${(n / 1048576).toFixed(1)}M`);
 
-async function runMemory(user, input, env) {
+async function runMemory(user, input, env, scope) {
   const ok = (text) => ({ text, error: false });
   const fail = (text) => ({ text, error: true });
   const cmd = input.command;
   const path = normalizeMemoryPath(input.path ?? input.old_path);
   if (!path) return fail(`Error: The path ${input.path ?? input.old_path} is not allowed. Use paths under /memories.`);
-  const files = await memoryFiles(user, env);
+  const files = await memoryFiles(user, env, scope);
   const isDir = path === '/memories' || files.some((f) => f.path.startsWith(`${path}/`));
   const current = files.find((f) => f.path === path)?.content ?? null;
 
