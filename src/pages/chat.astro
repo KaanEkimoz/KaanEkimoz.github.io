@@ -203,8 +203,8 @@ import { CHAT_EFFORTS, CHAT_MODELS } from '@lib/constants';
       <aside id="sources-rail" class="sources-rail" aria-label="Proje detayları" hidden>
         <div class="sources-head">
           <span id="sources-title" class="sources-title"></span>
-          <button id="sources-close" type="button" class="icon-btn sources-close" aria-label="Proje detaylarını kapat" title="Kapat">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18" /></svg>
+          <button id="sources-close" type="button" class="icon-btn sources-close" aria-label="Proje panelini kapat" title="Proje panelini kapat">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><rect x="3" y="4" width="18" height="16" rx="2" /><path d="M15 4v16" /></svg>
           </button>
         </div>
         <div id="sources-list" class="sources-list"></div>
@@ -1007,7 +1007,9 @@ import { CHAT_EFFORTS, CHAT_MODELS } from '@lib/constants';
       function renderSources() {
         const p = openProject();
         sourcesRail.hidden = !p;
-        sourcesBtn.hidden = !p;
+        // Like the sidebar: the button sits inside the panel, and in the top
+        // bar only while the panel is shut.
+        sourcesBtn.hidden = !p || (wideChat.matches && !panelClosed);
         sourcesRail.classList.toggle('is-closed', panelClosed);
         sourcesBtn.setAttribute('aria-expanded', String(wideChat.matches ? !panelClosed : sourcesRail.classList.contains('is-open')));
         if (!p) {
@@ -1094,6 +1096,7 @@ import { CHAT_EFFORTS, CHAT_MODELS } from '@lib/constants';
         renderSources();
       }
       sourcesBtn.addEventListener('click', toggleProjectPanel);
+      wideChat.addEventListener('change', () => renderSources());
       $<HTMLButtonElement>('sources-close').addEventListener('click', toggleProjectPanel);
 
       function contextLine(label: string, value: string) {
@@ -1678,6 +1681,23 @@ addEventListener('load',function(){restore();if(saved.scroll)window.scrollTo(0,s
         return openers;
       }
 
+      // A full HTML page in a reply shows as one button named after the page.
+      function pagesToButtons(root: HTMLElement) {
+        for (const pre of root.querySelectorAll('pre')) {
+          const html = pre.querySelector('code')?.textContent ?? '';
+          if (!/^\s*<(!doctype html|html[\s>])/i.test(html)) continue;
+          const name = /<title[^>]*>([^<]*)<\/title>/i.exec(html)?.[1].trim() || 'HTML sayfası';
+          const done = /<\/html>\s*$/i.test(html);
+          const btn = document.createElement('button');
+          btn.type = 'button';
+          btn.className = 'att-chip out-chip page-btn';
+          btn.textContent = done ? `▶ ${name}` : `${name} hazırlanıyor…`;
+          btn.disabled = !done;
+          btn.addEventListener('click', () => void openHtml(name, html));
+          pre.replaceWith(btn);
+        }
+      }
+
       function linkFileNames(root: HTMLElement) {
         const names = [...knownFiles().keys()].sort((a, b) => b.length - a.length);
         if (!names.length) return;
@@ -1813,6 +1833,7 @@ addEventListener('load',function(){restore();if(saved.scroll)window.scrollTo(0,s
           },
           setBody(text: string) {
             body.innerHTML = renderMarkdown(text);
+            pagesToButtons(body);
             linkFileNames(body);
           },
           setTyping() {
@@ -4204,6 +4225,13 @@ addEventListener('load',function(){restore();if(saved.scroll)window.scrollTo(0,s
     white-space: pre-wrap;
     font-size: 0.85rem;
     color: rgb(var(--text-100));
+  }
+  .page-btn {
+    display: inline-flex;
+    margin: 0.25rem 0;
+  }
+  .topbar .sources-btn[hidden] {
+    display: none;
   }
   .file-link {
     font: inherit;
