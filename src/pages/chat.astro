@@ -333,6 +333,18 @@ import { CHAT_EFFORTS, CHAT_MODELS } from '@lib/constants';
       </div>
     </dialog>
 
+    <!-- In-app questions -->
+    <dialog id="ask-dialog" class="settings-dialog ask-dialog">
+      <form id="ask-form" class="space-y-4">
+        <p id="ask-text" class="text-sm text-text-100"></p>
+        <input id="ask-input" maxlength="120" aria-labelledby="ask-text" class="w-full bg-bg-base border border-border" />
+        <div class="flex justify-end gap-2">
+          <button id="ask-cancel" type="button" class="pill-btn">Vazgeç</button>
+          <button id="ask-ok" type="submit" class="pill-btn ask-ok"></button>
+        </div>
+      </form>
+    </dialog>
+
     <!-- Project editor -->
     <dialog id="project-dialog" class="settings-dialog">
       <form id="project-form" method="dialog" class="space-y-4">
@@ -516,6 +528,10 @@ import { CHAT_EFFORTS, CHAT_MODELS } from '@lib/constants';
       const settingsSave = $<HTMLButtonElement>('settings-save');
       const memoryDialog = $<HTMLDialogElement>('memory-dialog');
       const memoryList = $<HTMLDivElement>('memory-list');
+      const askDialog = $<HTMLDialogElement>('ask-dialog');
+      const askInput = $<HTMLInputElement>('ask-input');
+      const askOk = $<HTMLButtonElement>('ask-ok');
+      const askCancel = $<HTMLButtonElement>('ask-cancel');
       const projectDialog = $<HTMLDialogElement>('project-dialog');
       const projectForm = $<HTMLFormElement>('project-form');
       const projectName = $<HTMLInputElement>('project-name');
@@ -901,6 +917,36 @@ import { CHAT_EFFORTS, CHAT_MODELS } from '@lib/constants';
         opt('__new', '+ Yeni proje');
       }
 
+      // Questions open inside the app, never as browser pop-ups.
+      let askDone: ((answer: string | null) => void) | null = null;
+      function ask(opts: { text: string; action: string; danger?: boolean; value?: string; alone?: boolean }) {
+        askDone?.(null);
+        $<HTMLParagraphElement>('ask-text').textContent = opts.text;
+        askOk.textContent = opts.action;
+        askOk.classList.toggle('is-danger', !!opts.danger);
+        askCancel.hidden = !!opts.alone;
+        askInput.hidden = opts.value === undefined;
+        askInput.value = opts.value ?? '';
+        askDialog.showModal();
+        if (opts.value !== undefined) askInput.select();
+        else askOk.focus();
+        return new Promise<string | null>((resolve) => (askDone = resolve));
+      }
+      const askSure = async (text: string, action = 'Sil') => (await ask({ text, action, danger: true })) !== null;
+      const tell = (text: string) => ask({ text, action: 'Tamam', alone: true });
+      function finishAsk(answer: string | null) {
+        const done = askDone;
+        askDone = null;
+        askDialog.close();
+        done?.(answer);
+      }
+      $<HTMLFormElement>('ask-form').addEventListener('submit', (e) => {
+        e.preventDefault();
+        finishAsk(askInput.value);
+      });
+      askCancel.addEventListener('click', () => finishAsk(null));
+      askDialog.addEventListener('close', () => finishAsk(null));
+
       function renderProjectLabel() {
         const p = projectOf(active()?.projectId ?? currentProject);
         projectLabel.hidden = !p;
@@ -1076,7 +1122,7 @@ import { CHAT_EFFORTS, CHAT_MODELS } from '@lib/constants';
             if (!info) throw new Error('Desteklenmeyen tür');
             added.push(await uploadFile(file, info, true));
           } catch (err) {
-            alert(`${file.name}: ${(err as Error).message}`);
+            void tell(`${file.name}: ${(err as Error).message}`);
           }
           quickUploads -= 1;
         }
@@ -1089,7 +1135,7 @@ import { CHAT_EFFORTS, CHAT_MODELS } from '@lib/constants';
           if (res?.ok) await loadProjects();
           else {
             deleteFiles(added.map((a) => a.ref));
-            alert(res ? await errorMessage(res) : 'Dosyalar projeye eklenemedi.');
+            void tell(res ? await errorMessage(res) : 'Dosyalar projeye eklenemedi.');
           }
         }
         renderSources();
@@ -1248,7 +1294,7 @@ import { CHAT_EFFORTS, CHAT_MODELS } from '@lib/constants';
       });
       $<HTMLButtonElement>('project-cancel').addEventListener('click', () => projectDialog.close());
       async function deleteProject(id: string) {
-        if (!confirm('Proje, dosyaları ve hafızası silinsin mi? Sohbetler kalır.')) return false;
+        if (!(await askSure('Proje, dosyaları ve hafızası silinsin mi? Sohbetler kalır.'))) return false;
         await api(`/projects/${id}`, { method: 'DELETE' }).catch(() => {});
         if (currentProject === id) currentProject = null;
         convos.forEach((c) => c.projectId === id && (c.projectId = null));
@@ -1548,14 +1594,14 @@ addEventListener('load',function(){restore();if(saved.scroll)window.scrollTo(0,s
           }
           if (item.saved) {
             add('Kaydı sıfırla', async () => {
-              if (!confirm(`"${item.title}" kaydı silinsin mi? Sayfa baştan başlar.`)) return;
+              if (!(await askSure(`"${item.title}" kaydı silinsin mi? Sayfa baştan başlar.`, 'Sıfırla'))) return;
               await api(`/apps/${item.id}/state`, { method: 'PUT', body: '' }).catch(() => {});
               appCache.delete(item.id);
               void loadApps();
             });
           }
           add('Sil', async () => {
-            if (!confirm(`"${item.title}" silinsin mi?`)) return;
+            if (!(await askSure(`"${item.title}" silinsin mi?`))) return;
             await api(`/apps/${item.id}`, { method: 'DELETE' }).catch(() => {});
             void loadApps();
           }, true);
@@ -2376,9 +2422,9 @@ addEventListener('load',function(){restore();if(saved.scroll)window.scrollTo(0,s
           item('Yeniden adlandır', () => void renameConvo(c));
           if (c.id !== activeId) item('Yanda aç', () => void openSplit(c));
           item('.md olarak indir', () => void fullConvo(c).then(exportConvo));
-          item('Sil', () => {
+          item('Sil', async () => {
             if (streaming && c.id === activeId) return;
-            if (!confirm('Bu sohbet silinsin mi? Tüm cihazlarından silinir.')) return;
+            if (!(await askSure('Bu sohbet silinsin mi? Tüm cihazlarından silinir.'))) return;
             removeConvo(c);
             renderConversation();
             renderConvoList();
@@ -2398,7 +2444,7 @@ addEventListener('load',function(){restore();if(saved.scroll)window.scrollTo(0,s
       });
 
       async function renameConvo(c: Convo) {
-        const name = prompt('Sohbetin yeni adı', c.title)?.trim();
+        const name = (await ask({ text: 'Sohbetin yeni adı', action: 'Kaydet', value: c.title }))?.trim();
         if (!name || name === c.title) return;
         await fullConvo(c);
         c.title = name.slice(0, 120);
@@ -2512,9 +2558,9 @@ addEventListener('load',function(){restore();if(saved.scroll)window.scrollTo(0,s
         }),
       );
 
-      $<HTMLButtonElement>('clear-btn').addEventListener('click', () => {
+      $<HTMLButtonElement>('clear-btn').addEventListener('click', async () => {
         if (streaming) return;
-        if (!confirm('Tüm sohbet geçmişin silinsin mi? Tüm cihazlarından silinir.')) return;
+        if (!(await askSure('Tüm sohbet geçmişin silinsin mi? Tüm cihazlarından silinir.'))) return;
         for (const c of [...convos]) removeConvo(c);
         renderConversation();
         renderConvoList();
@@ -2636,7 +2682,7 @@ addEventListener('load',function(){restore();if(saved.scroll)window.scrollTo(0,s
       $<HTMLButtonElement>('settings-cancel').addEventListener('click', () => settingsDialog.close());
       $<HTMLButtonElement>('settings-x').addEventListener('click', () => settingsDialog.close());
       // A click on the backdrop lands on the dialog itself, outside its box.
-      for (const dialog of [settingsDialog, memoryDialog, projectDialog]) {
+      for (const dialog of [askDialog, settingsDialog, memoryDialog, projectDialog]) {
         dialog.addEventListener('click', (e) => {
           const box = dialog.getBoundingClientRect();
           const inside = e.clientX >= box.left && e.clientX <= box.right && e.clientY >= box.top && e.clientY <= box.bottom;
@@ -2658,7 +2704,8 @@ addEventListener('load',function(){restore();if(saved.scroll)window.scrollTo(0,s
       }
       memoryDialog.append(closeButton('icon-btn dialog-x', () => memoryDialog.close()));
       projectDialog.append(closeButton('icon-btn dialog-x', () => projectDialog.close()));
-      for (const dialog of [settingsDialog, memoryDialog, projectDialog]) {
+      askDialog.append(closeButton('icon-btn dialog-x', () => askDialog.close()));
+      for (const dialog of [askDialog, settingsDialog, memoryDialog, projectDialog]) {
         dialog.append(closeButton('overlay-x', () => dialog.close()));
       }
       drawer.append(closeButton('overlay-x overlay-x--drawer', closeDrawer));
@@ -2723,6 +2770,7 @@ addEventListener('load',function(){restore();if(saved.scroll)window.scrollTo(0,s
       // Each open overlay holds one history entry, so the phone's back
       // button closes the overlay instead of leaving the chat.
       const overlayClosers: [() => boolean, () => void][] = [
+        [() => askDialog.open, () => askDialog.close()],
         [() => settingsDialog.open, () => settingsDialog.close()],
         [() => memoryDialog.open, () => memoryDialog.close()],
         [() => projectDialog.open, () => projectDialog.close()],
@@ -2754,7 +2802,7 @@ addEventListener('load',function(){restore();if(saved.scroll)window.scrollTo(0,s
         overlayClosers.find(([isOpen]) => isOpen())?.[1]();
       });
       const overlayWatch = new MutationObserver(syncBackEntry);
-      for (const el of [settingsDialog, memoryDialog, projectDialog, htmlPanel, sourcesRail, drawer, appsPage]) {
+      for (const el of [askDialog, settingsDialog, memoryDialog, projectDialog, htmlPanel, sourcesRail, drawer, appsPage]) {
         overlayWatch.observe(el, { attributes: true, attributeFilter: ['open', 'hidden', 'class'] });
       }
       overlayWatch.observe(document.body, { childList: true });
@@ -2792,7 +2840,7 @@ addEventListener('load',function(){restore();if(saved.scroll)window.scrollTo(0,s
         const owner = projects.find((p) => p.id === projectId);
         name.textContent = owner ? `${projectIcon(owner)} ${rest}` : f.path.replace(/^\/memories\//, '');
         const del = actionBtn('Sil', async () => {
-          if (!confirm(`"${name.textContent}" notu silinsin mi?`)) return;
+          if (!(await askSure(`"${name.textContent}" notu silinsin mi?`))) return;
           await api(`/memory?path=${encodeURIComponent(f.path)}`, { method: 'DELETE' }).catch(() => {});
           void refresh();
         });
@@ -5252,6 +5300,31 @@ addEventListener('load',function(){restore();if(saved.scroll)window.scrollTo(0,s
     border: 1px solid rgb(var(--border));
     color: rgb(var(--text-200));
     transition: background 0.15s;
+  }
+  .ask-dialog {
+    width: min(26rem, calc(100vw - 2rem));
+  }
+  .ask-dialog p {
+    padding-right: 2rem;
+  }
+  .ask-dialog input[hidden] {
+    display: none;
+  }
+  .ask-ok {
+    color: rgb(255 255 255);
+    background: rgb(var(--accent-1));
+    border-color: transparent;
+  }
+  .ask-ok.is-danger {
+    background: rgb(var(--accent-2));
+  }
+  .ask-ok:hover {
+    color: rgb(255 255 255);
+    filter: brightness(1.1);
+    background: rgb(var(--accent-1));
+  }
+  .ask-ok.is-danger:hover {
+    background: rgb(var(--accent-2));
   }
   .pill-btn:hover {
     background: rgb(var(--hover) / 0.06);
