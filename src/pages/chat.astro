@@ -5310,20 +5310,26 @@ addEventListener('load',function(){restore();if(saved.scroll)window.scrollTo(0,s
   .ask-dialog input[hidden] {
     display: none;
   }
-  .ask-ok {
+  .ask-dialog input:not([hidden]) {
+    display: block;
+    padding: 0.55rem 0.75rem;
+    border-radius: 0.6rem;
+    color: rgb(var(--text-100));
+  }
+  .pill-btn.ask-ok {
     color: rgb(255 255 255);
     background: rgb(var(--accent-1));
     border-color: transparent;
   }
-  .ask-ok.is-danger {
+  .pill-btn.ask-ok.is-danger {
     background: rgb(var(--accent-2));
   }
-  .ask-ok:hover {
+  .pill-btn.ask-ok:hover {
     color: rgb(255 255 255);
     filter: brightness(1.1);
     background: rgb(var(--accent-1));
   }
-  .ask-ok.is-danger:hover {
+  .pill-btn.ask-ok.is-danger:hover {
     background: rgb(var(--accent-2));
   }
   .pill-btn:hover {
