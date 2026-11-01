@@ -89,9 +89,9 @@ const WEB_SEARCH_PRICE = 0.01; // $10 per 1,000 searches
 // max_tokens, so deeper effort gets more room. A ceiling, not a charge —
 // you only pay for what's used.
 const EFFORTS = {
-  low: 4096,
-  medium: 8192,
-  high: 16000,
+  low: 8192,
+  medium: 16000,
+  high: 32000,
 };
 const DEFAULT_EFFORT = 'low';
 
@@ -124,7 +124,7 @@ const MEMORY_TOOL = { type: 'memory_20250818', name: 'memory' };
 
 // One turn may take several requests: memory calls and paused server-tool
 // loops each need another round.
-const MAX_ROUNDS = 10;
+const MAX_ROUNDS = 25;
 
 // Small side jobs.
 const TITLE_MODEL = 'claude-haiku-5-5';
@@ -146,7 +146,7 @@ const UPLOAD_TYPES = {
   'application/vnd.openxmlformats-officedocument.presentationml.presentation': 'container',
 };
 const BLOCK_TYPES = { image: 'image', document: 'document', container: 'container_upload' };
-const MAX_UPLOAD_BYTES = 15 * 1024 * 1024;
+const MAX_UPLOAD_BYTES = 30 * 1024 * 1024;
 const FILE_TTL_SECONDS = 90 * 24 * 60 * 60; // the Files API maximum; project files don't expire
 const ANTHROPIC_FILES_URL = 'https://api.anthropic.com/v1/files';
 
@@ -167,17 +167,18 @@ const ANTHROPIC_VERSION = '2023-06-01';
 
 // ─── Abuse / cost limits ───────────────────────────────────────────────────
 
-const MAX_BODY_BYTES = 1024 * 1024; // raw chat request body
-const MAX_MESSAGES = 200; // turns in one request (older ones get summarized)
-const MAX_MESSAGE_CHARS = 30_000; // one message
-const MAX_TOTAL_CHARS = 400_000; // whole conversation as sent
-const MAX_ATTACHMENTS_PER_MESSAGE = 5;
-const MAX_ATTACHMENTS_TOTAL = 30; // attachments are re-sent every turn
+const MAX_BODY_BYTES = 3 * 1024 * 1024; // raw chat request body
+const MAX_MESSAGES = 500; // turns in one request (older ones get summarized)
+const MAX_MESSAGE_CHARS = 200_000; // one message
+const MAX_TOTAL_CHARS = 1_500_000; // whole conversation as sent
+// The first message also carries the files of messages folded into a summary.
+const MAX_ATTACHMENTS_PER_MESSAGE = 60;
+const MAX_ATTACHMENTS_TOTAL = 60; // attachments are re-sent every turn
 const MAX_CONVO_BYTES = 1_500_000; // one saved conversation (D1 rows top out at 2 MB)
 const MAX_INSTRUCTIONS_CHARS = 2_000;
 const MAX_NAME_CHARS = 40;
 const MAX_PROJECT_INSTRUCTIONS_CHARS = 4_000;
-const MAX_PROJECT_FILES = 10;
+const MAX_PROJECT_FILES = 30;
 const MAX_MEMORY_FILES = 50;
 const MAX_MEMORY_FILE_CHARS = 20_000;
 const MEMORY_PROMPT_CHARS = 8_000; // memory shown up front in the system prompt
@@ -497,6 +498,7 @@ async function fileBlock(file, env) {
 async function runTurn(req, user, env, ctx, cors) {
   const settings = await loadSettings(user, env);
   const memoryOn = settings.memory && !!env.DB;
+  const memoryScope = req.project?.id ?? null;
   const tools = [];
   const limits = req.deep ? DEEP_LIMITS : NORMAL_LIMITS;
   if (req.web) tools.push({ ...WEB_SEARCH_TOOL, max_uses: limits.searches });
@@ -507,7 +509,7 @@ async function runTurn(req, user, env, ctx, cors) {
   const body = {
     model: req.model,
     max_tokens: EFFORTS[req.effort],
-    system: systemPrompt(settings, req, memoryOn ? await memoryFiles(user, env) : null),
+    system: systemPrompt(settings, req, memoryOn ? await memoryFiles(user, env, memoryScope) : null),
     messages: req.messages,
     // Thinking stays adaptive; "summarized" lets the page show what the
     // model was thinking about (the raw chain of thought is never sent).
@@ -587,7 +589,7 @@ async function runTurn(req, user, env, ctx, cors) {
               if (block.type !== 'tool_use') continue;
               const result =
                 block.name === 'memory' && memoryOn
-                  ? await runMemory(user, block.input ?? {}, env)
+                  ? await runMemory(user, block.input ?? {}, env, memoryScope)
                   : { text: `Error: unknown tool ${block.name}`, error: true };
               results.push({ type: 'tool_result', tool_use_id: block.id, content: result.text, ...(result.error ? { is_error: true } : {}) });
             }
@@ -795,7 +797,7 @@ function systemPrompt({ name, instructions }, req, memory) {
     parts.push(
       'You can run code in a sandbox (Python with pandas, matplotlib, openpyxl, python-docx, python-pptx, reportlab and more). The sandbox itself is offline, which does not limit web_search or web_fetch: never tell the person you have no internet because of it. ' +
         'When the person wants a file (spreadsheet, document, slides, PDF, chart image), create it and save it at the top level of $OUTPUT_DIR: only files saved there reach them as downloads. ' +
-        'Uploaded files are in the sandbox too.',
+        'Only Office files (xlsx, docx, pptx) are in the sandbox. PDFs, images and text files are attached to the conversation itself, earlier ones included: read them directly and never look for them in the sandbox or say you cannot reach them.',
     );
   }
   if (memory) {
@@ -818,6 +820,7 @@ function systemPrompt({ name, instructions }, req, memory) {
   if (req.project) {
     parts.push(
       `This chat belongs to the project "${req.project.name}". Its files are attached at the start of the conversation.` +
+        (memory ? ` Notes that only matter for this project go under ${projectMemoryDir(req.project.id)}/; notes about the person in general stay elsewhere in /memories.` : '') +
         (req.project.instructions ? `\nProject instructions:\n<project_instructions>\n${req.project.instructions}\n</project_instructions>` : ''),
     );
   }
@@ -1104,6 +1107,7 @@ async function deleteProject(user, id, env, cors) {
       if (fileId) await anthropicDeleteFile(fileId, env);
     }
     await env.DB.prepare('DELETE FROM projects WHERE user = ? AND id = ?').bind(user, id).run();
+    await memoryDelete(user, projectMemoryDir(id), env);
     await env.DB.prepare('UPDATE conversations SET project_id = NULL WHERE user = ? AND project_id = ?').bind(user, id).run();
   }
   return new Response(null, { status: 204, headers: cors });
@@ -1122,11 +1126,19 @@ function normalizeMemoryPath(path) {
   return `/${segs.join('/')}`;
 }
 
-async function memoryFiles(user, env) {
+const PROJECT_MEMORY_DIR = '/memories/projects';
+const projectMemoryDir = (id) => `${PROJECT_MEMORY_DIR}/${id}`;
+
+// `scope` limits what a chat sees: a project id for that project's notes
+// plus the general ones, null for general only, undefined for everything.
+async function memoryFiles(user, env, scope) {
   const { results } = await env.DB.prepare('SELECT path, content, updated_at FROM memories WHERE user = ? ORDER BY path')
     .bind(user)
     .all();
-  return results.map((r) => ({ path: r.path, content: r.content, updatedAt: r.updated_at }));
+  const files = results.map((r) => ({ path: r.path, content: r.content, updatedAt: r.updated_at }));
+  if (scope === undefined) return files;
+  const own = scope ? `${projectMemoryDir(scope)}/` : null;
+  return files.filter((f) => !f.path.startsWith(`${PROJECT_MEMORY_DIR}/`) || (own && f.path.startsWith(own)));
 }
 
 async function memoryPut(user, path, content, env) {
@@ -1146,13 +1158,13 @@ async function memoryDelete(user, path, env) {
 
 const humanSize = (n) => (n < 1024 ? `${n}` : n < 1024 * 1024 ? `${(n / 1024).toFixed(1)}K` : `${(n / 1048576).toFixed(1)}M`);
 
-async function runMemory(user, input, env) {
+async function runMemory(user, input, env, scope) {
   const ok = (text) => ({ text, error: false });
   const fail = (text) => ({ text, error: true });
   const cmd = input.command;
   const path = normalizeMemoryPath(input.path ?? input.old_path);
   if (!path) return fail(`Error: The path ${input.path ?? input.old_path} is not allowed. Use paths under /memories.`);
-  const files = await memoryFiles(user, env);
+  const files = await memoryFiles(user, env, scope);
   const isDir = path === '/memories' || files.some((f) => f.path.startsWith(`${path}/`));
   const current = files.find((f) => f.path === path)?.content ?? null;
 
@@ -1258,13 +1270,13 @@ async function uploadFile(request, url, env, cors) {
   }
   const declared = Number(request.headers.get('Content-Length') ?? 0);
   if (declared > MAX_UPLOAD_BYTES) {
-    return json({ error: 'Dosya çok büyük (en fazla 15 MB).' }, 413, cors);
+    return json({ error: 'Dosya çok büyük (en fazla 30 MB).' }, 413, cors);
   }
 
   const blob = await request.blob();
   if (blob.size === 0) return json({ error: 'Dosya boş.' }, 400, cors);
   if (blob.size > MAX_UPLOAD_BYTES) {
-    return json({ error: 'Dosya çok büyük (en fazla 15 MB).' }, 413, cors);
+    return json({ error: 'Dosya çok büyük (en fazla 30 MB).' }, 413, cors);
   }
 
   const form = new FormData();
