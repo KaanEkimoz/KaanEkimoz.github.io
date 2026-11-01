@@ -1134,6 +1134,7 @@ import { CHAT_EFFORTS, CHAT_MODELS } from '@lib/constants';
         memoryBox.className = 'context-memory';
         memoryBox.append(noteEl('Yükleniyor…'));
         contextPanel.replaceChildren(
+          closeButton('icon-btn dialog-x', closeContext),
           heading('Bağlam'),
           contextBar(ctx),
           contextLine('Kullanılan', `${tokens(ctx)} / 1M`),
@@ -2280,13 +2281,74 @@ import { CHAT_EFFORTS, CHAT_MODELS } from '@lib/constants';
       $<HTMLButtonElement>('settings-cancel').addEventListener('click', () => settingsDialog.close());
       $<HTMLButtonElement>('settings-x').addEventListener('click', () => settingsDialog.close());
       // A click on the backdrop lands on the dialog itself, outside its box.
-      for (const dialog of [settingsDialog, memoryDialog]) {
+      for (const dialog of [settingsDialog, memoryDialog, projectDialog]) {
         dialog.addEventListener('click', (e) => {
           const box = dialog.getBoundingClientRect();
           const inside = e.clientX >= box.left && e.clientX <= box.right && e.clientY >= box.top && e.clientY <= box.bottom;
           if (e.target === dialog && !inside) dialog.close();
         });
       }
+
+      // ─── Closing overlays ────────────────────────────────────────────
+      const CLOSE_ICON = '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18" /></svg>';
+      function closeButton(className: string, close: () => void) {
+        const btn = document.createElement('button');
+        btn.type = 'button';
+        btn.className = className;
+        btn.setAttribute('aria-label', 'Kapat');
+        btn.title = 'Kapat';
+        btn.innerHTML = CLOSE_ICON;
+        btn.addEventListener('click', close);
+        return btn;
+      }
+      memoryDialog.append(closeButton('icon-btn dialog-x', () => memoryDialog.close()));
+      projectDialog.append(closeButton('icon-btn dialog-x', () => projectDialog.close()));
+      for (const dialog of [settingsDialog, memoryDialog, projectDialog]) {
+        dialog.append(closeButton('overlay-x', () => dialog.close()));
+      }
+      drawer.append(closeButton('overlay-x overlay-x--drawer', closeDrawer));
+      sourcesRail.append(closeButton('overlay-x', () => sourcesRail.classList.remove('is-open')));
+      htmlPanel.append(closeButton('overlay-x', closePanel));
+
+      // Each open overlay holds one history entry, so the phone's back
+      // button closes the overlay instead of leaving the chat.
+      const overlayClosers: [() => boolean, () => void][] = [
+        [() => settingsDialog.open, () => settingsDialog.close()],
+        [() => memoryDialog.open, () => memoryDialog.close()],
+        [() => projectDialog.open, () => projectDialog.close()],
+        [() => !!convoMenu, closeConvoMenu],
+        [() => !contextPanel.hidden, closeContext],
+        [() => htmlPanel.classList.contains('is-open'), closePanel],
+        [() => sourcesRail.classList.contains('is-open'), () => sourcesRail.classList.remove('is-open')],
+        [() => !wide.matches && drawer.classList.contains('is-open'), closeDrawer],
+      ];
+      let backEntry = false;
+      let skipPop = false;
+      function syncBackEntry() {
+        const open = overlayClosers.some(([isOpen]) => isOpen());
+        if (open && !backEntry) {
+          backEntry = true;
+          history.pushState({ chatOverlay: true }, '');
+        } else if (!open && backEntry) {
+          backEntry = false;
+          skipPop = true;
+          history.back();
+        }
+      }
+      addEventListener('popstate', () => {
+        if (skipPop) {
+          skipPop = false;
+          return;
+        }
+        backEntry = false;
+        overlayClosers.find(([isOpen]) => isOpen())?.[1]();
+      });
+      const overlayWatch = new MutationObserver(syncBackEntry);
+      for (const el of [settingsDialog, memoryDialog, projectDialog, contextPanel, htmlPanel, sourcesRail, drawer]) {
+        overlayWatch.observe(el, { attributes: true, attributeFilter: ['open', 'hidden', 'class'] });
+      }
+      overlayWatch.observe(document.body, { childList: true });
+
       settingsForm.addEventListener('submit', async (e) => {
         e.preventDefault();
         settingsSave.disabled = true;
@@ -4651,6 +4713,36 @@ import { CHAT_EFFORTS, CHAT_MODELS } from '@lib/constants';
     position: absolute;
     top: 0.75rem;
     right: 0.75rem;
+  }
+  .overlay-x {
+    display: none;
+  }
+  @media (max-width: 899px) {
+    .overlay-x {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      position: fixed;
+      right: 1rem;
+      bottom: calc(1rem + env(safe-area-inset-bottom));
+      z-index: 45;
+      width: 2.75rem;
+      height: 2.75rem;
+      border-radius: 999px;
+      color: rgb(var(--text-100));
+      background: rgb(var(--bg-elev-2));
+      border: 1px solid rgb(var(--border));
+      box-shadow: 0 6px 18px rgb(0 0 0 / 0.3);
+    }
+    .sources-rail .overlay-x,
+    .html-panel .overlay-x,
+    .sidebar .overlay-x {
+      position: absolute;
+    }
+    .sidebar .overlay-x--drawer {
+      bottom: 4.5rem;
+      right: 0.75rem;
+    }
   }
   .emoji-grid {
     display: flex;
