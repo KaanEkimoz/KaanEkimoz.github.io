@@ -21,7 +21,7 @@ saklanır ve cihazlar arasında eşitlenir.
 | Rate limit | `wrangler.toml` → `[[ratelimits]]` | IP başına 60 istek / 60 sn |
 | Seçilebilir modeller / güç seviyeleri | `src/index.js` → `MODELS`, `EFFORTS` | Sayfadaki liste `src/lib/constants.ts`'te; ikisini birlikte güncelle |
 | `max_tokens`, system prompt | `src/index.js` | İstemci değiştiremez |
-| Dosya ekleri | `src/index.js` → `UPLOAD_TYPES`, `MAX_UPLOAD_BYTES` | Görsel (JPEG/PNG/GIF/WebP), PDF, düz metin; en fazla 15 MB; 90 gün sonra otomatik silinir |
+| Dosya ekleri | `src/index.js` → `UPLOAD_TYPES`, `MAX_UPLOAD_BYTES` | Görsel (JPEG/PNG/GIF/WebP), PDF, düz metin; en fazla 30 MB; 90 gün sonra otomatik silinir |
 | Mesaj sayısı / boyut sınırları | `src/index.js` → `MAX_*` | 200 mesaj, mesaj başına 30k, toplam 400k karakter; mesaj başına 5, toplam 30 ek |
 
 ## İlk kurulum

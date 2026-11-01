@@ -314,7 +314,7 @@ import { CHAT_EFFORTS, CHAT_MODELS } from '@lib/constants';
           <textarea id="project-instructions" rows="4" maxlength="4000" class="w-full bg-bg-base border border-border focus:border-accent-1 outline-none px-3 py-2 text-text-100 leading-relaxed"></textarea>
         </label>
         <div class="space-y-2">
-          <span class="text-sm text-text-200">Dosyalar (her sohbetin başına eklenir, en fazla 10)</span>
+          <span class="text-sm text-text-200">Dosyalar (her sohbetin başına eklenir, en fazla 30)</span>
           <div id="project-files" class="flex flex-wrap gap-2"></div>
           <button id="project-add-file" type="button" class="pill-btn">Dosya ekle</button>
           <input id="project-file-input" type="file" multiple hidden accept="image/png,image/jpeg,image/gif,image/webp,application/pdf,text/plain,.txt,.md,.csv,.json,.xlsx,.xls,.docx,.pptx" />
@@ -418,8 +418,8 @@ import { CHAT_EFFORTS, CHAT_MODELS } from '@lib/constants';
       const EXPIRED_MSG = 'Güvenlik için parola 30 günde bir soruluyor. Tekrar gir.';
       const MIGRATE_MSG = 'Sohbet geçmişi artık hesabına kaydediliyor. Bu cihazdaki sohbetleri kendi hesabına taşımak için kendi parolanı gir.';
       const MAX_CONVOS = 200;
-      const MAX_ATTACHMENTS = 5; // per message; the Worker enforces the same
-      const MAX_FILE_BYTES = 15 * 1024 * 1024;
+      const MAX_ATTACHMENTS = 20; // per message
+      const MAX_FILE_BYTES = 30 * 1024 * 1024;
       const MAX_TEXT_BYTES = 512 * 1024; // ~130k tokens, re-sent every turn
       const IMAGE_MAX_SIDE = 2048; // the API downsizes larger images anyway
       const IMAGE_TYPES = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];
@@ -435,8 +435,8 @@ import { CHAT_EFFORTS, CHAT_MODELS } from '@lib/constants';
       // Long chats: once the model reads this much, older messages are
       // summarized (keeping the last few as they are) so replies stay fast,
       // cheap and sharp.
-      const COMPACT_AT_TOKENS = 120_000;
-      const COMPACT_AT_MESSAGES = 120;
+      const COMPACT_AT_TOKENS = 500_000;
+      const COMPACT_AT_MESSAGES = 400;
       const KEEP_AFTER_COMPACT = 6;
       const SYNC_EVERY_MS = 30_000; // re-check the server when the tab comes back
       const SAVE_RETRY_MS = 20_000; // after a save that didn't reach the server
@@ -964,7 +964,7 @@ import { CHAT_EFFORTS, CHAT_MODELS } from '@lib/constants';
         projectFileInput.value = '';
         for (const file of files) {
           if (!editing) return;
-          if (editing.files.length + editing.uploading >= 10) break;
+          if (editing.files.length + editing.uploading >= 30) break;
           const info = classify(file);
           if (!info) continue;
           editing.uploading += 1;
@@ -2036,14 +2036,17 @@ import { CHAT_EFFORTS, CHAT_MODELS } from '@lib/constants';
       }
 
       // What the Worker gets: messages after the summary, with the summary
-      // put in front of the first one.
+      // and the files of the summarized messages in front of the first one.
       function apiMessages(c: Convo) {
         const start = c.summary?.upto ?? 0;
         const out = c.messages!.slice(start).map(toApiMessage);
         if (c.summary && out.length) {
           const first = out[0];
           const blocks = typeof first.content === 'string' ? [{ type: 'text', text: first.content }] : first.content;
+          const files = c.messages!.slice(0, start).flatMap((m) => m.attachments ?? []);
+          const earlier = files.length ? toApiMessage({ role: 'user', content: '', attachments: files } as Message).content : [];
           first.content = [
+            ...(earlier as Record<string, string>[]),
             { type: 'text', text: `<önceki_konuşmanın_özeti>\n${c.summary.text}\n</önceki_konuşmanın_özeti>` },
             ...blocks,
           ];
@@ -2401,7 +2404,7 @@ import { CHAT_EFFORTS, CHAT_MODELS } from '@lib/constants';
           body = await drawScaled(file, IMAGE_MAX_SIDE, 0.85);
           type = 'image/jpeg';
         }
-        if (body.size > MAX_FILE_BYTES) throw new Error('En fazla 15 MB');
+        if (body.size > MAX_FILE_BYTES) throw new Error('En fazla 30 MB');
         if (!getToken()) throw new Error('Önce parolayı gir');
         const res = await api(`/files${keep ? '?keep=1' : ''}`, {
           method: 'POST',
@@ -2426,7 +2429,7 @@ import { CHAT_EFFORTS, CHAT_MODELS } from '@lib/constants';
           const p: Pending = { id: crypto.randomUUID(), name: file.name || 'dosya', status: 'uploading' };
           pending.push(p);
           if (!info) Object.assign(p, { status: 'error', error: 'Desteklenmeyen tür' });
-          else if (file.size > MAX_FILE_BYTES && info.kind !== 'image') Object.assign(p, { status: 'error', error: 'En fazla 15 MB' });
+          else if (file.size > MAX_FILE_BYTES && info.kind !== 'image') Object.assign(p, { status: 'error', error: 'En fazla 30 MB' });
           else void uploadPending(p, file, info);
         }
         renderTray();
