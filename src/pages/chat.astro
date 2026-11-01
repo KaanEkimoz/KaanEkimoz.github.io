@@ -435,7 +435,7 @@ import { CHAT_EFFORTS, CHAT_MODELS } from '@lib/constants';
       // Long chats: once the model reads this much, older messages are
       // summarized (keeping the last few as they are) so replies stay fast,
       // cheap and sharp.
-      const COMPACT_AT_TOKENS = 500_000;
+      const COMPACT_AT_TOKENS = 800_000; // every model has 1M context; room left for a big new file
       const COMPACT_AT_MESSAGES = 400;
       const KEEP_AFTER_COMPACT = 6;
       const SYNC_EVERY_MS = 30_000; // re-check the server when the tab comes back
