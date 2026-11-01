@@ -5,9 +5,8 @@
  * then code, projects and the people who use them. Signals run along the
  * wires; hovering an agent opens its arms and lights its road to the end
  * user. Wide screens get the left-to-right flow, phones the top-to-bottom layers.
- * On phones there is no hover, so the map tours the agents by itself until
- * someone taps one. It runs even with reduced motion on: Kaan wants this map
- * shown on every device.
+ * On phones the arms stay folded: a tap only lights the road. It runs even with
+ * reduced motion on: Kaan wants this map shown on every device.
  */
 import { copy, pick } from '@lib/home';
 import type { Lang } from '@lib/i18n';
@@ -132,7 +131,7 @@ const labels = {
   type Edge = { a: Node; b: Node; kind: 'agent' | 'hub' | 'member' | 'extra'; bend: number };
   type Labels = { hint: string; stages: string[]; names: Record<string, string> };
 
-  // Agent arms stay folded into their agent until it is hovered.
+  // Agent arms stay folded into their agent until it is hovered (wide screens only).
   const ARM_OF: Record<string, string> = { cc: 'claude', cagents: 'claude', teams: 'claude', sub: 'claude', codex: 'chatgpt', gptwork: 'chatgpt', ollama: 'local', qwen: 'local', llama: 'local', deepseek: 'local' };
   const STAGE_X = [0.058, 0.26, 0.5, 0.625, 0.705, 0.81, 0.94];
   const FONT = { display: 'Sora, ui-sans-serif, system-ui, sans-serif', body: 'Geist, ui-sans-serif, system-ui, sans-serif', mono: '"JetBrains Mono", ui-monospace, monospace' };
@@ -212,9 +211,9 @@ const labels = {
     const kaanW = () => (view === 'flow' ? Math.max(150, Math.min(176, W * 0.13)) : Math.min(230, W * 0.6));
 
     // Layers (phones): a top-to-bottom pipeline in two columns. Me, the agents,
-    // one band where the open agent's arms unfold, then MCP, skills, engines,
-    // languages, projects and the end user. Labels sit right of their dots.
-    let bandY = 0, contentH = 0;
+    // a line for the hint, then MCP, skills, engines, languages, projects and
+    // the end user. Labels sit right of their dots.
+    let hintY = 0, contentH = 0;
     function layoutLayers() {
       const P = 14, cw = (W - P * 2) / 2;
       let y = 14;
@@ -224,12 +223,8 @@ const labels = {
         m.tx = lone ? W / 2 : P + cw * ((i % 2) + 0.5); m.ty = y + 20 + Math.floor(i / 2) * 50;
       });
       y += Math.ceil(agents.length / 2) * 50 + 6;
-      bandY = y;
-      for (const a of agents) nodes.filter((n) => ARM_OF[n.id] === a.id).forEach((m, i) => {
-        const pill = m.g === 'cl' || m.g === 'gx';
-        m.tx = pill ? P + cw * ((i % 2) + 0.5) : P + 12 + cw * (i % 2); m.ty = y + 18 + Math.floor(i / 2) * 38;
-      });
-      y += 2 * 38 + 22;
+      hintY = y + 12;
+      y += 36;
       for (const g of ['mcp', 'skills', 'infra', 'langs', 'outputs']) {
         ctx!.font = `600 12px ${FONT.body}`;
         hubs[g].tx = P + (ctx!.measureText(hubs[g].label).width + 24) / 2; hubs[g].ty = y + 13; y += 40;
@@ -357,14 +352,6 @@ const labels = {
     };
 
     let last = performance.now(), clock = 0, raf = 0, visible = false;
-    // Phones have no hover: until someone taps, the map opens one agent after another.
-    let userAt = -99, tourAt = 0, tourIdx = -1, touring = false;
-    const tour = () => {
-      if (view !== 'layers' || clock - userAt < 8 || clock - tourAt < (touring ? 3.4 : 1.4)) return;
-      tourAt = clock;
-      if (touring) { selected = null; touring = false; return; }
-      tourIdx = (tourIdx + 1) % agents.length; selected = agents[tourIdx]; touring = true;
-    };
     // Labels on phones get a halo in the ground colour so wires never cut through
     // them. Text is the slowest thing to draw, so each label is drawn once into a
     // small sprite (per font, colour and theme) and then just copied.
@@ -390,11 +377,10 @@ const labels = {
       raf = 0;
       if (!visible) return;
       const dt = Math.min(0.05, (now - last) / 1000); last = now; clock += dt;
-      tour();
       const phone = view === 'layers';
       const ease = 1 - Math.pow(0.0015, dt);
       const f = selected || hover, fo = f && (ARM_OF[f.id] || (Object.values(ARM_OF).includes(f.id) ? f.id : null));
-      if (fo) { openAgent = fo; openLinger = 0.5; } else if ((openLinger -= dt) <= 0) openAgent = null;
+      if (fo && !phone) { openAgent = fo; openLinger = 0.5; } else if ((openLinger -= dt) <= 0) openAgent = null;
       let moving = false;
       for (const n of nodes) {
         const home = armOpen(n) ? n : byId[ARM_OF[n.id]];
@@ -405,18 +391,9 @@ const labels = {
       const c = ctx!;
       // Phones: skip the still map unless something on it changed; the overlay carries the motion.
       const key = `${(selected || hover)?.id}|${openAgent}`;
-      // A new focus repaints the whole map once. While arms slide, only the strip
-      // from the agents down to the arms band is repainted; one full repaint
-      // follows when they settle.
-      const full = !phone || staticDirty || key !== staticKey || (wasMoving && !moving);
-      const strip = phone && !full && moving;
-      const redraw = full || strip;
+      const redraw = !phone || staticDirty || key !== staticKey || (wasMoving && !moving);
       wasMoving = moving;
-      if (full) { staticKey = key; staticDirty = false; c.clearRect(0, 0, W, H); }
-      else if (strip) {
-        const y0 = byId.kaan.ty + 26, y1 = bandY + 100;
-        c.save(); c.beginPath(); c.rect(0, y0, W, y1 - y0); c.clip(); c.clearRect(0, y0, W, y1 - y0);
-      }
+      if (redraw) { staticKey = key; staticDirty = false; c.clearRect(0, 0, W, H); }
       if (view === 'flow') {
         c.textBaseline = 'middle'; c.textAlign = 'center'; c.font = `500 11px ${FONT.mono}`;
         STAGE_X.forEach((x, i) => {
@@ -426,18 +403,21 @@ const labels = {
         c.globalAlpha = 1;
       }
       const fs = focusSet();
-      // Off the lit road things fade; less on phones, where the tour keeps something lit most of the time.
-      const dimOf = (n: Node) => (fs ? (fs.has(n) || (ARM_OF[n.id] && ARM_OF[n.id] === openAgent) ? 1 : phone ? 0.4 : 0.18) : 1);
+      // Off the lit road things fade.
+      const dimOf = (n: Node) => (fs ? (fs.has(n) || (ARM_OF[n.id] && ARM_OF[n.id] === openAgent) ? 1 : 0.18) : 1);
+      // An open agent and its arms are drawn last, over everything else on the map.
+      const lifted = (n: Node) => !!openAgent && (n.id === openAgent || ARM_OF[n.id] === openAgent);
 
-      if (redraw) for (const e of edges) {
-        const al = Math.min(e.a.a, e.b.a) * Math.min(dimOf(e.a), dimOf(e.b)); if (al < 0.02) continue;
+      const drawEdge = (e: Edge) => {
+        const al = Math.min(e.a.a, e.b.a) * Math.min(dimOf(e.a), dimOf(e.b)); if (al < 0.02) return;
         const [qx, qy] = ctrl(e);
         c.strokeStyle = e.kind === 'member' ? css('--line-2') : colorOf(e.b);
         c.globalAlpha = al * (e.kind === 'agent' ? 0.6 : e.kind === 'member' ? (phone ? 0.3 : 0.5) : phone ? 0.26 : 0.32);
         c.lineWidth = e.kind === 'agent' ? 2.2 : e.kind === 'hub' ? 1.3 : 1; c.setLineDash(e.kind === 'extra' ? [3, 5] : []);
         c.beginPath(); c.moveTo(e.a.x, e.a.y); c.quadraticCurveTo(qx, qy, e.b.x, e.b.y); c.stroke();
-      }
-      c.setLineDash([]);
+        c.setLineDash([]);
+      };
+      if (redraw) for (const e of edges) if (!(lifted(e.a) && lifted(e.b))) drawEdge(e);
 
       spawn(dt);
       const pc = phone ? fxCtx! : c;
@@ -463,8 +443,8 @@ const labels = {
       }
 
       c.textBaseline = 'middle';
-      if (redraw) for (const n of nodes) {
-        const al = n.a * dimOf(n); if (al < 0.02) continue; c.globalAlpha = al;
+      const drawNode = (n: Node) => {
+        const al = n.a * dimOf(n); if (al < 0.02) return; c.globalAlpha = al;
         const col = colorOf(n), isF = n === hover || n === selected;
         if (n.id === 'kaan') {
           const w = kaanW(), h = 66, x = n.x - w / 2, y = n.y - h / 2;
@@ -476,7 +456,7 @@ const labels = {
           c.textAlign = 'left'; c.fillStyle = css('--fg'); c.font = `700 15px ${FONT.display}`;
           c.fillText('Kaan Usta', ix + ir + 9, n.y - 9);
           c.fillStyle = col; c.font = `500 9.5px ${FONT.mono}`; c.fillText('Developer', ix + ir + 9, n.y + 12);
-          continue;
+          return;
         }
         if (n.g === 'ai' || n.g === 'cl' || n.g === 'gx') {
           const [w, h] = pillSize(n), x = n.x - w / 2, y = n.y - h / 2;
@@ -488,7 +468,7 @@ const labels = {
           else { c.fillStyle = col; c.beginPath(); c.arc(x + 20, n.y, 5, 0, 7); c.fill(); }
           c.fillStyle = css('--fg'); c.textAlign = 'left'; c.font = `700 ${tiny ? 11.5 : small || narrow() ? 13 : 15}px ${FONT.display}`;
           c.fillText(n.label, x + (tiny ? 26 : small ? 30 : 34), n.y + 1);
-          continue;
+          return;
         }
         if (n.id === 'hub-users') {
           c.font = `700 14px ${FONT.display}`;
@@ -500,7 +480,7 @@ const labels = {
           c.beginPath(); c.arc(px, py - 5.5, 4.4, 0, 7); c.fill();
           c.beginPath(); c.arc(px, py + 9.5, 8, Math.PI, 0); c.closePath(); c.fill();
           c.fillStyle = css('--fg'); c.textAlign = 'left'; c.fillText(n.label, x + 38, n.y + 1);
-          continue;
+          return;
         }
         if (n.hub) {
           c.font = `600 12px ${FONT.body}`;
@@ -508,10 +488,17 @@ const labels = {
           roundRect(n.x - w / 2, n.y - h / 2, w, h, h / 2); c.fillStyle = css('--ground'); c.fill();
           c.strokeStyle = col; c.lineWidth = isF ? 2 : 1.2; c.stroke();
           c.fillStyle = col; c.textAlign = 'center'; c.fillText(n.label, n.x, n.y);
-          continue;
+          return;
         }
         const r = isF ? 6.5 : phone ? 4.4 : 4.4 + Math.sin(clock * 1.7 + n.x * 0.01) * 0.5;
         const mic = iconFor(n);
+        // An open arm sits over the map: a solid plate keeps text behind it from showing through.
+        if (lifted(n)) {
+          c.font = `600 ${narrow() ? 11 : 12}px ${FONT.body}`;
+          const w = c.measureText(n.label).width + (mic ? 42 : 34);
+          roundRect(n.x - 14, n.y - 13, w, 26, 8); c.fillStyle = css('--panel-2'); c.fill();
+          c.strokeStyle = colorOf(n); c.lineWidth = 1; c.stroke();
+        }
         if (mic) {
           const s = isF ? 18 : 15;
           c.fillStyle = css('--panel-2'); c.strokeStyle = col; c.lineWidth = 1; c.beginPath(); c.arc(n.x, n.y, s * 0.72, 0, 7); c.fill(); c.stroke();
@@ -523,12 +510,18 @@ const labels = {
         if (isF) { c.strokeStyle = col; c.globalAlpha = al * 0.6; c.beginPath(); c.arc(n.x, n.y, r + 5 + (phone ? 0 : Math.sin(clock * 4) * 1.5), 0, 7); c.stroke(); c.globalAlpha = al; }
         c.font = `${isF ? 600 : 500} ${narrow() ? 11 : 12}px ${FONT.body}`; c.fillStyle = isF ? css('--fg') : css('--muted');
         c.textAlign = 'left'; label(n.label, n.x + (mic ? 17 : 10), n.y + (phone ? 1 : 0));
+      };
+      if (redraw) {
+        for (const n of nodes) if (!lifted(n)) drawNode(n);
+        for (const e of edges) if (lifted(e.a) && lifted(e.b)) drawEdge(e);
+        c.globalAlpha = 1;
+        for (const n of nodes) if (lifted(n) && ARM_OF[n.id]) drawNode(n);
+        if (openAgent) drawNode(byId[openAgent]);
       }
-      if (strip) c.restore();
-      if (phone && !openAgent && L.hint) {
+      if (phone && !selected && L.hint) {
         pc.globalAlpha = 0.55 + Math.sin(clock * 2.2) * 0.25; pc.fillStyle = css('--muted'); pc.textAlign = 'center'; pc.textBaseline = 'middle';
-        pc.font = `500 11.5px ${FONT.mono}`; pc.fillText(L.hint, W / 2, bandY + 38);
-        dirty.push(0, bandY + 26, W, 24);
+        pc.font = `500 11.5px ${FONT.mono}`; pc.fillText(L.hint, W / 2, hintY);
+        dirty.push(0, hintY - 12, W, 24);
       }
       c.globalAlpha = 1; pc.globalAlpha = 1;
       raf = requestAnimationFrame(frame);
@@ -547,9 +540,9 @@ const labels = {
       }
       return best && best.n;
     };
-    const onMove = (e: PointerEvent) => { hover = pick(e); cv.style.cursor = hover ? 'pointer' : 'default'; kick(); };
+    const onMove = (e: PointerEvent) => { if (e.pointerType !== 'mouse') return; hover = pick(e); cv.style.cursor = hover ? 'pointer' : 'default'; kick(); };
     const onLeave = () => { hover = null; kick(); };
-    const onClick = (e: MouseEvent) => { const n = pick(e); userAt = clock; touring = false; selected = n === selected ? null : n; kick(); };
+    const onClick = (e: MouseEvent) => { const n = pick(e); selected = n === selected ? null : n; kick(); };
     cv.addEventListener('pointermove', onMove);
     cv.addEventListener('pointerleave', onLeave);
     cv.addEventListener('click', onClick);
