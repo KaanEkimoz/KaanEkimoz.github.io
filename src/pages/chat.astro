@@ -80,6 +80,10 @@ import { CHAT_EFFORTS, CHAT_MODELS } from '@lib/constants';
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M12 3a6 6 0 0 0-6 6c0 2.2 1.2 3.6 2 4.5.6.7 1 1.5 1 2.5h6c0-1 .4-1.8 1-2.5.8-.9 2-2.3 2-4.5a6 6 0 0 0-6-6zM9.5 19h5M10.5 22h3" /></svg>
             <span>Hafıza</span>
           </button>
+          <button id="apps-btn" type="button" class="nav-item">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><rect x="4" y="4" width="7" height="7" rx="1.5" /><rect x="13" y="4" width="7" height="7" rx="1.5" /><rect x="4" y="13" width="7" height="7" rx="1.5" /><rect x="13" y="13" width="7" height="7" rx="1.5" /></svg>
+            <span>Uygulamalar</span>
+          </button>
         </nav>
 
         <ul id="convo-list" class="convo-list"></ul>
@@ -309,6 +313,17 @@ import { CHAT_EFFORTS, CHAT_MODELS } from '@lib/constants';
       </div>
     </dialog>
 
+    <!-- Apps -->
+    <dialog id="apps-dialog" class="settings-dialog">
+      <div class="space-y-4">
+        <div>
+          <div class="font-mono uppercase tracking-widest text-xs text-text-300 mb-2">Uygulamalar</div>
+          <p class="text-sm text-text-200">Claude'un yaptığı sayfalar. Kaldığın yer otomatik kaydedilir.</p>
+        </div>
+        <div id="apps-list" class="memory-list"></div>
+      </div>
+    </dialog>
+
     <!-- Project editor -->
     <dialog id="project-dialog" class="settings-dialog">
       <form id="project-form" method="dialog" class="space-y-4">
@@ -492,6 +507,8 @@ import { CHAT_EFFORTS, CHAT_MODELS } from '@lib/constants';
       const settingsSave = $<HTMLButtonElement>('settings-save');
       const memoryDialog = $<HTMLDialogElement>('memory-dialog');
       const memoryList = $<HTMLDivElement>('memory-list');
+      const appsDialog = $<HTMLDialogElement>('apps-dialog');
+      const appsList = $<HTMLDivElement>('apps-list');
       const projectDialog = $<HTMLDialogElement>('project-dialog');
       const projectForm = $<HTMLFormElement>('project-form');
       const projectName = $<HTMLInputElement>('project-name');
@@ -1339,10 +1356,31 @@ import { CHAT_EFFORTS, CHAT_MODELS } from '@lib/constants';
       // the page can't reach this site's storage (the password lives there);
       // the policy lets CDN scripts load but stops it sending anything out.
       const FRAME_POLICY = `<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'unsafe-inline' https:; style-src 'unsafe-inline' https:; img-src data: blob: https:; font-src data: https:; media-src data: blob: https:; connect-src 'none'; form-action 'none'">`;
-      const withPolicy = (html: string) =>
-        /<head[^>]*>/i.test(html)
-          ? html.replace(/<head[^>]*>/i, (tag) => tag + FRAME_POLICY)
-          : html.replace(/^(\s*<!doctype[^>]*>)?/i, (head) => head + FRAME_POLICY);
+      // The frame has no storage of its own: this gives it a localStorage
+      // and watches its form fields, and sends both up to be saved.
+      const stateScript = (state: string | null) => `<script>(function(){
+var saved=${(state || '{}').replace(/</g, '\\u003c')};var data=saved.ls||{},fields=saved.fields||{},log=saved.log||[],timer;
+function send(){parent.postMessage({type:'app-state',state:JSON.stringify({ls:data,fields:fields,log:log,scroll:window.scrollY,text:document.body?document.body.innerText.slice(0,6000):''})},'*')}
+function later(){clearTimeout(timer);timer=setTimeout(send,300)}
+var api={getItem:function(k){return k in data?data[k]:null},setItem:function(k,v){data[k]=String(v);later()},removeItem:function(k){delete data[k];later()},clear:function(){data={};later()},key:function(i){var n=Object.keys(data)[i];return n===undefined?null:n}};
+var store=new Proxy(api,{get:function(t,k){if(k==='length')return Object.keys(data).length;if(k in t)return t[k];return typeof k==='string'&&k in data?data[k]:undefined},set:function(t,k,v){t.setItem(k,v);return true},deleteProperty:function(t,k){t.removeItem(k);return true}});
+try{Object.defineProperty(window,'localStorage',{value:store,configurable:true});Object.defineProperty(window,'sessionStorage',{value:store,configurable:true})}catch(e){}
+function list(){return Array.prototype.slice.call(document.querySelectorAll('input,textarea,select'))}
+function key(el,i){return (el.id||el.name||'')+'#'+i}
+function restore(){list().forEach(function(el,i){var v=fields[key(el,i)];if(v===undefined)return;if(el.type==='checkbox'||el.type==='radio')el.checked=v;else el.value=v})}
+function grab(){list().forEach(function(el,i){fields[key(el,i)]=(el.type==='checkbox'||el.type==='radio')?el.checked:el.value});later()}
+document.addEventListener('click',function(e){var t=e.target&&e.target.closest&&e.target.closest('button,a,label,[role=button],li,div');var x=t?(t.innerText||'').trim().slice(0,120):'';if(x){log.push(x);if(log.length>100)log.shift();later()}},true);
+document.addEventListener('input',grab,true);document.addEventListener('change',grab,true);
+var sc;addEventListener('scroll',function(){clearTimeout(sc);sc=setTimeout(later,300)},true);
+document.addEventListener('DOMContentLoaded',restore);
+addEventListener('load',function(){restore();if(saved.scroll)window.scrollTo(0,saved.scroll)});
+})()<\/script>`;
+      const withPolicy = (html: string, state: string | null) => {
+        const head = FRAME_POLICY + stateScript(state);
+        return /<head[^>]*>/i.test(html)
+          ? html.replace(/<head[^>]*>/i, (tag) => tag + head)
+          : html.replace(/^(\s*<!doctype[^>]*>)?/i, (start) => start + head);
+      };
 
       const htmlPanel = $<HTMLElement>('html-panel');
       const htmlFrame = $<HTMLIFrameElement>('html-panel-frame');
@@ -1352,19 +1390,20 @@ import { CHAT_EFFORTS, CHAT_MODELS } from '@lib/constants';
       let fileRun = 0;
       const htmlTitle = $<HTMLSpanElement>('html-panel-title');
       const splitView = $<HTMLDivElement>('split-view');
-      let panelDoc: { name: string; html: string; convo: string | null } | null = null;
+      let panelDoc: { name: string; html: string; convo: string | null; appId?: string } | null = null;
       let splitId: string | null = null;
 
-      function openPanel(name: string, html: string) {
+      function openPanel(name: string, html: string, app?: { id: string; state: string | null }) {
         closePanel();
-        panelDoc = { name, html, convo: activeId };
+        panelDoc = { name, html, convo: activeId, appId: app?.id };
         htmlTitle.textContent = name;
-        htmlFrame.srcdoc = withPolicy(html);
+        htmlFrame.srcdoc = withPolicy(html, app?.state ?? null);
         htmlPanel.classList.add('is-open');
         htmlPanel.inert = false;
         closeDrawer();
       }
       function closePanel() {
+        void flushAppState();
         panelDoc = null;
         splitId = null;
         splitView.replaceChildren();
@@ -1376,6 +1415,128 @@ import { CHAT_EFFORTS, CHAT_MODELS } from '@lib/constants';
         htmlPanel.inert = true;
         htmlFrame.removeAttribute('srcdoc');
       }
+
+      // ─── Apps ─────────────────────────────────────────────────────────
+      let pendingState: { id: string; state: string } | null = null;
+      let stateTimer = 0;
+      async function flushAppState() {
+        clearTimeout(stateTimer);
+        if (!pendingState) return;
+        const { id, state } = pendingState;
+        pendingState = null;
+        await api(`/apps/${id}/state`, { method: 'PUT', body: state, keepalive: true }).catch(() => {});
+      }
+      addEventListener('message', (e) => {
+        if (e.source !== htmlFrame.contentWindow || !panelDoc?.appId) return;
+        if (e.data?.type !== 'app-state' || typeof e.data.state !== 'string' || e.data.state.length > 200_000) return;
+        pendingState = { id: panelDoc.appId, state: e.data.state };
+        clearTimeout(stateTimer);
+        stateTimer = window.setTimeout(() => void flushAppState(), 800);
+      });
+      document.addEventListener('visibilitychange', () => {
+        if (document.visibilityState === 'hidden') void flushAppState();
+      });
+
+      async function htmlAppId(html: string) {
+        const hash = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(html.trim()));
+        return [...new Uint8Array(hash)]
+          .slice(0, 16)
+          .map((b) => b.toString(16).padStart(2, '0'))
+          .join('');
+      }
+
+      async function appRecord(id: string) {
+        const res = await api(`/apps/${id}`).catch(() => null);
+        return res?.ok ? ((await res.json()) as { title: string; html: string; state: string | null }) : null;
+      }
+
+      // A page from a reply: its saved progress if the Worker has kept it.
+      async function openHtml(name: string, html: string, fileId?: string) {
+        const id = fileId ?? (await htmlAppId(html));
+        const app = await appRecord(id);
+        openPanel(app?.title || name, html, app ? { id, state: app.state } : undefined);
+      }
+
+      async function renderApps() {
+        appsList.replaceChildren(noteEl('Yükleniyor…'));
+        try {
+          const res = await api('/apps');
+          if (!res.ok) throw new Error(await errorMessage(res));
+          const { items } = (await res.json()) as {
+            items: { id: string; title: string; convoId: string | null; projectId: string | null; saved: boolean; updatedAt: number }[];
+          };
+          appsList.replaceChildren();
+          if (!items.length) appsList.append(noteEl('Henüz uygulama yok. Claude bir HTML sayfası yapınca burada toplanır.'));
+          for (const item of items) {
+            const row = document.createElement('div');
+            row.className = 'app-row';
+            const open = document.createElement('button');
+            open.type = 'button';
+            open.className = 'app-open';
+            const title = document.createElement('span');
+            title.className = 'convo-title';
+            title.textContent = item.title;
+            const sub = document.createElement('span');
+            sub.className = 'convo-sub';
+            const owner = projectOf(item.projectId);
+            const convo = convos.find((c) => c.id === item.convoId);
+            sub.textContent = [
+              owner ? `${projectIcon(owner)} ${projectTitle(owner)}` : convo?.title,
+              when(item.updatedAt),
+              item.saved ? 'kayıtlı' : '',
+            ]
+              .filter(Boolean)
+              .join(' · ');
+            open.append(title, sub);
+            open.addEventListener('click', async () => {
+              const app = await appRecord(item.id);
+              if (!app) return;
+              appsDialog.close();
+              openPanel(app.title, app.html, { id: item.id, state: app.state });
+            });
+            const actions = document.createElement('div');
+            actions.className = 'app-actions';
+            if (convo) {
+              actions.append(
+                actionBtn('Sohbete git', () => {
+                  if (streaming) return;
+                  activeId = convo.id;
+                  persist();
+                  appsDialog.close();
+                  renderConvoList();
+                  if (convo.messages === null) void loadFull(convo);
+                  else renderConversation();
+                }),
+              );
+            }
+            if (item.saved) {
+              actions.append(
+                actionBtn('Sıfırla', async () => {
+                  if (!confirm(`"${item.title}" kaydı silinsin mi? Sayfa baştan başlar.`)) return;
+                  await api(`/apps/${item.id}/state`, { method: 'PUT', body: '' }).catch(() => {});
+                  void renderApps();
+                }),
+              );
+            }
+            actions.append(
+              actionBtn('Sil', async () => {
+                if (!confirm(`"${item.title}" silinsin mi?`)) return;
+                await api(`/apps/${item.id}`, { method: 'DELETE' }).catch(() => {});
+                void renderApps();
+              }),
+            );
+            row.append(open, actions);
+            appsList.append(row);
+          }
+        } catch (err) {
+          appsList.replaceChildren(noteEl((err as Error).message || 'Yüklenemedi.', 'error'));
+        }
+      }
+      $<HTMLButtonElement>('apps-btn').addEventListener('click', () => {
+        closeDrawer();
+        appsDialog.showModal();
+        void renderApps();
+      });
 
       // ─── File viewer ─────────────────────────────────────────────────
       async function renderPdf(blob: Blob, run: number) {
@@ -1563,20 +1724,6 @@ import { CHAT_EFFORTS, CHAT_MODELS } from '@lib/constants';
             img.addEventListener('click', () => void openOutput(f));
             row.append(img);
           }
-          const btn = document.createElement('button');
-          btn.type = 'button';
-          btn.className = 'att-chip out-chip';
-          btn.textContent = `⬇ ${f.name}`;
-          btn.addEventListener('click', async () => {
-            try {
-              const a = document.createElement('a');
-              a.href = await outputUrl(f);
-              a.download = f.name;
-              a.click();
-            } catch (err) {
-              btn.textContent = `⚠ ${(err as Error).message}`;
-            }
-          });
           if (/\.html?$/i.test(f.name)) {
             const view = document.createElement('button');
             view.type = 'button';
@@ -1584,7 +1731,7 @@ import { CHAT_EFFORTS, CHAT_MODELS } from '@lib/constants';
             view.textContent = `▶ ${f.name}`;
             view.addEventListener('click', async () => {
               try {
-                openPanel(f.name, await (await fetch(await outputUrl(f))).text());
+                await openHtml(f.name, await (await fetch(await outputUrl(f))).text(), f.id);
               } catch (err) {
                 view.textContent = `⚠ ${(err as Error).message}`;
               }
@@ -1599,6 +1746,22 @@ import { CHAT_EFFORTS, CHAT_MODELS } from '@lib/constants';
             view.addEventListener('click', () => void openOutput(f));
             row.append(view);
           }
+          // HTML and PDF download from the panel they open in.
+          if (/\.(html?|pdf)$/i.test(f.name)) continue;
+          const btn = document.createElement('button');
+          btn.type = 'button';
+          btn.className = 'att-chip out-chip';
+          btn.textContent = `⬇ ${f.name}`;
+          btn.addEventListener('click', async () => {
+            try {
+              const a = document.createElement('a');
+              a.href = await outputUrl(f);
+              a.download = f.name;
+              a.click();
+            } catch (err) {
+              btn.textContent = `⚠ ${(err as Error).message}`;
+            }
+          });
           row.append(btn);
         }
         return row;
@@ -1757,7 +1920,7 @@ import { CHAT_EFFORTS, CHAT_MODELS } from '@lib/constants';
             view.type = 'button';
             view.className = 'copy-btn preview-btn';
             view.textContent = 'Önizle';
-            view.addEventListener('click', () => openPanel('Önizleme', code.textContent ?? ''));
+            view.addEventListener('click', () => void openHtml('Önizleme', code.textContent ?? ''));
             pre.append(view);
           }
         });
@@ -2289,7 +2452,7 @@ import { CHAT_EFFORTS, CHAT_MODELS } from '@lib/constants';
       $<HTMLButtonElement>('settings-cancel').addEventListener('click', () => settingsDialog.close());
       $<HTMLButtonElement>('settings-x').addEventListener('click', () => settingsDialog.close());
       // A click on the backdrop lands on the dialog itself, outside its box.
-      for (const dialog of [settingsDialog, memoryDialog, projectDialog]) {
+      for (const dialog of [settingsDialog, memoryDialog, appsDialog, projectDialog]) {
         dialog.addEventListener('click', (e) => {
           const box = dialog.getBoundingClientRect();
           const inside = e.clientX >= box.left && e.clientX <= box.right && e.clientY >= box.top && e.clientY <= box.bottom;
@@ -2310,19 +2473,76 @@ import { CHAT_EFFORTS, CHAT_MODELS } from '@lib/constants';
         return btn;
       }
       memoryDialog.append(closeButton('icon-btn dialog-x', () => memoryDialog.close()));
+      appsDialog.append(closeButton('icon-btn dialog-x', () => appsDialog.close()));
       projectDialog.append(closeButton('icon-btn dialog-x', () => projectDialog.close()));
-      for (const dialog of [settingsDialog, memoryDialog, projectDialog]) {
+      for (const dialog of [settingsDialog, memoryDialog, appsDialog, projectDialog]) {
         dialog.append(closeButton('overlay-x', () => dialog.close()));
       }
       drawer.append(closeButton('overlay-x overlay-x--drawer', closeDrawer));
       sourcesRail.append(closeButton('overlay-x', () => sourcesRail.classList.remove('is-open')));
       htmlPanel.append(closeButton('overlay-x', closePanel));
 
+      // Drag handles on panel edges. Widths are CSS variables, kept per device.
+      function addResizer(panel: HTMLElement, edge: 'left' | 'right', name: string, min: number) {
+        const handle = document.createElement('div');
+        handle.className = `resizer resizer--${edge}`;
+        handle.setAttribute('role', 'separator');
+        handle.setAttribute('aria-orientation', 'vertical');
+        handle.setAttribute('aria-label', 'Paneli boyutlandır');
+        handle.tabIndex = 0;
+        handle.title = 'Sürükleyerek boyutlandır, çift tıkla sıfırla';
+        const key = `fx-chat-width:${name}`;
+        const prop = `--${name}-width`;
+        const root = document.documentElement.style;
+        const apply = (px: number) => {
+          const max = chatMain.offsetWidth + panel.offsetWidth - 300;
+          const width = Math.round(Math.max(min, Math.min(px, Math.max(min, max))));
+          root.setProperty(prop, `${width}px`);
+          return width;
+        };
+        const saved = load<number>(key, 0);
+        if (saved) root.setProperty(prop, `${saved}px`);
+        handle.addEventListener('pointerdown', (e) => {
+          e.preventDefault();
+          handle.setPointerCapture(e.pointerId);
+          const startX = e.clientX;
+          const startWidth = panel.offsetWidth;
+          document.body.classList.add('is-resizing');
+          const move = (ev: PointerEvent) => {
+            const delta = ev.clientX - startX;
+            apply(startWidth + (edge === 'left' ? -delta : delta));
+          };
+          const stop = () => {
+            handle.removeEventListener('pointermove', move);
+            document.body.classList.remove('is-resizing');
+            save(key, panel.offsetWidth);
+          };
+          handle.addEventListener('pointermove', move);
+          handle.addEventListener('pointerup', stop, { once: true });
+          handle.addEventListener('pointercancel', stop, { once: true });
+        });
+        handle.addEventListener('dblclick', () => {
+          root.removeProperty(prop);
+          save(key, 0);
+        });
+        handle.addEventListener('keydown', (e) => {
+          if (e.key !== 'ArrowLeft' && e.key !== 'ArrowRight') return;
+          e.preventDefault();
+          const grow = (e.key === 'ArrowLeft') === (edge === 'left');
+          save(key, apply(panel.offsetWidth + (grow ? 24 : -24)));
+        });
+        panel.append(handle);
+      }
+      addResizer(drawer, 'right', 'sidebar', 220);
+      addResizer(sourcesRail, 'left', 'project-panel', 260);
+      addResizer(htmlPanel, 'left', 'html-panel', 320);
+
       // Each open overlay holds one history entry, so the phone's back
       // button closes the overlay instead of leaving the chat.
       const overlayClosers: [() => boolean, () => void][] = [
         [() => settingsDialog.open, () => settingsDialog.close()],
         [() => memoryDialog.open, () => memoryDialog.close()],
+        [() => appsDialog.open, () => appsDialog.close()],
         [() => projectDialog.open, () => projectDialog.close()],
         [() => !!convoMenu, closeConvoMenu],
         [() => htmlPanel.classList.contains('is-open'), closePanel],
@@ -2351,7 +2571,7 @@ import { CHAT_EFFORTS, CHAT_MODELS } from '@lib/constants';
         overlayClosers.find(([isOpen]) => isOpen())?.[1]();
       });
       const overlayWatch = new MutationObserver(syncBackEntry);
-      for (const el of [settingsDialog, memoryDialog, projectDialog, htmlPanel, sourcesRail, drawer]) {
+      for (const el of [settingsDialog, memoryDialog, appsDialog, projectDialog, htmlPanel, sourcesRail, drawer]) {
         overlayWatch.observe(el, { attributes: true, attributeFilter: ['open', 'hidden', 'class'] });
       }
       overlayWatch.observe(document.body, { childList: true });
@@ -2661,6 +2881,7 @@ import { CHAT_EFFORTS, CHAT_MODELS } from '@lib/constants';
         };
 
         try {
+          await flushAppState(); // Claude reads the latest page state
           const res = await fetch(CHAT_WORKER_URL, {
             method: 'POST',
             headers: { Authorization: authHeader(getToken()), 'Content-Type': 'application/json' },
@@ -2672,6 +2893,7 @@ import { CHAT_EFFORTS, CHAT_MODELS } from '@lib/constants';
               deep: pressed(webBtn),
               code: true, // always offered; Claude runs code when the task needs it
               projectId: convo.projectId ?? undefined,
+              convoId: convo.id,
               containerId: convo.containerId ?? undefined,
             }),
             signal: controller.signal,
@@ -3806,8 +4028,12 @@ import { CHAT_EFFORTS, CHAT_MODELS } from '@lib/constants';
     .drawer-backdrop {
       display: none !important;
     }
+    .sidebar {
+      position: relative;
+      width: var(--sidebar-width, 17.5rem);
+    }
     .chat-body.sidebar-collapsed .sidebar {
-      margin-left: -17.5rem;
+      margin-left: calc(-1 * var(--sidebar-width, 17.5rem));
     }
     .topbar .topbar-menu,
     .topbar .topbar-new {
@@ -3819,9 +4045,53 @@ import { CHAT_EFFORTS, CHAT_MODELS } from '@lib/constants';
     }
   }
   @media (min-width: 1100px) {
+    .sources-rail {
+      position: relative;
+      width: var(--project-panel-width, 20rem);
+    }
     .sources-rail.is-closed {
       display: none;
     }
+  }
+  .resizer {
+    display: none;
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    z-index: 5;
+    width: 0.6rem;
+    cursor: col-resize;
+    touch-action: none;
+  }
+  .resizer--left {
+    left: -0.3rem;
+  }
+  .resizer--right {
+    right: -0.3rem;
+  }
+  .resizer:hover,
+  .resizer:focus-visible,
+  .is-resizing .resizer {
+    background: linear-gradient(rgb(var(--accent-1) / 0.5), rgb(var(--accent-1) / 0.5)) center / 2px 100% no-repeat;
+    outline: none;
+  }
+  @media (min-width: 900px) {
+    .sidebar .resizer,
+    .html-panel .resizer {
+      display: block;
+    }
+  }
+  @media (min-width: 1100px) {
+    .sources-rail .resizer {
+      display: block;
+    }
+  }
+  .is-resizing {
+    cursor: col-resize;
+    user-select: none;
+  }
+  .is-resizing iframe {
+    pointer-events: none;
   }
   /* The project panel slides in over the chat when there's no room for it. */
   @media (max-width: 1099px) {
@@ -3960,8 +4230,9 @@ import { CHAT_EFFORTS, CHAT_MODELS } from '@lib/constants';
   }
   @media (min-width: 900px) {
     .html-panel {
+      position: relative;
       display: none;
-      flex: 0 0 50%;
+      flex: 0 0 var(--html-panel-width, 50%);
       border-left: 1px solid rgb(var(--border) / 0.6);
     }
     .html-panel.is-open {
@@ -4665,6 +4936,25 @@ import { CHAT_EFFORTS, CHAT_MODELS } from '@lib/constants';
     display: flex;
     flex-direction: column;
     gap: 0.75rem;
+  }
+  .app-row {
+    padding-bottom: 0.6rem;
+    border-bottom: 1px solid rgb(var(--border) / 0.6);
+  }
+  .app-open {
+    display: flex;
+    flex-direction: column;
+    gap: 0.1rem;
+    width: 100%;
+    min-width: 0;
+    text-align: left;
+    color: rgb(var(--text-100));
+  }
+  .app-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.25rem;
+    margin-top: 0.25rem;
   }
   .memory-head {
     display: flex;

@@ -111,6 +111,11 @@ Yeni bir `migrations/000N_*.sql` eklendiğinde aynı komut yalnızca eksik olanl
 - Veritabanını görmek → Cloudflare paneli → Storage & Databases → D1 → `kaanusta-chat` (sohbetler şifresiz saklanır)
 - Loglar (hata ayıklama; anahtar loglanmaz) → `npx wrangler tail`
 
+## Uygulamalar
+
+- Sohbet kaydedilirken yanıtlardaki tam HTML sayfaları ve üretilen `.html` dosyaları `apps` tablosuna alınır (kimlik: kodun SHA-256'sı ya da dosya kimliği). İlk `GET /apps` eski sohbetleri de tarar. Sohbet silinse de sayfa kalır.
+- Sayfa sandbox'ta `localStorage` kullanamaz; panel ona sahte bir `localStorage` verir, form alanlarıyla birlikte `postMessage` ile alıp `state` sütununa yazar.
+
 ## Dosya ekleri
 
 - Files API yüklenen dosyayı geri vermediği için görüntüleyici R2'deki kopyayı okur (`kaanusta-chat-files`, PDF, görsel, düz metin). Sohbet kopyaları (`chat/`) bucket kuralıyla 90 günde silinir, proje kopyaları (`project/`) proje silinince gider.
