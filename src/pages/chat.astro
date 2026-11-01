@@ -1417,27 +1417,45 @@ import { CHAT_EFFORTS, CHAT_MODELS } from '@lib/constants';
         }
       }
 
-      async function openFile(a: Pick<Attachment, 'ref' | 'name'>) {
+      function openFile(a: Pick<Attachment, 'ref' | 'name'>) {
+        return showFile(a.name, async () => {
+          const res = await api(`/files/${encodeURIComponent(a.ref)}`);
+          if (res.status === 404) throw new Error('Bu dosyanın kopyası yok. Görmek için yeniden yüklemen gerekiyor; Claude okumaya devam eder.');
+          if (!res.ok) throw new Error(await errorMessage(res));
+          return res.blob();
+        });
+      }
+
+      function openOutput(f: OutputFile) {
+        return showFile(f.name, async () => (await fetch(await outputUrl(f))).blob());
+      }
+
+      function openPdfLink(href: string, name: string) {
+        return showFile(name, async () => {
+          const res = await api(`/pdf?url=${encodeURIComponent(href)}`);
+          if (!res.ok) throw new Error(await errorMessage(res));
+          return res.blob();
+        });
+      }
+
+      async function showFile(name: string, read: () => Promise<Blob>) {
         closePanel();
         const run = fileRun;
-        htmlTitle.textContent = a.name;
+        htmlTitle.textContent = name;
         fileView.replaceChildren(noteEl('Açılıyor…'));
         htmlPanel.classList.add('is-open', 'is-file');
         htmlPanel.inert = false;
         closeDrawer();
         sourcesRail.classList.remove('is-open');
         try {
-          const res = await api(`/files/${encodeURIComponent(a.ref)}`);
-          if (res.status === 404) throw new Error('Bu dosyanın kopyası yok. Görmek için yeniden yüklemen gerekiyor; Claude okumaya devam eder.');
-          if (!res.ok) throw new Error(await errorMessage(res));
-          const blob = await res.blob();
+          const blob = await read();
           if (run !== fileRun) return;
-          panelFile = { name: a.name, blob };
-          if (blob.type === 'application/pdf') await renderPdf(blob, run);
-          else if (blob.type.startsWith('image/')) {
+          panelFile = { name, blob };
+          if (blob.type === 'application/pdf' || /\.pdf$/i.test(name)) await renderPdf(blob, run);
+          else if (blob.type.startsWith('image/') || /\.(png|jpe?g|gif|webp)$/i.test(name)) {
             const img = document.createElement('img');
             img.className = 'file-image';
-            img.alt = a.name;
+            img.alt = name;
             img.src = URL.createObjectURL(blob);
             fileView.replaceChildren(img);
           } else {
@@ -1485,6 +1503,54 @@ import { CHAT_EFFORTS, CHAT_MODELS } from '@lib/constants';
         });
       }
 
+      // Every file this chat can open, by name, for names and links in replies.
+      function knownFiles() {
+        const c = active();
+        const openers = new Map<string, () => void>();
+        const project = projectOf(c?.projectId ?? currentProject);
+        for (const a of [...(project?.files ?? []), ...(c?.messages ?? []).flatMap((m) => m.attachments ?? [])]) {
+          if (a.kind !== 'container' && !isExpired(a)) openers.set(a.name, () => void openFile(a));
+        }
+        for (const f of (c?.messages ?? []).flatMap((m) => m.files ?? [])) {
+          if (/\.(pdf|png|jpe?g|gif|webp)$/i.test(f.name)) openers.set(f.name, () => void openOutput(f));
+        }
+        return openers;
+      }
+
+      function linkFileNames(root: HTMLElement) {
+        const names = [...knownFiles().keys()].sort((a, b) => b.length - a.length);
+        if (!names.length) return;
+        const pattern = new RegExp(`(${names.map((n) => n.replace(/[.*+?^\${}()|[\]\\]/g, '\\$&')).join('|')})`);
+        const walker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT);
+        const hits: Text[] = [];
+        while (walker.nextNode()) {
+          const node = walker.currentNode as Text;
+          if (pattern.test(node.data) && !node.parentElement?.closest('pre, a, button')) hits.push(node);
+        }
+        for (const node of hits) {
+          const parts = node.data.split(pattern).map((part, i) => {
+            if (i % 2 === 0) return part;
+            const btn = document.createElement('button');
+            btn.type = 'button';
+            btn.className = 'file-link';
+            btn.textContent = part;
+            btn.dataset.file = part;
+            return btn;
+          });
+          node.replaceWith(...parts);
+        }
+      }
+
+      function pdfLinkName(href: string) {
+        try {
+          const { pathname, protocol } = new URL(href);
+          if (!protocol.startsWith('http') || !/\.pdf$/i.test(pathname)) return null;
+          return decodeURIComponent(pathname.split('/').pop()!);
+        } catch {
+          return null;
+        }
+      }
+
       function filesEl(files: OutputFile[]): HTMLElement {
         const row = document.createElement('div');
         row.className = 'out-files';
@@ -1494,6 +1560,7 @@ import { CHAT_EFFORTS, CHAT_MODELS } from '@lib/constants';
             img.className = 'out-image';
             img.alt = f.name;
             void outputUrl(f).then((u) => (img.src = u)).catch(() => img.remove());
+            img.addEventListener('click', () => void openOutput(f));
             row.append(img);
           }
           const btn = document.createElement('button');
@@ -1524,10 +1591,30 @@ import { CHAT_EFFORTS, CHAT_MODELS } from '@lib/constants';
             });
             row.append(view);
           }
+          if (/\.pdf$/i.test(f.name)) {
+            const view = document.createElement('button');
+            view.type = 'button';
+            view.className = 'att-chip out-chip';
+            view.textContent = `▶ ${f.name}`;
+            view.addEventListener('click', () => void openOutput(f));
+            row.append(view);
+          }
           row.append(btn);
         }
         return row;
       }
+
+      list.addEventListener('click', (e) => {
+        const target = e.target as HTMLElement;
+        const mention = target.closest<HTMLElement>('.file-link');
+        if (mention) return knownFiles().get(mention.dataset.file ?? '')?.();
+        const link = target.closest('a');
+        const name = link && pdfLinkName(link.href);
+        if (link && name) {
+          e.preventDefault();
+          void openPdfLink(link.href, name);
+        }
+      });
 
       // One builder for both saved and streaming replies, so they look alike.
       function assistantView(m: Message) {
@@ -1563,6 +1650,7 @@ import { CHAT_EFFORTS, CHAT_MODELS } from '@lib/constants';
           },
           setBody(text: string) {
             body.innerHTML = renderMarkdown(text);
+            linkFileNames(body);
           },
           setTyping() {
             body.innerHTML = TYPING_HTML;
@@ -3846,6 +3934,15 @@ import { CHAT_EFFORTS, CHAT_MODELS } from '@lib/constants';
     white-space: pre-wrap;
     font-size: 0.85rem;
     color: rgb(var(--text-100));
+  }
+  .file-link {
+    font: inherit;
+    color: rgb(var(--accent-1));
+    text-decoration: underline;
+    text-underline-offset: 2px;
+  }
+  .out-image {
+    cursor: zoom-in;
   }
   .att-open {
     display: block;

@@ -35,6 +35,7 @@
  *   POST   /compact              → { summary } of older messages (Sonnet)
  *   POST   /files[?keep=1]       → upload one attachment (raw body)
  *   GET    /files/<ref>          → the R2 copy of an attachment, for the viewer
+ *   GET    /pdf?url=<link>       → a PDF from the web, for the viewer
  *   DELETE /files/<ref>          → delete an attachment this Worker uploaded
  *   GET    /outputs/<file_id>    → download a file Claude made for this user
  *   GET    /convos               → { items: [{ id, title, updatedAt, projectId }] }
@@ -196,6 +197,7 @@ const ROUTES = [
   ['POST', /^\/compact$/, 'compact'],
   ['POST', /^\/files$/, 'upload'],
   ['GET', /^\/files\/([\w.-]{1,200})$/, 'viewFile'],
+  ['GET', /^\/pdf$/, 'fetchPdf'],
   ['DELETE', /^\/files\/([\w.-]{1,200})$/, 'deleteFile'],
   ['GET', /^\/outputs\/(file_[A-Za-z0-9]{1,100})$/, 'download'],
   ['GET', /^\/convos$/, 'listConvos'],
@@ -271,6 +273,8 @@ export default {
         return compact(request, user, env, ctx, cors);
       case 'upload':
         return uploadFile(request, url, user, env, cors);
+      case 'fetchPdf':
+        return fetchPdf(url.searchParams.get('url'), cors);
       case 'viewFile':
         return viewFile(user, param, env, cors);
       case 'deleteFile':
@@ -1358,6 +1362,34 @@ async function viewFile(user, ref, env, cors) {
   return new Response(object.body, {
     headers: { ...cors, 'Content-Type': object.httpMetadata?.contentType ?? 'application/octet-stream' },
   });
+}
+
+// PDF links in replies: most hosts send no CORS headers, so the viewer
+// reads them through here.
+async function fetchPdf(target, cors) {
+  let link;
+  try {
+    link = new URL(target);
+  } catch {
+    return json({ error: 'Geçersiz bağlantı.' }, 400, cors);
+  }
+  if (link.protocol !== 'https:' && link.protocol !== 'http:') return json({ error: 'Geçersiz bağlantı.' }, 400, cors);
+  let res;
+  try {
+    res = await fetch(link, { redirect: 'follow' });
+  } catch {
+    return json({ error: 'PDF indirilemedi.' }, 502, cors);
+  }
+  if (!res.ok) return json({ error: 'PDF indirilemedi; site izin vermiyor olabilir.' }, 502, cors);
+  if (Number(res.headers.get('Content-Length') ?? 0) > MAX_UPLOAD_BYTES) {
+    return json({ error: 'PDF çok büyük (en fazla 30 MB).' }, 413, cors);
+  }
+  const body = await res.arrayBuffer();
+  if (body.byteLength > MAX_UPLOAD_BYTES) return json({ error: 'PDF çok büyük (en fazla 30 MB).' }, 413, cors);
+  if (new TextDecoder().decode(body.slice(0, 5)) !== '%PDF-') {
+    return json({ error: 'Bağlantı bir PDF döndürmedi.' }, 415, cors);
+  }
+  return new Response(body, { headers: { ...cors, 'Content-Type': 'application/pdf' } });
 }
 
 async function dropCopy(user, fileId, env) {
