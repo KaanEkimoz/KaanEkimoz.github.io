@@ -126,6 +126,26 @@ import { CHAT_EFFORTS, CHAT_MODELS } from '@lib/constants';
           </button>
         </header>
 
+        <div id="apps-page" class="apps-page" hidden>
+          <div class="apps-inner">
+            <h1 class="apps-title">Uygulamalar</h1>
+            <div class="apps-tools">
+              <div id="apps-filters" class="apps-filters" role="group" aria-label="Filtre"></div>
+              <input id="apps-search" type="search" placeholder="Ara" autocomplete="off" aria-label="Uygulamalarda ara" />
+              <select id="apps-sort" aria-label="Sırala">
+                <option value="recent">Son güncellenen</option>
+                <option value="name">Ada göre</option>
+              </select>
+              <button id="apps-layout" type="button" class="icon-btn" aria-label="Görünümü değiştir" title="Izgara veya liste">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M4 6h16M4 12h16M4 18h16" /></svg>
+              </button>
+            </div>
+            <p class="apps-label">Yeni bir şey yap</p>
+            <div id="apps-starters" class="apps-starters"></div>
+            <div id="apps-grid" class="apps-grid"></div>
+          </div>
+        </div>
+
         <main id="scroller" class="scroller">
           <div id="messages" class="messages" aria-live="polite"></div>
         </main>
@@ -313,17 +333,6 @@ import { CHAT_EFFORTS, CHAT_MODELS } from '@lib/constants';
       </div>
     </dialog>
 
-    <!-- Apps -->
-    <dialog id="apps-dialog" class="settings-dialog">
-      <div class="space-y-4">
-        <div>
-          <div class="font-mono uppercase tracking-widest text-xs text-text-300 mb-2">Uygulamalar</div>
-          <p class="text-sm text-text-200">Claude'un yaptığı sayfalar. Kaldığın yer otomatik kaydedilir.</p>
-        </div>
-        <div id="apps-list" class="memory-list"></div>
-      </div>
-    </dialog>
-
     <!-- Project editor -->
     <dialog id="project-dialog" class="settings-dialog">
       <form id="project-form" method="dialog" class="space-y-4">
@@ -507,8 +516,6 @@ import { CHAT_EFFORTS, CHAT_MODELS } from '@lib/constants';
       const settingsSave = $<HTMLButtonElement>('settings-save');
       const memoryDialog = $<HTMLDialogElement>('memory-dialog');
       const memoryList = $<HTMLDivElement>('memory-list');
-      const appsDialog = $<HTMLDialogElement>('apps-dialog');
-      const appsList = $<HTMLDivElement>('apps-list');
       const projectDialog = $<HTMLDialogElement>('project-dialog');
       const projectForm = $<HTMLFormElement>('project-form');
       const projectName = $<HTMLInputElement>('project-name');
@@ -1386,7 +1393,16 @@ addEventListener('load',function(){restore();if(saved.scroll)window.scrollTo(0,s
       };
 
       const htmlPanel = $<HTMLElement>('html-panel');
-      const htmlFrame = $<HTMLIFrameElement>('html-panel-frame');
+      let htmlFrame = $<HTMLIFrameElement>('html-panel-frame');
+      // A new element each time: changing srcdoc on a live frame adds a
+      // history entry, and the back button would navigate the frame.
+      function swapFrame(srcdoc?: string) {
+        const fresh = htmlFrame.cloneNode(false) as HTMLIFrameElement;
+        fresh.removeAttribute('srcdoc');
+        if (srcdoc) fresh.srcdoc = srcdoc;
+        htmlFrame.replaceWith(fresh);
+        htmlFrame = fresh;
+      }
       const fileView = $<HTMLDivElement>('file-view');
       let panelFile: { name: string; blob: Blob } | null = null;
       let fileObserver: IntersectionObserver | null = null;
@@ -1400,7 +1416,7 @@ addEventListener('load',function(){restore();if(saved.scroll)window.scrollTo(0,s
         closePanel();
         panelDoc = { name, html, convo: activeId, appId: app?.id };
         htmlTitle.textContent = name;
-        htmlFrame.srcdoc = withPolicy(html, app?.state ?? null);
+        swapFrame(withPolicy(html, app?.state ?? null));
         htmlPanel.classList.add('is-open');
         htmlPanel.inert = false;
         closeDrawer();
@@ -1416,7 +1432,7 @@ addEventListener('load',function(){restore();if(saved.scroll)window.scrollTo(0,s
         fileView.replaceChildren();
         htmlPanel.classList.remove('is-open', 'is-split', 'is-file');
         htmlPanel.inert = true;
-        htmlFrame.removeAttribute('srcdoc');
+        swapFrame();
       }
 
       // ─── Apps ─────────────────────────────────────────────────────────
@@ -1460,85 +1476,232 @@ addEventListener('load',function(){restore();if(saved.scroll)window.scrollTo(0,s
         openPanel(app?.title || name, html, app ? { id, state: app.state } : undefined);
       }
 
-      async function renderApps() {
-        appsList.replaceChildren(noteEl('Yükleniyor…'));
+      interface AppItem { id: string; title: string; convoId: string | null; projectId: string | null; saved: boolean; updatedAt: number }
+      const KEY_APPS_LIST = 'fx-chat-apps-list';
+      const APP_STARTERS = [
+        { label: 'Quiz', color: '13 71 138', icon: '<path d="M9 9a3 3 0 1 1 4 2.8c-.7.3-1 .9-1 1.7M12 17h.01" />', prompt: 'Şu konuda interaktif bir HTML quiz yap: ' },
+        { label: 'Bilgi kartları', color: '112 44 12', icon: '<rect x="4" y="6" width="16" height="12" rx="2" /><path d="M8 10h8M8 14h5" />', prompt: 'Şu konu için çevrilebilen HTML bilgi kartları yap: ' },
+        { label: 'Kontrol listesi', color: '63 39 145', icon: '<path d="M5 7l2 2 3-3M5 15l2 2 3-3M13 8h6M13 16h6" />', prompt: 'Şu iş için ilerlemeyi kaydeden bir HTML kontrol listesi yap: ' },
+        { label: 'Çalışma planı', color: '124 28 28', icon: '<rect x="4" y="5" width="16" height="15" rx="2" /><path d="M4 10h16M9 3v4M15 3v4" />', prompt: 'Şu hedef için takip edebileceğim bir HTML çalışma planı yap: ' },
+      ];
+      const appsPage = $<HTMLDivElement>('apps-page');
+      const appsGrid = $<HTMLDivElement>('apps-grid');
+      const appsSearch = $<HTMLInputElement>('apps-search');
+      const appsSort = $<HTMLSelectElement>('apps-sort');
+      const appsFilters = $<HTMLDivElement>('apps-filters');
+      let appItems: AppItem[] = [];
+      let appsFilter = 'all';
+      const appCache = new Map<string, Promise<Awaited<ReturnType<typeof appRecord>>>>();
+      const appOf = (id: string) => {
+        if (!appCache.has(id)) appCache.set(id, appRecord(id));
+        return appCache.get(id)!;
+      };
+
+      function closeApps() {
+        if (appsPage.hidden) return;
+        appsPage.hidden = true;
+        chatMain.classList.remove('is-apps');
+        $<HTMLButtonElement>('apps-btn').classList.remove('is-active');
+      }
+
+      function openApps() {
+        closeDrawer();
+        appsPage.hidden = false;
+        chatMain.classList.add('is-apps');
+        $<HTMLButtonElement>('apps-btn').classList.add('is-active');
+        appCache.clear();
+        void loadApps();
+      }
+
+      async function loadApps() {
+        appsGrid.replaceChildren(noteEl('Yükleniyor…'));
         try {
           const res = await api('/apps');
           if (!res.ok) throw new Error(await errorMessage(res));
-          const { items } = (await res.json()) as {
-            items: { id: string; title: string; convoId: string | null; projectId: string | null; saved: boolean; updatedAt: number }[];
-          };
-          appsList.replaceChildren();
-          if (!items.length) appsList.append(noteEl('Henüz uygulama yok. Claude bir HTML sayfası yapınca burada toplanır.'));
-          for (const item of items) {
-            const row = document.createElement('div');
-            row.className = 'app-row';
-            const open = document.createElement('button');
-            open.type = 'button';
-            open.className = 'app-open';
-            const title = document.createElement('span');
-            title.className = 'convo-title';
-            title.textContent = item.title;
-            const sub = document.createElement('span');
-            sub.className = 'convo-sub';
-            const owner = projectOf(item.projectId);
-            const convo = convos.find((c) => c.id === item.convoId);
-            sub.textContent = [
-              owner ? `${projectIcon(owner)} ${projectTitle(owner)}` : convo?.title,
-              when(item.updatedAt),
-              item.saved ? 'kayıtlı' : '',
-            ]
-              .filter(Boolean)
-              .join(' · ');
-            open.append(title, sub);
-            open.addEventListener('click', async () => {
-              const app = await appRecord(item.id);
-              if (!app) return;
-              appsDialog.close();
-              openPanel(app.title, app.html, { id: item.id, state: app.state });
-            });
-            const actions = document.createElement('div');
-            actions.className = 'app-actions';
-            if (convo) {
-              actions.append(
-                actionBtn('Sohbete git', () => {
-                  if (streaming) return;
-                  activeId = convo.id;
-                  persist();
-                  appsDialog.close();
-                  renderConvoList();
-                  if (convo.messages === null) void loadFull(convo);
-                  else renderConversation();
-                }),
-              );
-            }
-            if (item.saved) {
-              actions.append(
-                actionBtn('Sıfırla', async () => {
-                  if (!confirm(`"${item.title}" kaydı silinsin mi? Sayfa baştan başlar.`)) return;
-                  await api(`/apps/${item.id}/state`, { method: 'PUT', body: '' }).catch(() => {});
-                  void renderApps();
-                }),
-              );
-            }
-            actions.append(
-              actionBtn('Sil', async () => {
-                if (!confirm(`"${item.title}" silinsin mi?`)) return;
-                await api(`/apps/${item.id}`, { method: 'DELETE' }).catch(() => {});
-                void renderApps();
-              }),
-            );
-            row.append(open, actions);
-            appsList.append(row);
-          }
+          appItems = ((await res.json()) as { items: AppItem[] }).items;
+          renderAppCards();
         } catch (err) {
-          appsList.replaceChildren(noteEl((err as Error).message || 'Yüklenemedi.', 'error'));
+          appsGrid.replaceChildren(noteEl((err as Error).message || 'Yüklenemedi.', 'error'));
         }
       }
-      $<HTMLButtonElement>('apps-btn').addEventListener('click', () => {
-        closeDrawer();
-        appsDialog.showModal();
-        void renderApps();
+
+      async function openApp(item: AppItem) {
+        appCache.delete(item.id);
+        const app = await appOf(item.id);
+        if (app) openPanel(app.title, app.html, { id: item.id, state: app.state });
+      }
+
+      function openAppMenu(item: AppItem, anchor: HTMLElement) {
+        const convo = convos.find((c) => c.id === item.convoId);
+        openMenu(anchor, (add) => {
+          add('Aç', () => void openApp(item));
+          if (convo) {
+            add('Sohbete git', () => {
+              if (streaming) return;
+              closeApps();
+              activeId = convo.id;
+              persist();
+              renderConvoList();
+              if (convo.messages === null) void loadFull(convo);
+              else renderConversation();
+            });
+          }
+          if (item.saved) {
+            add('Kaydı sıfırla', async () => {
+              if (!confirm(`"${item.title}" kaydı silinsin mi? Sayfa baştan başlar.`)) return;
+              await api(`/apps/${item.id}/state`, { method: 'PUT', body: '' }).catch(() => {});
+              appCache.delete(item.id);
+              void loadApps();
+            });
+          }
+          add('Sil', async () => {
+            if (!confirm(`"${item.title}" silinsin mi?`)) return;
+            await api(`/apps/${item.id}`, { method: 'DELETE' }).catch(() => {});
+            void loadApps();
+          }, true);
+        });
+      }
+
+      const thumbObserver = new IntersectionObserver(
+        (entries) => {
+          for (const entry of entries) {
+            if (!entry.isIntersecting) continue;
+            thumbObserver.unobserve(entry.target);
+            const frame = entry.target.querySelector('iframe')!;
+            void appOf((entry.target as HTMLElement).dataset.app!).then((app) => {
+              if (app) frame.srcdoc = withPolicy(app.html, app.state);
+            });
+          }
+        },
+        { rootMargin: '200px' },
+      );
+
+      const appScale = new ResizeObserver(() => {
+        const width = appsGrid.querySelector<HTMLElement>('.app-thumb')?.clientWidth;
+        if (width) appsGrid.style.setProperty('--thumb-scale', String(width / 1200));
+      });
+      appScale.observe(appsGrid);
+
+      function appCard(item: AppItem) {
+        const card = document.createElement('article');
+        card.className = 'app-card';
+        const open = document.createElement('button');
+        open.type = 'button';
+        open.className = 'app-open';
+        open.setAttribute('aria-label', `${item.title} uygulamasını aç`);
+        const thumb = document.createElement('span');
+        thumb.className = 'app-thumb';
+        thumb.dataset.app = item.id;
+        const frame = document.createElement('iframe');
+        frame.sandbox.add('allow-scripts');
+        frame.tabIndex = -1;
+        frame.title = '';
+        frame.setAttribute('aria-hidden', 'true');
+        thumb.append(frame);
+        const foot = document.createElement('span');
+        foot.className = 'app-foot';
+        const title = document.createElement('span');
+        title.className = 'convo-title';
+        title.textContent = item.title;
+        const sub = document.createElement('span');
+        sub.className = 'convo-sub';
+        const owner = projectOf(item.projectId);
+        const convo = convos.find((c) => c.id === item.convoId);
+        sub.textContent = [
+          owner ? `${projectIcon(owner)} ${projectTitle(owner)}` : convo?.title,
+          when(item.updatedAt),
+          item.saved ? 'devam ediyor' : '',
+        ]
+          .filter(Boolean)
+          .join(' · ');
+        foot.append(title, sub);
+        open.append(thumb, foot);
+        open.addEventListener('click', () => void openApp(item));
+        const more = document.createElement('button');
+        more.type = 'button';
+        more.className = 'convo-more app-more';
+        more.setAttribute('aria-label', `${item.title} seçenekleri`);
+        more.setAttribute('aria-haspopup', 'menu');
+        more.textContent = '⋯';
+        more.addEventListener('click', (e) => {
+          e.stopPropagation();
+          openAppMenu(item, more);
+        });
+        card.append(open, more);
+        return { card, thumb };
+      }
+
+      function renderAppCards() {
+        const usedProjects = projects.filter((p) => appItems.some((a) => a.projectId === p.id));
+        const filters: [string, string][] = [
+          ['all', 'Tümü'],
+          ['saved', 'Devam edenler'],
+          ...usedProjects.map((p): [string, string] => [p.id, `${projectIcon(p)} ${projectTitle(p)}`]),
+        ];
+        if (!filters.some(([id]) => id === appsFilter)) appsFilter = 'all';
+        appsFilters.replaceChildren(
+          ...filters.map(([id, label]) => {
+            const btn = document.createElement('button');
+            btn.type = 'button';
+            btn.className = 'apps-filter';
+            btn.setAttribute('aria-pressed', String(id === appsFilter));
+            btn.textContent = label;
+            btn.addEventListener('click', () => {
+              appsFilter = id;
+              renderAppCards();
+            });
+            return btn;
+          }),
+        );
+        const q = appsSearch.value.trim().toLocaleLowerCase('tr');
+        const shown = appItems
+          .filter((a) => appsFilter === 'all' || (appsFilter === 'saved' ? a.saved : a.projectId === appsFilter))
+          .filter((a) => !q || a.title.toLocaleLowerCase('tr').includes(q))
+          .sort((a, b) => (appsSort.value === 'name' ? a.title.localeCompare(b.title, 'tr') : b.updatedAt - a.updatedAt));
+        thumbObserver.disconnect();
+        appsGrid.replaceChildren();
+        if (!shown.length) {
+          appsGrid.append(noteEl(appItems.length ? 'Eşleşen uygulama yok.' : 'Henüz uygulama yok. Claude bir HTML sayfası yapınca burada toplanır.'));
+        }
+        for (const item of shown) {
+          const { card, thumb } = appCard(item);
+          appsGrid.append(card);
+          thumbObserver.observe(thumb);
+        }
+      }
+
+      appsSearch.addEventListener('input', renderAppCards);
+      appsSort.addEventListener('change', renderAppCards);
+      appsGrid.classList.toggle('is-list', load<boolean>(KEY_APPS_LIST, false));
+      $<HTMLButtonElement>('apps-layout').addEventListener('click', () => {
+        save(KEY_APPS_LIST, appsGrid.classList.toggle('is-list'));
+      });
+      $<HTMLDivElement>('apps-starters').append(
+        ...APP_STARTERS.map((s) => {
+          const btn = document.createElement('button');
+          btn.type = 'button';
+          btn.className = 'app-starter';
+          const tile = document.createElement('span');
+          tile.className = 'app-starter-tile';
+          tile.style.setProperty('--tile', s.color);
+          const icon = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+          icon.setAttribute('viewBox', '0 0 24 24');
+          icon.setAttribute('aria-hidden', 'true');
+          icon.innerHTML = s.icon;
+          tile.append(icon);
+          btn.append(tile, s.label);
+          btn.addEventListener('click', () => {
+            document.querySelector<HTMLElement>('[data-new-chat]')?.click();
+            input.value = s.prompt;
+            input.dispatchEvent(new Event('input', { bubbles: true }));
+            input.focus();
+          });
+          return btn;
+        }),
+      );
+      $<HTMLButtonElement>('apps-btn').addEventListener('click', openApps);
+      document.addEventListener('click', (e) => {
+        if ((e.target as HTMLElement).closest('.convo-item, [data-new-chat], .project-row .convo-more[title]')) closeApps();
       });
 
       // ─── File viewer ─────────────────────────────────────────────────
@@ -2473,7 +2636,7 @@ addEventListener('load',function(){restore();if(saved.scroll)window.scrollTo(0,s
       $<HTMLButtonElement>('settings-cancel').addEventListener('click', () => settingsDialog.close());
       $<HTMLButtonElement>('settings-x').addEventListener('click', () => settingsDialog.close());
       // A click on the backdrop lands on the dialog itself, outside its box.
-      for (const dialog of [settingsDialog, memoryDialog, appsDialog, projectDialog]) {
+      for (const dialog of [settingsDialog, memoryDialog, projectDialog]) {
         dialog.addEventListener('click', (e) => {
           const box = dialog.getBoundingClientRect();
           const inside = e.clientX >= box.left && e.clientX <= box.right && e.clientY >= box.top && e.clientY <= box.bottom;
@@ -2494,9 +2657,8 @@ addEventListener('load',function(){restore();if(saved.scroll)window.scrollTo(0,s
         return btn;
       }
       memoryDialog.append(closeButton('icon-btn dialog-x', () => memoryDialog.close()));
-      appsDialog.append(closeButton('icon-btn dialog-x', () => appsDialog.close()));
       projectDialog.append(closeButton('icon-btn dialog-x', () => projectDialog.close()));
-      for (const dialog of [settingsDialog, memoryDialog, appsDialog, projectDialog]) {
+      for (const dialog of [settingsDialog, memoryDialog, projectDialog]) {
         dialog.append(closeButton('overlay-x', () => dialog.close()));
       }
       drawer.append(closeButton('overlay-x overlay-x--drawer', closeDrawer));
@@ -2563,12 +2725,12 @@ addEventListener('load',function(){restore();if(saved.scroll)window.scrollTo(0,s
       const overlayClosers: [() => boolean, () => void][] = [
         [() => settingsDialog.open, () => settingsDialog.close()],
         [() => memoryDialog.open, () => memoryDialog.close()],
-        [() => appsDialog.open, () => appsDialog.close()],
         [() => projectDialog.open, () => projectDialog.close()],
         [() => !!convoMenu, closeConvoMenu],
         [() => htmlPanel.classList.contains('is-open'), closePanel],
         [() => sourcesRail.classList.contains('is-open'), () => sourcesRail.classList.remove('is-open')],
         [() => !wide.matches && drawer.classList.contains('is-open'), closeDrawer],
+        [() => !appsPage.hidden, closeApps],
       ];
       let backEntry = false;
       let skipPop = false;
@@ -2592,7 +2754,7 @@ addEventListener('load',function(){restore();if(saved.scroll)window.scrollTo(0,s
         overlayClosers.find(([isOpen]) => isOpen())?.[1]();
       });
       const overlayWatch = new MutationObserver(syncBackEntry);
-      for (const el of [settingsDialog, memoryDialog, appsDialog, projectDialog, htmlPanel, sourcesRail, drawer]) {
+      for (const el of [settingsDialog, memoryDialog, projectDialog, htmlPanel, sourcesRail, drawer, appsPage]) {
         overlayWatch.observe(el, { attributes: true, attributeFilter: ['open', 'hidden', 'class'] });
       }
       overlayWatch.observe(document.body, { childList: true });
@@ -4226,6 +4388,183 @@ addEventListener('load',function(){restore();if(saved.scroll)window.scrollTo(0,s
     font-size: 0.85rem;
     color: rgb(var(--text-100));
   }
+  .apps-page {
+    flex: 1;
+    min-height: 0;
+    overflow-y: auto;
+  }
+  .apps-page[hidden],
+  .chat-main.is-apps .scroller,
+  .chat-main.is-apps .hero,
+  .chat-main.is-apps .composer-wrap,
+  .chat-main.is-apps .topbar-title,
+  .chat-main.is-apps .project-label,
+  .chat-main.is-apps .topbar .sources-btn,
+  .chat-app:has(.is-apps) .sources-rail {
+    display: none;
+  }
+  .apps-inner {
+    max-width: 70rem;
+    margin: 0 auto;
+    padding: 1rem 1.25rem 3rem;
+  }
+  .apps-title {
+    margin-bottom: 1.25rem;
+    font-family: ui-serif, Georgia, 'Times New Roman', serif !important;
+    font-weight: 400;
+    font-size: 1.9rem;
+    color: rgb(var(--text-100));
+  }
+  .apps-tools {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.5rem;
+  }
+  .apps-filters {
+    display: flex;
+    flex: 1;
+    flex-wrap: wrap;
+    gap: 0.25rem;
+    min-width: 0;
+  }
+  @media (max-width: 699px) {
+    .apps-filters {
+      flex: 1 1 100%;
+    }
+    .apps-tools input,
+    .apps-tools select {
+      flex: 1;
+      width: auto;
+    }
+  }
+  .apps-filter {
+    white-space: nowrap;
+    padding: 0.3rem 0.7rem;
+    border-radius: 0.6rem;
+    font-size: 0.875rem;
+    color: rgb(var(--text-200));
+  }
+  .apps-filter[aria-pressed='true'] {
+    color: rgb(var(--text-100));
+    background: rgb(var(--hover) / 0.12);
+  }
+  .apps-tools input,
+  .apps-tools select {
+    min-width: 0;
+    width: 10rem;
+    padding: 0.3rem 0.6rem;
+    border-radius: 0.6rem;
+    font-size: 0.82rem;
+    color: rgb(var(--text-100));
+    background: rgb(var(--bg-elev));
+    border: 1px solid rgb(var(--border));
+  }
+  .apps-label {
+    margin: 1.5rem 0 0.6rem;
+    font-size: 0.85rem;
+    color: rgb(var(--text-300));
+  }
+  .apps-starters {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(8.5rem, 1fr));
+    gap: 0.9rem;
+    margin-bottom: 2rem;
+  }
+  .app-starter {
+    display: flex;
+    flex-direction: column;
+    gap: 0.4rem;
+    text-align: left;
+    font-size: 0.875rem;
+    color: rgb(var(--text-100));
+  }
+  .app-starter-tile {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height: 5.5rem;
+    border-radius: 0.8rem;
+    background: rgb(var(--tile));
+    transition: filter 0.15s ease;
+  }
+  .app-starter:hover .app-starter-tile {
+    filter: brightness(1.2);
+  }
+  .app-starter svg {
+    width: 2.4rem;
+    height: 2.4rem;
+    fill: none;
+    stroke: rgb(255 255 255 / 0.85);
+    stroke-width: 1.5;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+  }
+  .apps-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(min(100%, 17rem), 1fr));
+    gap: 1.1rem;
+  }
+  .app-card {
+    position: relative;
+    min-width: 0;
+    overflow: hidden;
+    border-radius: 0.9rem;
+    background: rgb(var(--bg-elev));
+    border: 1px solid rgb(var(--border));
+    transition: border-color 0.15s ease;
+  }
+  .app-card:hover {
+    border-color: rgb(var(--text-300));
+  }
+  .app-open {
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+    min-width: 0;
+    text-align: left;
+    color: rgb(var(--text-100));
+  }
+  .app-thumb {
+    display: block;
+    position: relative;
+    width: 100%;
+    aspect-ratio: 16 / 9;
+    overflow: hidden;
+    background: rgb(var(--hover) / 0.08);
+  }
+  .app-thumb iframe {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 1200px;
+    height: 675px;
+    border: 0;
+    background: white;
+    pointer-events: none;
+    transform: scale(var(--thumb-scale, 0.25));
+    transform-origin: top left;
+  }
+  .app-foot {
+    display: flex;
+    flex-direction: column;
+    gap: 0.1rem;
+    padding: 0.7rem 2.4rem 0.75rem 0.85rem;
+    min-width: 0;
+  }
+  .app-more {
+    position: absolute;
+    right: 0.4rem;
+    bottom: 0.7rem;
+    opacity: 1;
+  }
+  .apps-grid.is-list {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 0.5rem;
+  }
+  .apps-grid.is-list .app-thumb {
+    display: none;
+  }
   .page-btn {
     display: inline-flex;
     margin: 0.25rem 0;
@@ -4964,25 +5303,6 @@ addEventListener('load',function(){restore();if(saved.scroll)window.scrollTo(0,s
     display: flex;
     flex-direction: column;
     gap: 0.75rem;
-  }
-  .app-row {
-    padding-bottom: 0.6rem;
-    border-bottom: 1px solid rgb(var(--border) / 0.6);
-  }
-  .app-open {
-    display: flex;
-    flex-direction: column;
-    gap: 0.1rem;
-    width: 100%;
-    min-width: 0;
-    text-align: left;
-    color: rgb(var(--text-100));
-  }
-  .app-actions {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 0.25rem;
-    margin-top: 0.25rem;
   }
   .memory-head {
     display: flex;
