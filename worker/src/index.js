@@ -34,6 +34,7 @@
  *   POST   /title                → { title } for a new conversation (Haiku)
  *   POST   /compact              → { summary } of older messages (Sonnet)
  *   POST   /files[?keep=1]       → upload one attachment (raw body)
+ *   GET    /files/<ref>          → the R2 copy of an attachment, for the viewer
  *   DELETE /files/<ref>          → delete an attachment this Worker uploaded
  *   GET    /outputs/<file_id>    → download a file Claude made for this user
  *   GET    /convos               → { items: [{ id, title, updatedAt, projectId }] }
@@ -147,6 +148,11 @@ const UPLOAD_TYPES = {
 };
 const BLOCK_TYPES = { image: 'image', document: 'document', container: 'container_upload' };
 const MAX_UPLOAD_BYTES = 30 * 1024 * 1024;
+// Uploads can't be read back from the Files API, so the page's viewer reads
+// a copy in R2. Chat copies expire with a bucket rule on chat/ (90 days,
+// like the files); new copies stop at the cap, inside R2's 10 GB free tier.
+const VIEWABLE_TYPES = /^(image\/|application\/pdf$|text\/plain$)/;
+const MAX_STORED_BYTES = 9 * 1024 * 1024 * 1024;
 const FILE_TTL_SECONDS = 90 * 24 * 60 * 60; // the Files API maximum; project files don't expire
 const ANTHROPIC_FILES_URL = 'https://api.anthropic.com/v1/files';
 
@@ -189,6 +195,7 @@ const ROUTES = [
   ['POST', /^\/title$/, 'title'],
   ['POST', /^\/compact$/, 'compact'],
   ['POST', /^\/files$/, 'upload'],
+  ['GET', /^\/files\/([\w.-]{1,200})$/, 'viewFile'],
   ['DELETE', /^\/files\/([\w.-]{1,200})$/, 'deleteFile'],
   ['GET', /^\/outputs\/(file_[A-Za-z0-9]{1,100})$/, 'download'],
   ['GET', /^\/convos$/, 'listConvos'],
@@ -263,9 +270,11 @@ export default {
       case 'compact':
         return compact(request, user, env, ctx, cors);
       case 'upload':
-        return uploadFile(request, url, env, cors);
+        return uploadFile(request, url, user, env, cors);
+      case 'viewFile':
+        return viewFile(user, param, env, cors);
       case 'deleteFile':
-        return deleteFile(param, env, cors);
+        return deleteFile(user, param, env, cors);
     }
 
     if (!env.DB) {
@@ -1104,7 +1113,10 @@ async function deleteProject(user, id, env, cors) {
   if (project) {
     for (const f of project.files) {
       const fileId = await verifyRef(f.ref, f.kind, env);
-      if (fileId) await anthropicDeleteFile(fileId, env);
+      if (fileId) {
+        await anthropicDeleteFile(fileId, env);
+        await dropCopy(user, fileId, env);
+      }
     }
     await env.DB.prepare('DELETE FROM projects WHERE user = ? AND id = ?').bind(user, id).run();
     await memoryDelete(user, projectMemoryDir(id), env);
@@ -1259,7 +1271,7 @@ async function runMemory(user, input, env, scope) {
 // name URL-encoded in X-File-Name. The Worker builds the multipart upload
 // itself so it controls the type allowlist and the expiry (?keep=1 for
 // project files, which stay until the project is deleted).
-async function uploadFile(request, url, env, cors) {
+async function uploadFile(request, url, user, env, cors) {
   if (!env.FILE_REF_SECRET) {
     return json({ error: 'Dosya yükleme henüz açılmadı.' }, 503, cors);
   }
@@ -1301,6 +1313,8 @@ async function uploadFile(request, url, env, cors) {
   }
 
   const file = await upstream.json();
+  const keep = url.searchParams.get('keep') === '1';
+  await storeCopy(`${keep ? 'project' : 'chat'}/${user}/${file.id}`, blob, type, env);
   return json(
     { ref: await signRef(file.id, kind, env), kind, expiresAt: file.expires_at ?? null },
     200,
@@ -1308,11 +1322,53 @@ async function uploadFile(request, url, env, cors) {
   );
 }
 
-async function deleteFile(ref, env, cors) {
+// A failed copy never fails the upload: Claude still gets the file.
+async function storeCopy(key, blob, type, env) {
+  if (!env.FILES || !VIEWABLE_TYPES.test(type)) return;
+  try {
+    let used = 0;
+    let cursor;
+    do {
+      const page = await env.FILES.list({ cursor });
+      used += page.objects.reduce((sum, o) => sum + o.size, 0);
+      cursor = page.truncated ? page.cursor : undefined;
+    } while (cursor);
+    if (used + blob.size > MAX_STORED_BYTES) {
+      console.error(`R2 cap reached (${used} bytes); no copy of ${key}.`);
+      return;
+    }
+    await env.FILES.put(key, blob, { httpMetadata: { contentType: type } });
+  } catch (err) {
+    console.error('R2 copy failed:', err);
+  }
+}
+
+async function fileIdOf(ref, env) {
   let fileId = null;
   for (const kind of Object.keys(BLOCK_TYPES)) fileId ??= await verifyRef(ref, kind, env);
+  return fileId;
+}
+
+async function viewFile(user, ref, env, cors) {
+  const fileId = await fileIdOf(ref, env);
+  if (!fileId) return json({ error: 'Geçersiz dosya.' }, 400, cors);
+  const object =
+    (await env.FILES?.get(`chat/${user}/${fileId}`)) ?? (await env.FILES?.get(`project/${user}/${fileId}`));
+  if (!object) return json({ error: 'Bu dosyanın görüntülenecek kopyası yok.' }, 404, cors);
+  return new Response(object.body, {
+    headers: { ...cors, 'Content-Type': object.httpMetadata?.contentType ?? 'application/octet-stream' },
+  });
+}
+
+async function dropCopy(user, fileId, env) {
+  await env.FILES?.delete([`chat/${user}/${fileId}`, `project/${user}/${fileId}`]);
+}
+
+async function deleteFile(user, ref, env, cors) {
+  const fileId = await fileIdOf(ref, env);
   if (!fileId) return json({ error: 'Geçersiz dosya.' }, 400, cors);
   if (!(await anthropicDeleteFile(fileId, env))) return json({ error: 'Dosya silinemedi.' }, 502, cors);
+  await dropCopy(user, fileId, env);
   return new Response(null, { status: 204, headers: cors });
 }
 

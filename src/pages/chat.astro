@@ -224,6 +224,7 @@ import { CHAT_EFFORTS, CHAT_MODELS } from '@lib/constants';
           </button>
         </header>
         <div id="split-view" class="split-view"></div>
+        <div id="file-view" class="file-view"></div>
         <iframe id="html-panel-frame" class="html-panel-frame" title="HTML önizleme" sandbox="allow-scripts allow-modals" referrerpolicy="no-referrer"></iframe>
       </aside>
     </div>
@@ -974,18 +975,23 @@ import { CHAT_EFFORTS, CHAT_MODELS } from '@lib/constants';
         return row;
       }
 
-      function fileRows(title: string, files: { name: string; expiresAt?: string | null }[]) {
+      function fileRows(title: string, files: Attachment[]) {
         const label = document.createElement('div');
         label.className = 'sources-label';
         label.textContent = title;
         return [
           label,
           ...files.map((f) => {
-            const row = document.createElement('div');
+            const viewable = f.kind !== 'container' && !isExpired(f);
+            const row = document.createElement(viewable ? 'button' : 'div');
             row.className = 'source-row';
             row.title = f.name;
             row.textContent = f.name;
-            if (isExpired(f as Attachment)) row.classList.add('is-expired');
+            if (isExpired(f)) row.classList.add('is-expired');
+            if (row instanceof HTMLButtonElement) {
+              row.type = 'button';
+              row.addEventListener('click', () => void openFile(f));
+            }
             return row;
           }),
         ];
@@ -1342,11 +1348,25 @@ import { CHAT_EFFORTS, CHAT_MODELS } from '@lib/constants';
             img.src = a.thumb.startsWith('data:image/') ? a.thumb : '';
             img.alt = a.name;
             img.title = expired ? `${a.name} (süresi doldu)` : a.name;
-            row.append(img);
+            if (expired) row.append(img);
+            else {
+              const open = document.createElement('button');
+              open.type = 'button';
+              open.className = 'att-open';
+              open.setAttribute('aria-label', `${a.name} dosyasını aç`);
+              open.append(img);
+              open.addEventListener('click', () => void openFile(a));
+              row.append(open);
+            }
           } else {
-            const chip = document.createElement('span');
+            const viewable = a.kind !== 'container' && !expired;
+            const chip = document.createElement(viewable ? 'button' : 'span');
             chip.className = `att-chip${expired ? ' is-expired' : ''}`;
             chip.textContent = `${a.kind === 'image' ? '🖼' : '📄'} ${a.name}${expired ? ' · süresi doldu' : ''}`;
+            if (chip instanceof HTMLButtonElement) {
+              chip.type = 'button';
+              chip.addEventListener('click', () => void openFile(a));
+            }
             row.append(chip);
           }
         }
@@ -1397,6 +1417,10 @@ import { CHAT_EFFORTS, CHAT_MODELS } from '@lib/constants';
 
       const htmlPanel = $<HTMLElement>('html-panel');
       const htmlFrame = $<HTMLIFrameElement>('html-panel-frame');
+      const fileView = $<HTMLDivElement>('file-view');
+      let panelFile: { name: string; blob: Blob } | null = null;
+      let fileObserver: IntersectionObserver | null = null;
+      let fileRun = 0;
       const htmlTitle = $<HTMLSpanElement>('html-panel-title');
       const splitView = $<HTMLDivElement>('split-view');
       let panelDoc: { name: string; html: string; convo: string | null } | null = null;
@@ -1415,12 +1439,97 @@ import { CHAT_EFFORTS, CHAT_MODELS } from '@lib/constants';
         panelDoc = null;
         splitId = null;
         splitView.replaceChildren();
-        htmlPanel.classList.remove('is-open', 'is-split');
+        panelFile = null;
+        fileRun += 1;
+        fileObserver?.disconnect();
+        fileView.replaceChildren();
+        htmlPanel.classList.remove('is-open', 'is-split', 'is-file');
         htmlPanel.inert = true;
         htmlFrame.removeAttribute('srcdoc');
       }
+
+      // ─── File viewer ─────────────────────────────────────────────────
+      async function renderPdf(blob: Blob, run: number) {
+        const [pdfjs, worker] = await Promise.all([
+          import('pdfjs-dist/legacy/build/pdf.mjs'),
+          import('pdfjs-dist/legacy/build/pdf.worker.min.mjs?url'),
+        ]);
+        pdfjs.GlobalWorkerOptions.workerSrc = worker.default;
+        const doc = await pdfjs.getDocument({ data: await blob.arrayBuffer() }).promise;
+        if (run !== fileRun) return void doc.destroy();
+        fileView.replaceChildren();
+        const width = fileView.clientWidth - 24;
+        fileObserver = new IntersectionObserver(
+          (entries) => {
+            for (const entry of entries) {
+              if (!entry.isIntersecting) continue;
+              const canvas = entry.target as HTMLCanvasElement;
+              fileObserver?.unobserve(canvas);
+              void doc.getPage(Number(canvas.dataset.page)).then((page) => {
+                const fit = width / page.getViewport({ scale: 1 }).width;
+                const viewport = page.getViewport({ scale: fit * Math.min(devicePixelRatio, 2) });
+                canvas.width = viewport.width;
+                canvas.height = viewport.height;
+                return page.render({ canvasContext: canvas.getContext('2d')!, viewport }).promise;
+              });
+            }
+          },
+          { root: fileView, rootMargin: '800px 0px' },
+        );
+        const first = await doc.getPage(1);
+        const ratio = first.getViewport({ scale: 1 });
+        for (let n = 1; n <= doc.numPages; n++) {
+          const canvas = document.createElement('canvas');
+          canvas.className = 'pdf-page';
+          canvas.dataset.page = String(n);
+          canvas.style.aspectRatio = `${ratio.width} / ${ratio.height}`;
+          fileView.append(canvas);
+          fileObserver.observe(canvas);
+        }
+      }
+
+      async function openFile(a: Pick<Attachment, 'ref' | 'name'>) {
+        closePanel();
+        const run = fileRun;
+        htmlTitle.textContent = a.name;
+        fileView.replaceChildren(noteEl('Açılıyor…'));
+        htmlPanel.classList.add('is-open', 'is-file');
+        htmlPanel.inert = false;
+        closeDrawer();
+        sourcesRail.classList.remove('is-open');
+        try {
+          const res = await api(`/files/${encodeURIComponent(a.ref)}`);
+          if (res.status === 404) throw new Error('Bu dosyanın kopyası yok. Görmek için yeniden yüklemen gerekiyor; Claude okumaya devam eder.');
+          if (!res.ok) throw new Error(await errorMessage(res));
+          const blob = await res.blob();
+          if (run !== fileRun) return;
+          panelFile = { name: a.name, blob };
+          if (blob.type === 'application/pdf') await renderPdf(blob, run);
+          else if (blob.type.startsWith('image/')) {
+            const img = document.createElement('img');
+            img.className = 'file-image';
+            img.alt = a.name;
+            img.src = URL.createObjectURL(blob);
+            fileView.replaceChildren(img);
+          } else {
+            const text = document.createElement('pre');
+            text.className = 'file-text';
+            text.textContent = await blob.text();
+            fileView.replaceChildren(text);
+          }
+        } catch (err) {
+          if (run === fileRun) fileView.replaceChildren(noteEl((err as Error).message || 'Dosya açılamadı.', 'error'));
+        }
+      }
       $<HTMLButtonElement>('html-panel-close').addEventListener('click', closePanel);
       $<HTMLButtonElement>('html-panel-save').addEventListener('click', () => {
+        if (panelFile) {
+          const link = document.createElement('a');
+          link.href = URL.createObjectURL(panelFile.blob);
+          link.download = panelFile.name;
+          link.click();
+          return;
+        }
         if (!panelDoc) return;
         const a = document.createElement('a');
         a.href = URL.createObjectURL(new Blob([panelDoc.html], { type: 'text/html;charset=utf-8' }));
@@ -3466,12 +3575,18 @@ import { CHAT_EFFORTS, CHAT_MODELS } from '@lib/constants';
     color: rgb(var(--text-300));
   }
   .source-row {
+    display: block;
+    width: 100%;
     padding: 0.3rem 0;
+    text-align: left;
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
     font-size: 0.82rem;
     color: rgb(var(--text-200));
+  }
+  button.source-row:hover {
+    color: rgb(var(--accent-1));
   }
   .source-row.is-expired {
     text-decoration: line-through;
@@ -3734,6 +3849,43 @@ import { CHAT_EFFORTS, CHAT_MODELS } from '@lib/constants';
   }
   .html-panel.is-split .split-view {
     display: flex;
+  }
+  .file-view {
+    display: none;
+    flex: 1;
+    flex-direction: column;
+    gap: 0.75rem;
+    min-height: 0;
+    overflow-y: auto;
+    padding: 0.75rem;
+    background: rgb(var(--bg-base));
+  }
+  .html-panel.is-file .file-view {
+    display: flex;
+  }
+  .html-panel.is-file .html-panel-frame {
+    display: none;
+  }
+  .pdf-page,
+  .file-image {
+    display: block;
+    width: 100%;
+    flex-shrink: 0;
+    border-radius: 0.25rem;
+    background: white;
+  }
+  .file-image {
+    height: auto;
+    background: none;
+  }
+  .file-text {
+    white-space: pre-wrap;
+    font-size: 0.85rem;
+    color: rgb(var(--text-100));
+  }
+  .att-open {
+    display: block;
+    border-radius: 0.6rem;
   }
   .html-panel.is-split .html-panel-frame,
   .html-panel.is-split #html-panel-save {

@@ -34,5 +34,11 @@ database_name = "kaanusta-chat"
 database_id = "e9da0476-502f-4673-a5f5-e17736a5957e"
 migrations_dir = "migrations"
 
+# Copies of uploads for the page's file viewer. chat/ objects expire through
+# a 90-day lifecycle rule on the bucket.
+[[r2_buckets]]
+binding = "FILES"
+bucket_name = "kaanusta-chat-files"
+
 [observability]
 enabled = true

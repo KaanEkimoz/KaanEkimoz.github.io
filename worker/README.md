@@ -113,6 +113,9 @@ Yeni bir `migrations/000N_*.sql` eklendiğinde aynı komut yalnızca eksik olanl
 
 ## Dosya ekleri
 
+- Files API yüklenen dosyayı geri vermediği için görüntüleyici R2'deki kopyayı okur (`kaanusta-chat-files`, PDF, görsel, düz metin). Sohbet kopyaları (`chat/`) bucket kuralıyla 90 günde silinir, proje kopyaları (`project/`) proje silinince gider.
+- Cloudflare'de R2 için sert harcama tavanı yok, bütçe uyarısı yalnızca e-posta atar. Bu yüzden Worker toplam 9 GB'ı (`MAX_STORED_BYTES`) aşınca yeni kopya almaz; dosya Claude'a yine gider, sadece panelde açılmaz.
+
 - Dosyalar Anthropic Files API'ye yüklenir; mesajlarda yeniden gönderilmez, kimlikleriyle anılır.
 - Yüklenen dosyalar API anahtarının **bütün workspace'ine** açıktır. Bu yüzden sayfa çıplak `file_id` görmez: Worker `<file_id>.<imza>` verir ve yalnızca kendi imzaladığı referansları kabul eder. Bu sohbet için ayrı bir workspace ve o workspace'e ait bir API anahtarı kullanmak en temizidir.
 - Her dosya 90 gün sonra kendiliğinden silinir; sohbet silinince ekleri de hemen silinir. Süresi dolan ekler eski sohbette "süresi doldu" olarak görünür ve modele not olarak gider.
