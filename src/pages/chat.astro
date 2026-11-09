@@ -175,7 +175,7 @@ import { CHAT_EFFORTS, CHAT_MODELS } from '@lib/constants';
               <textarea id="input" rows="1" placeholder="Bugün sana nasıl yardımcı olabilirim?" autocomplete="off"></textarea>
               <div class="composer-bar">
                 <div class="composer-tools">
-                  <button id="attach-btn" type="button" class="tool-btn" aria-label="Dosya ekle" title="Dosya ekle: görsel, PDF, metin, Excel, Word">
+                  <button id="attach-btn" type="button" class="tool-btn" aria-label="Dosya ekle" title="Dosya ekle: görsel, PDF, metin, Excel, Word, PowerPoint">
                     <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M12 5v14M5 12h14" /></svg>
                   </button>
                   <input
@@ -1057,7 +1057,7 @@ import { CHAT_EFFORTS, CHAT_MODELS } from '@lib/constants';
         return [
           label,
           ...files.map((f) => {
-            const viewable = f.kind !== 'container' && !isExpired(f);
+            const viewable = canView(f) && !isExpired(f);
             const row = document.createElement(viewable ? 'button' : 'div');
             row.className = 'source-row';
             row.title = f.name;
@@ -1353,6 +1353,8 @@ import { CHAT_EFFORTS, CHAT_MODELS } from '@lib/constants';
 
       // ─── Rendering ─────────────────────────────────────────────────────
       const isExpired = (a: Attachment) => !!a.expiresAt && Date.parse(a.expiresAt) <= Date.now();
+      // Slides open in the panel like PDFs; other Office files only live in the sandbox.
+      const canView = (a: Pick<Attachment, 'kind' | 'name'>) => a.kind !== 'container' || /\.pptx$/i.test(a.name);
 
       function attachmentsEl(atts: Attachment[]): HTMLElement {
         const row = document.createElement('div');
@@ -1376,7 +1378,7 @@ import { CHAT_EFFORTS, CHAT_MODELS } from '@lib/constants';
               row.append(open);
             }
           } else {
-            const viewable = a.kind !== 'container' && !expired;
+            const viewable = canView(a) && !expired;
             const chip = document.createElement(viewable ? 'button' : 'span');
             chip.className = `att-chip${expired ? ' is-expired' : ''}`;
             chip.textContent = `${a.kind === 'image' ? '🖼' : '📄'} ${a.name}${expired ? ' · süresi doldu' : ''}`;
@@ -1467,6 +1469,7 @@ addEventListener('load',function(){restore();if(saved.scroll)window.scrollTo(0,s
       const fileView = $<HTMLDivElement>('file-view');
       let panelFile: { name: string; blob: Blob } | null = null;
       let fileObserver: IntersectionObserver | null = null;
+      let fileResize: ResizeObserver | null = null;
       let fileRun = 0;
       const htmlTitle = $<HTMLSpanElement>('html-panel-title');
       const splitView = $<HTMLDivElement>('split-view');
@@ -1490,6 +1493,7 @@ addEventListener('load',function(){restore();if(saved.scroll)window.scrollTo(0,s
         panelFile = null;
         fileRun += 1;
         fileObserver?.disconnect();
+        fileResize?.disconnect();
         fileView.replaceChildren();
         htmlPanel.classList.remove('is-open', 'is-split', 'is-file');
         htmlPanel.inert = true;
@@ -1805,6 +1809,32 @@ addEventListener('load',function(){restore();if(saved.scroll)window.scrollTo(0,s
         }
       }
 
+      // Slides render as HTML at their own size, then scale to the panel width.
+      async function renderSlides(blob: Blob, run: number) {
+        const { init } = await import('pptx-preview');
+        if (run !== fileRun) return;
+        const deck = document.createElement('div');
+        deck.className = 'pptx-deck';
+        const stage = document.createElement('div');
+        stage.className = 'pptx-stage';
+        deck.append(stage);
+        const width = 960;
+        const viewer = init(stage, { width, mode: 'list' });
+        await viewer.preview(await blob.arrayBuffer());
+        if (run !== fileRun) return void viewer.destroy();
+        fileView.replaceChildren(deck);
+        const fit = () => {
+          const scale = Math.min(1, (fileView.clientWidth - 24) / width);
+          stage.style.transform = `scale(${scale})`;
+          deck.style.height = `${stage.offsetHeight * scale}px`;
+          deck.style.width = `${width * scale}px`;
+        };
+        fit();
+        fileResize?.disconnect();
+        fileResize = new ResizeObserver(fit);
+        fileResize.observe(fileView);
+      }
+
       function openFile(a: Pick<Attachment, 'ref' | 'name'>) {
         return showFile(a.name, async () => {
           const res = await api(`/files/${encodeURIComponent(a.ref)}`);
@@ -1840,6 +1870,7 @@ addEventListener('load',function(){restore();if(saved.scroll)window.scrollTo(0,s
           if (run !== fileRun) return;
           panelFile = { name, blob };
           if (blob.type === 'application/pdf' || /\.pdf$/i.test(name)) await renderPdf(blob, run);
+          else if (/presentationml/.test(blob.type) || /\.pptx$/i.test(name)) await renderSlides(blob, run);
           else if (blob.type.startsWith('image/') || /\.(png|jpe?g|gif|webp)$/i.test(name)) {
             const img = document.createElement('img');
             img.className = 'file-image';
@@ -1897,10 +1928,10 @@ addEventListener('load',function(){restore();if(saved.scroll)window.scrollTo(0,s
         const openers = new Map<string, () => void>();
         const project = projectOf(c?.projectId ?? currentProject);
         for (const a of [...(project?.files ?? []), ...(c?.messages ?? []).flatMap((m) => m.attachments ?? [])]) {
-          if (a.kind !== 'container' && !isExpired(a)) openers.set(a.name, () => void openFile(a));
+          if (canView(a) && !isExpired(a)) openers.set(a.name, () => void openFile(a));
         }
         for (const f of (c?.messages ?? []).flatMap((m) => m.files ?? [])) {
-          if (/\.(pdf|png|jpe?g|gif|webp)$/i.test(f.name)) openers.set(f.name, () => void openOutput(f));
+          if (/\.(pdf|pptx|png|jpe?g|gif|webp)$/i.test(f.name)) openers.set(f.name, () => void openOutput(f));
         }
         return openers;
       }
@@ -1982,7 +2013,7 @@ addEventListener('load',function(){restore();if(saved.scroll)window.scrollTo(0,s
             });
             row.append(view);
           }
-          if (/\.pdf$/i.test(f.name)) {
+          if (/\.(pdf|pptx)$/i.test(f.name)) {
             const view = document.createElement('button');
             view.type = 'button';
             view.className = 'att-chip out-chip';
@@ -1990,8 +2021,8 @@ addEventListener('load',function(){restore();if(saved.scroll)window.scrollTo(0,s
             view.addEventListener('click', () => void openOutput(f));
             row.append(view);
           }
-          // HTML and PDF download from the panel they open in.
-          if (/\.(html?|pdf)$/i.test(f.name)) continue;
+          // HTML, PDF and slides download from the panel they open in.
+          if (/\.(html?|pdf|pptx)$/i.test(f.name)) continue;
           const btn = document.createElement('button');
           btn.type = 'button';
           btn.className = 'att-chip out-chip';
@@ -3407,7 +3438,7 @@ addEventListener('load',function(){restore();if(saved.scroll)window.scrollTo(0,s
             : a.kind === 'image'
               ? { type: 'image', ref: a.ref }
               : a.kind === 'container'
-                ? { type: 'container_upload', ref: a.ref }
+                ? { type: 'container_upload', ref: a.ref, title: a.name }
                 : { type: 'document', ref: a.ref, title: a.name },
         );
         if (m.content) blocks.push({ type: 'text', text: m.content });
@@ -4509,6 +4540,22 @@ addEventListener('load',function(){restore();if(saved.scroll)window.scrollTo(0,s
   .file-image {
     height: auto;
     background: none;
+  }
+  .pptx-deck {
+    flex-shrink: 0;
+    overflow: hidden;
+  }
+  .pptx-stage {
+    width: 960px;
+    transform-origin: top left;
+  }
+  .pptx-stage .pptx-preview-wrapper {
+    background: none !important;
+  }
+  .pptx-stage .pptx-preview-slide-wrapper {
+    margin: 0 0 18px !important;
+    border-radius: 6px;
+    overflow: hidden;
   }
   .file-text {
     white-space: pre-wrap;
