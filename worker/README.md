@@ -118,7 +118,8 @@ Yeni bir `migrations/000N_*.sql` eklendiğinde aynı komut yalnızca eksik olanl
 
 ## Dosya ekleri
 
-- Files API yüklenen dosyayı geri vermediği için görüntüleyici R2'deki kopyayı okur (`kaanusta-chat-files`, PDF, görsel, düz metin). Sohbet kopyaları (`chat/`) bucket kuralıyla 90 günde silinir, proje kopyaları (`project/`) proje silinince gider.
+- Files API yüklenen dosyayı geri vermediği için görüntüleyici R2'deki kopyayı okur (`kaanusta-chat-files`, PDF, görsel, düz metin, pptx). Sohbet kopyaları (`chat/`) bucket kuralıyla 90 günde silinir, proje kopyaları (`project/`) proje silinince gider.
+- Bir pptx yüklenince Worker slayt metinlerini ve konuşmacı notlarını sunum sırasıyla çıkarır, kopyanın yanına `<anahtar>.txt` olarak koyar. Claude her turda bu metni belge olarak, dosyanın kendisini de kod sandbox'ında alır. Bu özellikten önce yüklenen sunumlarda metin ve kopya yok.
 - Cloudflare'de R2 için sert harcama tavanı yok, bütçe uyarısı yalnızca e-posta atar. Bu yüzden Worker toplam 9 GB'ı (`MAX_STORED_BYTES`) aşınca yeni kopya almaz; dosya Claude'a yine gider, sadece panelde açılmaz.
 
 - Dosyalar Anthropic Files API'ye yüklenir; mesajlarda yeniden gönderilmez, kimlikleriyle anılır.

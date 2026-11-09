@@ -156,7 +156,11 @@ const MAX_UPLOAD_BYTES = 30 * 1024 * 1024;
 // Uploads can't be read back from the Files API, so the page's viewer reads
 // a copy in R2. Chat copies expire with a bucket rule on chat/ (90 days,
 // like the files); new copies stop at the cap, inside R2's 10 GB free tier.
-const VIEWABLE_TYPES = /^(image\/|application\/pdf$|text\/plain$)/;
+const PPTX_TYPE = 'application/vnd.openxmlformats-officedocument.presentationml.presentation';
+const VIEWABLE_TYPES = /^(image\/|application\/pdf$|text\/plain$|application\/vnd\.openxmlformats-officedocument\.presentationml\.presentation$)/;
+// Slide text read from a pptx on upload, kept next to its copy in R2 and
+// sent beside the sandbox file so Claude reads slides like a document.
+const MAX_SLIDE_TEXT_CHARS = 100_000;
 const MAX_STORED_BYTES = 9 * 1024 * 1024 * 1024;
 const FILE_TTL_SECONDS = 90 * 24 * 60 * 60; // the Files API maximum; project files don't expire
 const ANTHROPIC_FILES_URL = 'https://api.anthropic.com/v1/files';
@@ -402,7 +406,7 @@ async function readChatRequest(request, user, env) {
     if (role !== 'user' && role !== 'assistant') {
       return { error: 'Geçersiz mesaj rolü.', status: 400 };
     }
-    const content = await readContent(m?.content, role, env, counts);
+    const content = await readContent(m?.content, role, user, env, counts);
     if (content.error) return content;
     messages.push({ role, content: content.value });
   }
@@ -430,8 +434,7 @@ async function readChatRequest(request, user, env) {
     if (project?.files.length) {
       const blocks = [];
       for (const f of project.files) {
-        const block = await fileBlock(f, env);
-        if (block) {
+        for (const block of await fileBlock(f, user, env)) {
           blocks.push(block);
           if (block.type === 'container_upload') counts.container = true;
         }
@@ -468,7 +471,7 @@ function hasLink(content) {
 // A message is either a string or a list of blocks:
 //   { type: 'text', text } | { type: 'image' | 'document' | 'container_upload', ref, title? }
 // Attachments are allowed only in user messages.
-async function readContent(content, role, env, counts) {
+async function readContent(content, role, user, env, counts) {
   if (typeof content === 'string') {
     const text = content.trim();
     if (!text) return { error: 'Boş mesaj gönderilemez.', status: 400 };
@@ -491,11 +494,11 @@ async function readContent(content, role, env, counts) {
       blocks.push({ type: 'text', text });
     } else if (Object.values(BLOCK_TYPES).includes(block?.type) && role === 'user') {
       const kind = Object.keys(BLOCK_TYPES).find((k) => BLOCK_TYPES[k] === block.type);
-      const out = await fileBlock({ ref: block.ref, kind, name: block.title }, env);
-      if (!out) return { error: 'Eklerden biri artık kullanılamıyor.', status: 400 };
-      if (out.type === 'container_upload') counts.container = true;
+      const out = await fileBlock({ ref: block.ref, kind, name: block.title }, user, env);
+      if (!out.length) return { error: 'Eklerden biri artık kullanılamıyor.', status: 400 };
+      if (out.some((b) => b.type === 'container_upload')) counts.container = true;
       attachments += 1;
-      blocks.push(out);
+      blocks.push(...out);
     } else {
       return { error: 'Geçersiz mesaj içeriği.', status: 400 };
     }
@@ -511,16 +514,37 @@ async function readContent(content, role, env, counts) {
   return { value: blocks };
 }
 
-// Turns a signed attachment reference into the API content block.
-async function fileBlock(file, env) {
+// Turns a signed attachment reference into its API content blocks
+// (none when the ref is invalid).
+async function fileBlock(file, user, env) {
   const fileId = await verifyRef(file?.ref, file?.kind, env);
-  if (!fileId) return null;
-  if (file.kind === 'container') return { type: 'container_upload', file_id: fileId };
-  const out = { type: BLOCK_TYPES[file.kind], source: { type: 'file', file_id: fileId } };
-  if (file.kind === 'document' && typeof file.name === 'string' && file.name.trim()) {
-    out.title = file.name.trim().slice(0, 200);
+  if (!fileId) return [];
+  const name = typeof file.name === 'string' ? file.name.trim().slice(0, 200) : '';
+  if (file.kind === 'container') {
+    const blocks = [{ type: 'container_upload', file_id: fileId }];
+    const slides = /\.pptx$/i.test(name) ? await slideNotes(user, fileId, env) : null;
+    if (slides) {
+      blocks.unshift({
+        type: 'document',
+        source: { type: 'text', media_type: 'text/plain', data: slides },
+        title: `${name} (slide text)`.slice(0, 200),
+      });
+    }
+    return blocks;
   }
-  return out;
+  const out = { type: BLOCK_TYPES[file.kind], source: { type: 'file', file_id: fileId } };
+  if (file.kind === 'document' && name) out.title = name;
+  return [out];
+}
+
+async function slideNotes(user, fileId, env) {
+  try {
+    const object =
+      (await env.FILES?.get(`chat/${user}/${fileId}.txt`)) ?? (await env.FILES?.get(`project/${user}/${fileId}.txt`));
+    return object ? await object.text() : null;
+  } catch {
+    return null;
+  }
 }
 
 // ─── The turn ──────────────────────────────────────────────────────────────
@@ -831,7 +855,7 @@ function systemPrompt({ name, instructions }, req, memory, apps) {
     parts.push(
       'You can run code in a sandbox (Python with pandas, matplotlib, openpyxl, python-docx, python-pptx, reportlab and more). The sandbox itself is offline, which does not limit web_search or web_fetch: never tell the person you have no internet because of it. ' +
         'When the person wants a file (spreadsheet, document, slides, PDF, chart image), create it and save it at the top level of $OUTPUT_DIR: only files saved there reach them as downloads. ' +
-        'Only Office files (xlsx, docx, pptx) are in the sandbox. PDFs, images and text files are attached to the conversation itself, earlier ones included: read them directly and never look for them in the sandbox or say you cannot reach them.',
+        'Only Office files (xlsx, docx, pptx) are in the sandbox; a pptx also comes with its slide text as a document, so read that first and open the file in the sandbox only for layout, images or charts. PDFs, images and text files are attached to the conversation itself, earlier ones included: read them directly and never look for them in the sandbox or say you cannot reach them.',
     );
   }
   if (memory) {
@@ -1469,7 +1493,9 @@ async function uploadFile(request, url, user, env, cors) {
 
   const file = await upstream.json();
   const keep = url.searchParams.get('keep') === '1';
-  await storeCopy(`${keep ? 'project' : 'chat'}/${user}/${file.id}`, blob, type, env);
+  const key = `${keep ? 'project' : 'chat'}/${user}/${file.id}`;
+  await storeCopy(key, blob, type, env);
+  if (type === PPTX_TYPE) await storeSlideText(key, blob, env);
   return json(
     { ref: await signRef(file.id, kind, env), kind, expiresAt: file.expires_at ?? null },
     200,
@@ -1496,6 +1522,93 @@ async function storeCopy(key, blob, type, env) {
   } catch (err) {
     console.error('R2 copy failed:', err);
   }
+}
+
+async function storeSlideText(key, blob, env) {
+  try {
+    const text = await slideText(await blob.arrayBuffer());
+    if (text) await env.FILES?.put(`${key}.txt`, text, { httpMetadata: { contentType: 'text/plain; charset=utf-8' } });
+  } catch (err) {
+    console.error('Slide text failed:', err);
+  }
+}
+
+// Reads the slides of a pptx in presentation order, with speaker notes:
+// "Slide 1\n<text>\nNotes: <notes>".
+async function slideText(buf) {
+  const parts = await unzip(buf, (n) => /^ppt\/(presentation\.xml|_rels\/presentation\.xml\.rels|(slides|notesSlides)\/(_rels\/)?\w+\.xml(\.rels)?)$/.test(n));
+  const rels = (path) => {
+    const map = new Map();
+    for (const m of (parts.get(path) ?? '').matchAll(/<Relationship\b[^>]*>/g)) {
+      const id = /\bId="([^"]+)"/.exec(m[0])?.[1];
+      const target = /\bTarget="([^"]+)"/.exec(m[0])?.[1];
+      if (id && target) map.set(id, target);
+    }
+    return map;
+  };
+  const paragraphs = (xml) =>
+    [...(xml ?? '').matchAll(/<a:p>[\s\S]*?<\/a:p>|<a:p\s[\s\S]*?<\/a:p>/g)]
+      .map((p) => [...p[0].matchAll(/<a:t(?:\s[^>]*)?>([^<]*)<\/a:t>/g)].map((t) => unescapeXml(t[1])).join(''))
+      .filter((line) => line.trim());
+  const deck = rels('ppt/_rels/presentation.xml.rels');
+  const ids = [...(parts.get('ppt/presentation.xml') ?? '').matchAll(/<p:sldId\b[^>]*\br:id="([^"]+)"/g)].map((m) => m[1]);
+  const slides = ids.map((id) => deck.get(id)).filter(Boolean).map((t) => `ppt/${t.replace(/^\/?ppt\//, '')}`);
+  const out = [];
+  slides.forEach((path, i) => {
+    const file = path.split('/').pop();
+    const notesTarget = [...rels(`ppt/slides/_rels/${file}.rels`).values()].find((t) => t.includes('notesSlide'));
+    const notes = notesTarget ? paragraphs(parts.get(`ppt/notesSlides/${notesTarget.split('/').pop()}`)) : [];
+    const lines = paragraphs(parts.get(path));
+    // Notes slides repeat the slide number as their own text; drop it.
+    const said = notes.filter((n) => n.trim() !== String(i + 1));
+    out.push([`Slide ${i + 1}`, ...lines, ...(said.length ? [`Notes: ${said.join(' ')}`] : [])].join('\n'));
+  });
+  return out.join('\n\n').slice(0, MAX_SLIDE_TEXT_CHARS);
+}
+
+function unescapeXml(s) {
+  return s.replace(/&(lt|gt|quot|apos|amp|#\d+|#x[\da-f]+);/gi, (_, e) => {
+    const named = { lt: '<', gt: '>', quot: '"', apos: "'", amp: '&' }[e.toLowerCase()];
+    if (named) return named;
+    const code = e[1].toLowerCase() === 'x' ? parseInt(e.slice(2), 16) : parseInt(e.slice(1), 10);
+    return String.fromCodePoint(code);
+  });
+}
+
+// A small zip reader for the entries `want` picks (stored or deflated).
+async function unzip(buf, want) {
+  const view = new DataView(buf);
+  const out = new Map();
+  let end = -1;
+  for (let i = buf.byteLength - 22; i >= Math.max(0, buf.byteLength - 65557); i--) {
+    if (view.getUint32(i, true) === 0x06054b50) {
+      end = i;
+      break;
+    }
+  }
+  if (end < 0) return out;
+  const decoder = new TextDecoder();
+  let p = view.getUint32(end + 16, true);
+  for (let n = view.getUint16(end + 10, true); n > 0 && p + 46 <= buf.byteLength; n--) {
+    if (view.getUint32(p, true) !== 0x02014b50) break;
+    const method = view.getUint16(p + 10, true);
+    const packed = view.getUint32(p + 20, true);
+    const size = view.getUint32(p + 24, true);
+    const nameLength = view.getUint16(p + 28, true);
+    const local = view.getUint32(p + 42, true);
+    const name = decoder.decode(new Uint8Array(buf, p + 46, nameLength));
+    p += 46 + nameLength + view.getUint16(p + 30, true) + view.getUint16(p + 32, true);
+    if (!want(name) || size > 8 * 1024 * 1024 || local + 30 > buf.byteLength) continue;
+    const start = local + 30 + view.getUint16(local + 26, true) + view.getUint16(local + 28, true);
+    if (start + packed > buf.byteLength) continue;
+    const data = new Uint8Array(buf, start, packed);
+    if (method === 0) out.set(name, decoder.decode(data));
+    else if (method === 8) {
+      const stream = new Blob([data]).stream().pipeThrough(new DecompressionStream('deflate-raw'));
+      out.set(name, decoder.decode(await new Response(stream).arrayBuffer()));
+    }
+  }
+  return out;
 }
 
 async function fileIdOf(ref, env) {
@@ -1544,7 +1657,8 @@ async function fetchPdf(target, cors) {
 }
 
 async function dropCopy(user, fileId, env) {
-  await env.FILES?.delete([`chat/${user}/${fileId}`, `project/${user}/${fileId}`]);
+  const keys = [`chat/${user}/${fileId}`, `project/${user}/${fileId}`];
+  await env.FILES?.delete([...keys, ...keys.map((k) => `${k}.txt`)]);
 }
 
 async function deleteFile(user, ref, env, cors) {
