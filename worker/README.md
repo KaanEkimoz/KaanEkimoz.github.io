@@ -16,6 +16,7 @@ saklanır ve cihazlar arasında eşitlenir.
 | `ACCESS_TOKEN_KAAN` | `wrangler secret put` | "kaan" kullanıcısının parolası |
 | D1 `kaanusta-chat` | `wrangler.toml` → `[[d1_databases]]` | Sohbetler + kişisel talimatlar; şema `migrations/` |
 | Web araması | `src/index.js` → `WEB_SEARCH_TOOL` | Her istekte açık, Claude gerektiğinde kullanır; arama başına $0,01 |
+| İnsan Modu | "İnsan" düğmesi açıkken sistem talimatına yazım kuralları eklenir (yapay zekâ kalıplarından kaçınma, Türkçe kuralları); Araştırma da açıksa rapor makale olarak yazılır | `HUMAN_MODE_PROMPT`, `HUMAN_RESEARCH_PROMPT` |
 | `FILE_REF_SECRET` | `wrangler secret put` | Dosya referanslarını imzalayan rastgele anahtar; yoksa dosya yükleme kapalı |
 | `ALLOWED_ORIGINS` | `wrangler.toml` → `[vars]` | CORS listesi |
 | Rate limit | `wrangler.toml` → `[[ratelimits]]` | IP başına 60 istek / 60 sn |
