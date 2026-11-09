@@ -189,6 +189,10 @@ import { CHAT_EFFORTS, CHAT_MODELS } from '@lib/constants';
                     <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><circle cx="12" cy="12" r="9" /><path d="M3 12h18M12 3a14 14 0 0 1 0 18M12 3a14 14 0 0 0 0 18" /></svg>
                     <span>Araştırma</span>
                   </button>
+                  <button id="human-btn" type="button" class="chip-btn" aria-pressed="false" title="İnsan Modu: daha doğal yazar; yapay zekâ kalıplarından (abartılı kelimeler, üçlü listeler, tireler, vurucu kapanışlar) kaçınır. Araştırma da açıksa raporu akıcı bir makale olarak yazar.">
+                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M4 20h4L19 9a2.8 2.8 0 0 0-4-4L4 16v4z" /><path d="M13.5 6.5l4 4" /></svg>
+                    <span>İnsan</span>
+                  </button>
                   <button id="model-chip" type="button" class="chip-btn model-chip" aria-haspopup="dialog"></button>
                 </div>
                 <div class="composer-actions">
@@ -473,6 +477,7 @@ import { CHAT_EFFORTS, CHAT_MODELS } from '@lib/constants';
       const KEY_MODEL = 'fx-chat-model';
       const KEY_EFFORT = 'fx-chat-effort';
       const KEY_RESEARCH = 'fx-chat-research';
+      const KEY_HUMAN = 'fx-chat-human';
       // Each device asks for the password again after this long. The Worker
       // still accepts it afterwards; this only makes the browser forget it.
       const TOKEN_MAX_AGE_MS = 30 * 24 * 60 * 60 * 1000;
@@ -515,6 +520,7 @@ import { CHAT_EFFORTS, CHAT_MODELS } from '@lib/constants';
       const modelSelect = $<HTMLSelectElement>('model-select');
       const effortSelect = $<HTMLSelectElement>('effort-select');
       const webBtn = $<HTMLButtonElement>('web-btn');
+      const humanBtn = $<HTMLButtonElement>('human-btn');
       const meter = $<HTMLSpanElement>('meter');
       const attachBtn = $<HTMLButtonElement>('attach-btn');
       const fileInput = $<HTMLInputElement>('file-input');
@@ -3231,6 +3237,7 @@ addEventListener('load',function(){restore();if(saved.scroll)window.scrollTo(0,s
               effort: effortSelect.value,
               web: true, // always offered; Claude searches when the task needs it
               deep: pressed(webBtn),
+              human: pressed(humanBtn),
               code: true, // always offered; Claude runs code when the task needs it
               projectId: convo.projectId ?? undefined,
               convoId: convo.id,
@@ -3774,6 +3781,7 @@ addEventListener('load',function(){restore();if(saved.scroll)window.scrollTo(0,s
       restorePicker(effortSelect, KEY_EFFORT, CHAT_EFFORTS);
       renderModelChip();
       restoreToggle(webBtn, KEY_RESEARCH);
+      restoreToggle(humanBtn, KEY_HUMAN);
 
       // ─── Boot ──────────────────────────────────────────────────────────
       if ('serviceWorker' in navigator) {
@@ -4749,6 +4757,7 @@ addEventListener('load',function(){restore();if(saved.scroll)window.scrollTo(0,s
   @media (max-width: 899px) {
     .composer-inner .composer-under,
     #web-btn span,
+    #human-btn span,
     .topbar #project-edit-btn {
       display: none;
     }
@@ -4766,7 +4775,8 @@ addEventListener('load',function(){restore();if(saved.scroll)window.scrollTo(0,s
     .chat-main.is-apps .topbar .composer-project {
       display: none;
     }
-    #web-btn {
+    #web-btn,
+    #human-btn {
       flex-shrink: 0;
       padding-inline: 0.5rem;
     }
