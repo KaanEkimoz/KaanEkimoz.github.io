@@ -84,8 +84,9 @@ These come from mistakes made in earlier sessions. Follow them in every session,
 /resume              Özgeçmiş / Resume, built from home.ts facts (CAREER, SKILL_GROUPS, EVALS, copy.resume); its button downloads public/cv/*.pdf
 /brickcrack-privacy  hidden, for App Store Connect (iOS build name "BrickCrack" = Brick Game)
 /drawrush-privacy    hidden, raw HTML in public/drawrush-privacy/ (bypasses Astro)
+/drawrush-terms      hidden, raw HTML in public/drawrush-terms/ (same pattern)
 /chat                hidden, private Claude chat (see below)
-/tr/...              Turkish mirror of every page except /chat and /drawrush-privacy
+/tr/...              Turkish mirror of every page except /chat, /drawrush-privacy and /drawrush-terms
 /rss.xml, /tr/rss.xml
 ```
 
