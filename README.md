@@ -49,7 +49,7 @@ src/
     home/         # home page sections (hero canvas, Q&A, AI studio, career, skills, ...)
   layouts/        # BaseLayout (head, nav, footer)
   views/          # page bodies shared by the EN and TR routes (take a `lang` prop)
-  pages/          # EN routes — thin wrappers around views/ (+ chat, privacy pages)
+  pages/          # EN routes — thin wrappers around views/ (+ chat, Brick Crack privacy/terms pages)
     tr/           # TR mirror of the public routes
   styles/
     global.css    # CSS variables, @layer components, prose styles
@@ -65,6 +65,8 @@ public/
   scripts/        # is:inline JS (project modal)
   drawrush-privacy/
   drawrush-terms/
+  brickgame-privacy/  # redirect → /brickcrack-privacy/
+  brickgame-terms/    # redirect → /brickcrack-terms/
 scripts/
   og-image.svg    # source for the OG image — regenerate with sharp
   chat-icon.svg   # source for the /chat app icons
