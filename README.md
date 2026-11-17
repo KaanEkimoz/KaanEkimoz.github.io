@@ -64,6 +64,7 @@ public/
   chat/           # /chat PWA manifest, icons, service worker
   scripts/        # is:inline JS (project modal)
   drawrush-privacy/
+  drawrush-terms/
 scripts/
   og-image.svg    # source for the OG image — regenerate with sharp
   chat-icon.svg   # source for the /chat app icons
