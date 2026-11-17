@@ -82,11 +82,14 @@ These come from mistakes made in earlier sessions. Follow them in every session,
 /projects[/<slug>]   grid with filter pills (All | Products & Web | Games) and detail pages
 /blog[/<slug>]       posts (md / mdx)
 /resume              Özgeçmiş / Resume, built from home.ts facts (CAREER, SKILL_GROUPS, EVALS, copy.resume); its button downloads public/cv/*.pdf
-/brickcrack-privacy  hidden, for App Store Connect (iOS build name "BrickCrack" = Brick Game)
+/brickcrack-privacy  hidden, Astro page (+ /tr mirror) for the store listings; App Store name "Brick Crack" = "Brick Game" on Google Play
+/brickcrack-terms    hidden, same pattern as /brickcrack-privacy
+/brickgame-privacy   hidden, redirect page in public/brickgame-privacy/ → /brickcrack-privacy/ (GitHub Pages has no server redirects: meta refresh + JS + canonical, answers 200)
+/brickgame-terms     hidden, same redirect pattern → /brickcrack-terms/
 /drawrush-privacy    hidden, raw HTML in public/drawrush-privacy/ (bypasses Astro)
 /drawrush-terms      hidden, raw HTML in public/drawrush-terms/ (same pattern)
 /chat                hidden, private Claude chat (see below)
-/tr/...              Turkish mirror of every page except /chat, /drawrush-privacy and /drawrush-terms
+/tr/...              Turkish mirror of every page except /chat, /drawrush-privacy, /drawrush-terms and the /brickgame-* redirects
 /rss.xml, /tr/rss.xml
 ```
 

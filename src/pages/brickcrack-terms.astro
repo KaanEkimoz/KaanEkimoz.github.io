@@ -1,0 +1,198 @@
+---
+/**
+ * Terms of Service — Brick Crack (App Store) / Brick Game (Google Play)
+ *
+ * Standalone page for the store listings, same layout as /brickcrack-privacy.
+ * Not linked from the site nav. /brickgame-terms redirects here
+ * (public/brickgame-terms/index.html). TR mirror at /tr/brickcrack-terms so the
+ * header's language toggle doesn't 404.
+ */
+import BaseLayout from '@layouts/BaseLayout.astro';
+import { type Lang } from '@lib/i18n';
+
+const lang: Lang = 'en';
+---
+
+<BaseLayout
+  lang={lang}
+  title="Terms of Service — Brick Crack (Brick Game)"
+  description="Terms of Service for Brick Crack (App Store) / Brick Game (Google Play), the mobile block puzzle by Ekimoz Games."
+>
+  <article class="max-w-3xl mx-auto px-6 py-16">
+    <header class="mb-10 border-b border-border pb-8">
+      <h1
+        class="font-display font-medium text-3xl sm:text-4xl text-text-100 tracking-tight"
+      >
+        Terms of Service — Brick Crack (Brick Game)
+      </h1>
+      <p class="mt-4 text-text-200 leading-relaxed">
+        Developer: Ekimoz Games (Yusuf Kaan Usta), Türkiye<br />
+        Contact: <a class="text-accent-2 hover:underline underline-offset-4" href="mailto:kaanekimoz@gmail.com">kaanekimoz@gmail.com</a>
+      </p>
+      <p class="mt-3 text-text-300 font-mono text-xs uppercase tracking-widest">
+        Effective date: November 18, 2026
+      </p>
+    </header>
+
+    <div class="prose-content space-y-4 text-text-200 leading-relaxed">
+      <p>
+        These Terms of Service ("Terms") govern your use of the mobile game
+        <strong>Brick Crack</strong>, published as <em>Brick Game</em> on Google
+        Play ("the Game"), made by Ekimoz Games (Yusuf Kaan Usta, "we", "us").
+        How the Game handles information is described in the
+        <a href="/brickcrack-privacy/">Privacy Policy</a>.
+      </p>
+
+      <h2>1. Acceptance and scope</h2>
+      <p>
+        By downloading, installing or playing the Game you agree to these Terms. If
+        you do not agree, do not use the Game.
+      </p>
+      <p>
+        "Brick Crack" on the App Store and "Brick Game" on Google Play are the same
+        game (package / bundle ID <code>com.ekimozgames.brickgame</code> on both),
+        and these Terms cover both versions. They apply in addition to the terms of
+        the store you got the Game from (the App Store or Google Play).
+      </p>
+
+      <h2>2. License to use the Game</h2>
+      <p>
+        We grant you a limited, personal, non-commercial, non-exclusive,
+        non-transferable and revocable license to install and play the Game on
+        devices you own or control. You may not sell, rent, sublicense or otherwise
+        transfer the Game or this license.
+      </p>
+
+      <h2>3. In-app purchases</h2>
+      <p>The Game offers two optional in-app purchases:</p>
+      <ul>
+        <li>
+          <strong>Premium</strong> unlocks levels 16–115 and all themes, and removes
+          ads.
+        </li>
+        <li><strong>Remove Ads</strong> removes ads.</li>
+      </ul>
+      <p>
+        Both are one-time purchases (non-consumable): you pay once and keep them.
+        Payment is handled by Google Play Billing on Android and Apple In-App
+        Purchase on iOS. We never receive your card details; the Game only sees
+        the store's confirmation that a purchase was made.
+      </p>
+      <p>
+        Purchases stay linked to your store account. If you reinstall the Game or
+        move to a new device, use <strong>Restore Purchases</strong>, which you can
+        find in the Premium panel and in the pause menu. Refunds are handled by
+        Google Play or Apple under their own refund policies; we cannot issue them
+        ourselves.
+      </p>
+
+      <h2>4. In-game progress and content</h2>
+      <ul>
+        <li>
+          Unlocked levels, themes, scores and other in-game progress have
+          <strong>no real-money value</strong>. They cannot be exchanged for cash,
+          sold, or transferred to another person.
+        </li>
+        <li>
+          Levels, themes and other content may change as the Game is updated.
+        </li>
+        <li>
+          Progress is stored on your device. If the Game's data on your device is
+          deleted (for example by uninstalling the Game), that progress is lost and
+          we cannot restore it. On Android, the parts saved to Google Play Games
+          cloud save are described in the
+          <a href="/brickcrack-privacy/">Privacy Policy</a>. Purchases can always
+          be brought back with Restore Purchases.
+        </li>
+      </ul>
+
+      <h2>5. Advertising</h2>
+      <p>
+        The Game shows ads (banner, interstitial and optional rewarded ads) through
+        Unity LevelPlay (ironSource) and Unity Ads. Ads are not personalized. We
+        are not responsible for the content of third-party ads or for the products
+        and services they promote. See the
+        <a href="/brickcrack-privacy/">Privacy Policy</a> for how ad data is handled.
+      </p>
+
+      <h2>6. Google Play Games features (Android only)</h2>
+      <p>
+        On Android, the Game uses Google Play Games Services for sign-in,
+        leaderboards, achievements and cloud save. When you use these features,
+        Google's own terms and privacy policy also apply. These features are not
+        available in the iOS version.
+      </p>
+
+      <h2>7. Unacceptable use</h2>
+      <p>You agree not to:</p>
+      <ul>
+        <li>
+          cheat, or use bots, scripts or other tools that give you an unfair
+          advantage;
+        </li>
+        <li>
+          modify, hack or tamper with the Game, its files or its saved data;
+        </li>
+        <li>
+          reverse engineer, decompile or disassemble the Game, except where the law
+          expressly allows it;
+        </li>
+        <li>
+          manipulate leaderboards or achievements, for example by submitting scores
+          you did not legitimately earn;
+        </li>
+        <li>use the Game in any way that breaks the law.</li>
+      </ul>
+
+      <h2>8. Intellectual property</h2>
+      <p>
+        The Game, including its design, artwork, sound and code, belongs to Ekimoz
+        Games. These Terms do not give you any ownership of it. You may not copy or
+        redistribute any part of the Game except as allowed by law.
+      </p>
+
+      <h2>9. No warranty</h2>
+      <p>
+        The Game is provided "as is" and "as available", without warranties of any
+        kind, express or implied. We do not guarantee that the Game will be free
+        of errors or interruptions, or that it will run on every device.
+      </p>
+
+      <h2>10. Limitation of liability</h2>
+      <p>
+        To the maximum extent permitted by applicable law, we are not liable for
+        any indirect, incidental or consequential damages, or for any loss of data
+        or in-game progress, arising from your use of or inability to use the Game.
+        Nothing in these Terms limits any rights you have as a consumer that cannot
+        be limited under applicable law.
+      </p>
+
+      <h2>11. Changes to these Terms</h2>
+      <p>
+        We may update these Terms when the Game changes. The effective date at the
+        top of this page shows the latest version. If you keep using the Game after
+        an update, you accept the updated Terms.
+      </p>
+
+      <h2>12. Termination</h2>
+      <p>
+        You can stop using the Game at any time by uninstalling it. Your license
+        ends automatically if you break these Terms. We may also discontinue the
+        Game or remove it from the stores.
+      </p>
+
+      <h2>13. Governing law</h2>
+      <p>
+        These Terms are governed by the laws of the Republic of Türkiye.
+      </p>
+
+      <h2>14. Contact</h2>
+      <p>For questions about these Terms or about the Game, please write to:</p>
+      <p>
+        <strong>Yusuf Kaan Usta</strong> (Ekimoz Games)<br />
+        <a href="mailto:kaanekimoz@gmail.com">kaanekimoz@gmail.com</a><br />
+        Türkiye
+      </p>
+    </div>
+  </article>
+</BaseLayout>

@@ -1,10 +1,10 @@
 ---
 /**
- * BrickCrack için Gizlilik Politikası — TR mirror.
- * EN versiyon /brickcrack-privacy adresinde; ASC kaydında EN link kullanılır.
- * Bu sayfa, header'daki dil toggle'ı 404 vermesin ve Türkçe ziyaretçi
- * politikaya kendi dilinde ulaşabilsin diye burada duruyor. Site
- * navigasyonundan hiçbir yerden link verilmiyor.
+ * Brick Crack (Brick Game) Gizlilik Politikası — TR mirror.
+ * EN sayfa /brickcrack-privacy adresinde; App Store Connect kaydında EN link
+ * kullanılır. Bu sayfa, header'daki dil toggle'ı 404 vermesin ve Türkçe
+ * ziyaretçi politikaya kendi dilinde ulaşabilsin diye burada. Site
+ * navigasyonundan link verilmiyor.
  */
 import BaseLayout from '@layouts/BaseLayout.astro';
 import { type Lang } from '@lib/i18n';
@@ -14,163 +14,257 @@ const lang: Lang = 'tr';
 
 <BaseLayout
   lang={lang}
-  title="Gizlilik Politikası — BrickCrack"
-  description="Ekimoz Games'in mobil blok puzzle oyunu BrickCrack (iOS) / Brick Game (Android) için gizlilik politikası."
+  title="Gizlilik Politikası — Brick Crack (Brick Game)"
+  description="Ekimoz Games'in mobil blok bulmaca oyunu Brick Crack (App Store) / Brick Game (Google Play) için gizlilik politikası."
 >
   <article class="max-w-3xl mx-auto px-6 py-16">
     <header class="mb-10 border-b border-border pb-8">
       <h1
         class="font-display font-medium text-3xl sm:text-4xl text-text-100 tracking-tight"
       >
-        Gizlilik Politikası — BrickCrack
+        Gizlilik Politikası — Brick Crack (Brick Game)
       </h1>
       <p class="mt-3 text-text-300 font-mono text-xs uppercase tracking-widest">
-        Yürürlük tarihi: 9 Haziran 2026
+        Yürürlük tarihi: 18 Kasım 2026
       </p>
     </header>
 
     <div class="prose-content space-y-4 text-text-200 leading-relaxed">
       <p>
-        Bu Gizlilik Politikası, Türkiye'de yaşayan Yusuf Kaan Usta (Ekimoz Games)
-        tarafından geliştirilen <strong>BrickCrack</strong> (Google Play'de
-        <em>Brick Game</em> adıyla yayımlanır; birlikte "Uygulama", "biz", "bizim"),
-        iOS veya Android'de kullanıldığında bilgilerin nasıl işlendiğini açıklar.
+        Bu Gizlilik Politikası, Türkiye'de yaşayan Yusuf Kaan Usta'nın (Ekimoz
+        Games) geliştirdiği <strong>Brick Crack</strong> oyununun (Google Play'deki
+        adıyla <em>Brick Game</em>; birlikte "Uygulama", "biz") iOS ve Android'de
+        bilgileri nasıl işlediğini anlatır. Uygulamanın kullanım kuralları
+        <a href="/tr/brickcrack-terms/">Kullanım Şartları</a>'nda.
       </p>
       <p>
-        Uygulamayı, hesap açmayı gerektirmeyecek ve mümkün olan en az bilgiyi
-        toplayacak şekilde tasarladık. İşlenen tek veri; Uygulamanın reklam, uygulama
-        içi satın alma ve mağaza dağıtımı için kullandığı üçüncü taraf servisler
-        üzerinden akar. Kendi kullanıcı veritabanımızı tutmuyoruz ve kendi sunucularımızda
-        birinci-taraf analytics çalıştırmıyoruz.
+        Uygulamanın kendi hesap sistemi, sunucusu ya da kullanıcı veritabanı yok.
+        Sizden ad, e-posta, telefon numarası veya kimliğinizi belirleyen başka bir
+        bilgi istemez. Cihazınızdan çıkan veri yalnızca aşağıda anlatılan üçüncü
+        taraf servislere gider: reklamlar, Android'de Google Play Games ve satın
+        almalar için uygulama mağazaları.
       </p>
 
-      <h2>Toplanan bilgiler</h2>
+      <h2>Cihazınızda tutulan veriler</h2>
       <p>
-        Uygulama; sizden isim, e-posta, telefon numarası veya başka bir kimlik
-        belirleyici bilgi istemez. Aşağıdaki bilgiler Uygulamanın gömdüğü üçüncü
-        taraf servisler tarafından işlenir.
+        Uygulama şunları cihazınıza kaydeder (Unity PlayerPrefs). Bunlar bize
+        gönderilmez:
+      </p>
+      <ul>
+        <li>ilerlemeniz ve skorlarınız;</li>
+        <li>ayarlarınız (dil, ses, tema);</li>
+        <li>Günlük Meydan Okuma seriniz;</li>
+        <li>hangi satın almalara sahip olduğunuzu gösteren kayıtlar.</li>
+      </ul>
+
+      <h2>Reklamlar</h2>
+      <p>
+        Uygulama, Unity LevelPlay (ironSource) ve Unity Ads üzerinden banner, geçiş
+        reklamı ve ödüllü reklam gösterir. Google AdMob kullanılmaz.
       </p>
       <ul>
         <li>
-          <strong>Reklam tanımlayıcıları ve reklam sinyalleri.</strong> Uygulama,
-          interstitial ve rewarded reklamlar için LevelPlay (ironSource / Unity Ads)
-          kullanır. LevelPlay ve aracılık ettiği reklam ağları; cihazınızın reklam
-          tanımlayıcısına (iOS'ta IDFA, Android'de GAID), IP adresinizden türetilen
-          yaklaşık konuma, cihaz türüne, işletim sistemi sürümüne ve reklamla olan
-          etkileşim olaylarınıza erişebilir. iOS tarafında, tracking-enabled SDK'lar
-          IDFA'ya erişmeden önce Uygulama App Tracking Transparency izni ister ve
-          verdiğiniz cevaba uyulur.
+          <strong>Reklamlar herkese kişiselleştirilmeden gösterilir.</strong>
+          Uygulama, reklam SDK'larına kişiselleştirilmiş reklama onay vermediğinizi
+          bildirir; bu yüzden ayrıca bir onay ekranı çıkmaz.
         </li>
         <li>
-          <strong>Satın alma kayıtları.</strong> Uygulama içi bir satın alma
-          yaptığınızda işlemi Apple App Store ya da Google Play yürütür ve geri
-          olarak Uygulamaya yalnızca satın almayı açmak veya geri yüklemek için
-          gerekli olan makbuzu iletir. Kart numaranızı, fatura adresinizi veya
-          mağaza hesabı şifrenizi hiçbir zaman görmeyiz.
+          <strong>iOS'ta takip yok.</strong> Uygulama App Tracking Transparency
+          (Uygulama Takip Şeffaflığı) izni istemez ve sizi başka şirketlerin
+          uygulamalarında ya da web sitelerinde takip etmez.
         </li>
         <li>
-          <strong>Çökme ve kararlılık verisi (platform varsayılanı).</strong>
-          Apple App Store Connect ve Google Play Console, Uygulamadan toplu çökme
-          loglarını toplayabilir. Bu, Uygulamanın açtığı bir seçenek değil;
-          platformun varsayılan davranışıdır.
+          Reklamlar kişiselleştirilmese de reklam SDK'ları cihaz bilgilerini
+          (model, işletim sistemi, dil, IP adresinden çıkarılan kaba bölge),
+          reklamlarla etkileşimlerinizi ve Android'de reklam kimliğinizi
+          işleyebilir. Bunları kişiselleştirilmemiş reklam göstermek, bir reklamın
+          ne sıklıkla çıkacağını sınırlamak ve dolandırıcılığı önlemek için
+          kullanırlar.
         </li>
       </ul>
 
-      <h2>Bilgilerin kullanım amacı</h2>
+      <h2>Google Play Games Services (yalnızca Android)</h2>
+      <p>
+        Uygulama Android'de Google Play Games'e otomatik olarak giriş yapar ve onu
+        skor tabloları, başarımlar ve bulut kayıt (Play Games Saved Games) için
+        kullanır. Bulut kayıtta şunlar bulunur:
+      </p>
       <ul>
-        <li>Uygulama içinde reklam göstermek ve geliştirmesini finanse etmek (LevelPlay).</li>
-        <li>
-          Yaptığınız uygulama içi satın almaları açmak ve yeni cihazda geri
-          yüklemenize izin vermek (Apple App Store / Google Play Billing üzerinden
-          Unity IAP).
-        </li>
-        <li>Platform düzeyindeki çökme raporları gerçek bir hatayı işaret ettiğinde, hataları gidermek.</li>
+        <li>açtığınız bölüm sayısı;</li>
+        <li>en yüksek skorlarınız (Klasik, Gelişmiş ve Bölümler);</li>
+        <li>satır başarımının sayacı;</li>
+        <li>eğitim ekranlarını görüp görmediğiniz.</li>
       </ul>
       <p>
-        Kişisel bilgileri satmıyoruz veya kiralamıyoruz, Uygulama ile ilgili veriyi
-        BrickCrack'i işletmekle ilgisiz bir amaç için kullanmıyoruz.
+        Skor tablolarında Play Games adınız ve avatarınız, Play Games ayarlarınıza
+        bağlı olarak diğer oyunculara görünebilir. Bu veriler Google hesabınızda
+        tutulur ve
+        <a href="https://policies.google.com/privacy" target="_blank" rel="noopener">Google'ın Gizlilik Politikası</a>'na
+        tabidir.
+      </p>
+      <p>
+        iOS sürümü Game Center kullanmaz; orada skor tablosu, başarım ya da bulut
+        kayıt yok.
+      </p>
+
+      <h2>Uygulama içi satın almalar</h2>
+      <p>
+        Uygulamada tek seferlik iki satın alma var: <strong>Premium</strong>
+        (16–115. bölümleri ve tüm temaları açar, reklamları kaldırır) ve
+        <strong>Remove Ads</strong> (reklamları kaldırır). Ödemeyi Unity IAP
+        üzerinden Google Play Billing ve Apple'ın uygulama içi satın alma sistemi
+        alır. Kart numaranızı, fatura adresinizi ya da mağaza hesabı şifrenizi hiç
+        görmeyiz; Uygulamaya yalnızca mağazanın satın alma onayı gelir, satın almayı
+        açmak ya da geri yüklemek için bu kadarı yeter.
+      </p>
+
+      <h2>Bildirimler ve paylaşım (Android)</h2>
+      <ul>
+        <li>
+          <strong>Günlük Meydan Okuma hatırlatması.</strong> Uygulama, Günlük Meydan
+          Okuma için akşam 20:00'de yerel bir hatırlatma bildirimi gösterebilir.
+          Bildirim iznini, ilk Günlük Meydan Okuma kazanımınızdan sonra bir kez
+          sorar. Hatırlatma telefonunuzda planlanır; sunucudan gelen bir bildirim
+          yok. Telefonunuzun ayarlarından istediğiniz zaman kapatabilirsiniz.
+        </li>
+        <li>
+          <strong>Paylaşım.</strong> Günlük Meydan Okuma sonucunuzu telefonunuzun
+          kendi paylaşım ekranıyla metin olarak paylaşabilirsiniz. Bize hiçbir şey
+          gönderilmez.
+        </li>
+      </ul>
+
+      <h2>Analitik ve çökme raporları</h2>
+      <p>
+        Uygulamada ayrı bir analitik ya da çökme raporlama SDK'sı yok. Yalnızca
+        Google Play Console ve App Store Connect'in kendi raporlarında gösterdiği
+        kurulum ve çökme istatistiklerini görüyoruz.
+      </p>
+
+      <h2>Bilgiler ne için kullanılır</h2>
+      <ul>
+        <li>Uygulamada reklam göstermek ve geliştirmesini finanse etmek için.</li>
+        <li>
+          Satın aldıklarınızı açmak ve yeni bir cihazda geri yüklemenizi sağlamak
+          için.
+        </li>
+        <li>
+          Android'de skor tablolarını ve başarımları çalıştırmak, ilerlemenizi
+          Google hesabınıza kaydetmek için.
+        </li>
+        <li>Mağazaların çökme raporları gerçek bir sorun gösterdiğinde hataları düzeltmek için.</li>
+      </ul>
+      <p>
+        Kişisel bilgileri satmıyor ya da kiralamıyoruz; Uygulamayla ilgili verileri
+        Brick Crack'i işletmek dışında bir amaçla kullanmıyoruz.
       </p>
 
       <h2>Üçüncü taraf servisler</h2>
       <p>
-        Uygulamanın bağlı olduğu üçüncü taraf servislerin, topladıkları veriyi nasıl
-        işlediklerine dair kendi gizlilik politikaları vardır:
+        Uygulamanın kullandığı üçüncü taraf servislerin, topladıkları verileri nasıl
+        işlediklerini anlatan kendi gizlilik politikaları var:
       </p>
       <ul>
         <li>
-          LevelPlay (ironSource / Unity Ads) —
+          Unity Ads —
+          <a href="https://unity.com/legal/game-player-and-app-user-privacy-policy" target="_blank" rel="noopener">
+            https://unity.com/legal/game-player-and-app-user-privacy-policy
+          </a>
+        </li>
+        <li>
+          Unity LevelPlay (ironSource) —
           <a href="https://www.is.com/privacy-policy/" target="_blank" rel="noopener">
             https://www.is.com/privacy-policy/
           </a>
         </li>
         <li>
-          Apple App Store / Apple In-App Purchase —
-          <a href="https://www.apple.com/legal/privacy/" target="_blank" rel="noopener">
-            https://www.apple.com/legal/privacy/
-          </a>
-        </li>
-        <li>
-          Google Play / Google Play Billing —
+          Google Play / Google Play Billing / Google Play Games Services —
           <a href="https://policies.google.com/privacy" target="_blank" rel="noopener">
             https://policies.google.com/privacy
           </a>
         </li>
         <li>
-          Unity (engine + IAP SDK) —
-          <a href="https://unity.com/legal/privacy-policy" target="_blank" rel="noopener">
-            https://unity.com/legal/privacy-policy
+          Apple App Store / Apple uygulama içi satın alma —
+          <a href="https://www.apple.com/legal/privacy/" target="_blank" rel="noopener">
+            https://www.apple.com/legal/privacy/
           </a>
         </li>
       </ul>
 
       <h2>Çocukların gizliliği</h2>
       <p>
-        BrickCrack genel kitleye yönelik bir oyundur ve 13 yaşın altındaki çocuklara
-        doğrudan hitap etmez. Çocuklardan bilerek kişisel bilgi toplamayız. Bir
-        çocuğun Uygulama üzerinden kişisel bilgi sağladığını düşünüyorsanız, lütfen
-        aşağıdaki adresten bizimle iletişime geçin; üçüncü taraf sağlayıcılarımızla
-        çalışarak bilgiyi kaldırırız.
+        Brick Crack genel kitle için yapılmış bir oyundur, 13 yaş altındaki
+        çocuklara yönelik değildir. Çocuklardan bilerek kişisel bilgi toplamıyoruz.
+        Bir çocuğun Uygulama üzerinden kişisel bilgi verdiğini düşünüyorsanız
+        aşağıdaki adresten bize yazın; üçüncü taraf sağlayıcılarla birlikte bu
+        bilgiyi kaldırmaya çalışırız.
       </p>
+
+      <h2>Seçenekleriniz</h2>
+      <ul>
+        <li>
+          <strong>Bildirimler:</strong> Günlük Meydan Okuma hatırlatmasını
+          telefonunuzun bildirim ayarlarından kapatabilirsiniz.
+        </li>
+        <li>
+          <strong>Android reklam kimliği:</strong> Ayarlar → Google → Reklamlar
+          bölümünden reklam kimliğinizi sıfırlayabilir ya da silebilirsiniz.
+        </li>
+        <li>
+          <strong>iOS'ta takip:</strong> Ayarlar → Gizlilik ve Güvenlik → İzleme
+          bölümünden uygulamaların sizi takip etmek için izin isteyip
+          isteyemeyeceğini belirlersiniz. Uygulama zaten bu izni istemez.
+        </li>
+        <li>
+          <strong>Cihazdaki veriler:</strong> Uygulamayı kaldırdığınızda cihazınıza
+          kaydettiği tüm veriler silinir.
+        </li>
+        <li>
+          <strong>Play Games verileri (Android):</strong> bulut kaydınız ve Play
+          Games verileriniz Google hesabınızda kalır. Bunları Google Play Games
+          uygulamasından ya da Google hesap ayarlarınızdan silebilirsiniz.
+        </li>
+        <li>
+          <strong>Satın almalar</strong> mağaza hesabınıza bağlı kalır; Premium
+          panelindeki ve duraklatma menüsündeki Restore Purchases ile geri
+          yüklenebilir.
+        </li>
+      </ul>
 
       <h2>Haklarınız</h2>
       <p>
         Yaşadığınız yere göre (örneğin Avrupa Birliği, Birleşik Krallık, Türkiye,
-        Kaliforniya veya Brezilya), hakkınızdaki kişisel bilgilere erişme,
-        düzeltme, silme veya işlenmesini sınırlandırma ya da belirli veri
-        kullanımlarından çıkma haklarınız olabilir.
+        Kaliforniya veya Brezilya) hakkınızdaki kişisel bilgilere erişme, bunları
+        düzeltme, silme ya da işlenmesini kısıtlama veya bazı veri kullanımlarını
+        reddetme haklarınız olabilir.
       </p>
       <ul>
         <li>
-          LevelPlay veya diğer reklam ortaklarına karşı haklarınızı kullanmak için
-          yukarıda bağlantılı politikalarına bakın — alttaki toplamayı onlar
-          yürütür.
+          Reklam servislerinde, Google'da ya da Apple'da tutulan veriler için
+          yukarıda bağlantısı verilen gizlilik politikalarına bakın; bu verileri
+          onlar işler.
         </li>
-        <li>Bize doğrudan ulaşmak için aşağıdaki adresi kullanabilirsiniz.</li>
+        <li>Bize doğrudan ulaşmak için aşağıdaki adrese yazabilirsiniz.</li>
       </ul>
-      <p>
-        Kişiselleştirilmiş reklamları işletim sistemi düzeyinde de devre dışı
-        bırakabilirsiniz: <strong>iOS</strong> Ayarlar → Gizlilik ve Güvenlik →
-        İzleme; <strong>Android</strong> Ayarlar → Gizlilik → Reklamlar.
-      </p>
 
       <h2>Veri saklama</h2>
       <p>
-        Uygulama kendi kullanıcı veritabanını tutmadığı için bizim tarafımızda
-        saklanacak bir şey yoktur. Yukarıdaki üçüncü taraf servisler, veriyi kendi
-        politikalarına göre saklar.
+        Kendi sunucumuz olmadığı için bizim tarafımızda saklanan bir veri yok.
+        Cihazınızdaki veriler Uygulamayı kaldırana kadar orada kalır. Android'de
+        bulut kayıt, Google hesabınızda Google'ın kurallarına göre tutulur.
+        Yukarıdaki diğer üçüncü taraf servisler verileri kendi politikalarına göre
+        saklar.
       </p>
 
-      <h2>Politika değişiklikleri</h2>
+      <h2>Politikadaki değişiklikler</h2>
       <p>
-        Uygulamanın veri uygulamaları değiştiğinde bu Gizlilik Politikasını
-        güncelleyebiliriz. Sayfanın üstündeki Yürürlük tarihi, son revizyonu
-        yansıtır. Önemli değişiklikler App Store listelemeleri üzerinden duyurulur.
+        Uygulamanın verileri işleme şekli değiştiğinde bu Gizlilik Politikasını
+        güncelleyebiliriz. Sayfanın üstündeki yürürlük tarihi son güncellemeyi
+        gösterir.
       </p>
 
       <h2>İletişim</h2>
-      <p>
-        Bu politika ya da BrickCrack hakkında sorularınız için:
-      </p>
+      <p>Bu politika ya da Brick Crack hakkındaki sorularınız için:</p>
       <p>
         <strong>Yusuf Kaan Usta</strong> (Ekimoz Games)<br />
         <a href="mailto:kaanekimoz@gmail.com">kaanekimoz@gmail.com</a><br />
