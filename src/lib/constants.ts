@@ -22,6 +22,7 @@ export const SITE = {
 // the /tr prefix when rendering the TR header.
 export const NAV = [
   { key: 'projects', href: '/projects' },
+  { key: 'download', href: '/download' },
   { key: 'blog', href: '/blog' },
   { key: 'resume', href: '/resume' },
 ] as const;

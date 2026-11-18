@@ -19,10 +19,20 @@ export const BCP47: Record<Lang, string> = {
 };
 
 type Dict = {
-  nav: { projects: string; blog: string; resume: string; home: string; contact: string; skip: string; main: string };
+  nav: { projects: string; download: string; blog: string; resume: string; home: string; contact: string; skip: string; main: string };
   footer: { links: string };
   blogIndex: { eyebrow: string; title: string; subtitle: string; empty: string; back: string; updated: string };
   projectsIndex: { eyebrow: string; title: string; subtitle: string };
+  download: {
+    eyebrow: string;
+    title: string;
+    subtitle: string;
+    source: string;
+    website: string;
+    details: string;
+    metaTitle: string;
+    metaDescription: string;
+  };
   projectDetail: {
     back: string;
     role: string;
@@ -49,7 +59,7 @@ type Dict = {
 };
 
 const en: Dict = {
-  nav: { projects: 'Projects', blog: 'Blog', resume: 'Resume', home: 'home', contact: 'Contact', skip: 'Skip to content', main: 'Main' },
+  nav: { projects: 'Projects', download: 'Download', blog: 'Blog', resume: 'Resume', home: 'home', contact: 'Contact', skip: 'Skip to content', main: 'Main' },
   footer: { links: 'Elsewhere' },
   blogIndex: {
     eyebrow: 'Writing',
@@ -63,6 +73,16 @@ const en: Dict = {
     eyebrow: 'Work',
     title: 'Projects',
     subtitle: 'Products I build end to end, and the games where I learned how.',
+  },
+  download: {
+    eyebrow: 'Download',
+    title: 'Get my apps',
+    subtitle: 'Everything you can install or play today, and the games whose source code is on GitHub.',
+    source: 'Source code',
+    website: 'Website',
+    details: 'Details',
+    metaTitle: 'Download',
+    metaDescription: 'Store links for my apps and games, and their source code on GitHub.',
   },
   projectDetail: {
     back: '← Projects',
@@ -97,7 +117,7 @@ const en: Dict = {
 };
 
 const tr: Dict = {
-  nav: { projects: 'Projeler', blog: 'Blog', resume: 'Özgeçmiş', home: 'ana sayfa', contact: 'İletişim', skip: 'İçeriğe geç', main: 'Ana menü' },
+  nav: { projects: 'Projeler', download: 'İndir', blog: 'Blog', resume: 'Özgeçmiş', home: 'ana sayfa', contact: 'İletişim', skip: 'İçeriğe geç', main: 'Ana menü' },
   footer: { links: 'Diğer hesaplar' },
   blogIndex: {
     eyebrow: 'Yazılar',
@@ -111,6 +131,16 @@ const tr: Dict = {
     eyebrow: 'İşler',
     title: 'Projeler',
     subtitle: 'Uçtan uca kurduğum ürünler ve bu işi öğrendiğim oyunlar.',
+  },
+  download: {
+    eyebrow: 'İndir',
+    title: 'Uygulamalarım',
+    subtitle: "Bugün indirip oynayabileceğin her şey, bir de kaynak kodu GitHub'da olan oyunlarım.",
+    source: 'Kaynak kodu',
+    website: 'Web sitesi',
+    details: 'Detaylar',
+    metaTitle: 'İndir',
+    metaDescription: "Uygulamalarımın ve oyunlarımın mağaza bağlantıları, GitHub'daki kaynak kodları.",
   },
   projectDetail: {
     back: '← Projeler',

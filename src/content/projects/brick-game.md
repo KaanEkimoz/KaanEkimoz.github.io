@@ -8,7 +8,6 @@ role: "Solo (code, visuals, UI, SFX, monetization)"
 description: "A polished mobile block-puzzle, built solo end-to-end."
 techStack: ["Unity", "C#", "LevelPlay (ironSource)", "Unity IAP"]
 links:
-  github: "https://github.com/KaanEkimoz/Brick-Game"
   googlePlay: "https://play.google.com/store/apps/details?id=com.ekimozgames.brickgame"
 coverImage: "../../assets/projects/brick-game/cover.png"
 gallery:

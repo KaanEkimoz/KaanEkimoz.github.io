@@ -1,0 +1,195 @@
+---
+/**
+ * Download: every project that has somewhere to get it (store, website,
+ * itch.io) or its source on GitHub, with all of its links under it. Built
+ * from the `links` of the projects collection, so a new link shows up here
+ * without touching this page.
+ */
+import { Image } from 'astro:assets';
+import BaseLayout from '@layouts/BaseLayout.astro';
+import PageHeader from '@components/PageHeader.astro';
+import BrandIcon from '@components/BrandIcon.astro';
+import Tag from '@components/ui/Tag.astro';
+import { getProjects, slugOf } from '@lib/content';
+import { localizedPath, t, type Lang } from '@lib/i18n';
+
+interface Props {
+  lang: Lang;
+}
+
+const { lang } = Astro.props;
+
+const GLOBE =
+  '<svg width="16" height="16" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3c2.5 2.5 3.5 5.5 3.5 9s-1 6.5-3.5 9c-2.5-2.5-3.5-5.5-3.5-9s1-6.5 3.5-9z"/></svg>';
+
+type Link = { href: string; label: string; icon?: string; svg?: string };
+
+const apps = (await getProjects(lang))
+  .map((p) => {
+    const l = p.data.links;
+    const get = [
+      l.googlePlay && { href: l.googlePlay, label: 'Google Play', icon: 'siGoogleplay' },
+      l.appStore && { href: l.appStore, label: 'App Store', icon: 'siAppstore' },
+      l.itchio && { href: l.itchio, label: 'itch.io', icon: 'siItchdotio' },
+      l.website && { href: l.website, label: t('download.website', lang), svg: GLOBE },
+    ].filter(Boolean) as Link[];
+    const source: Link[] = l.github ? [{ href: l.github, label: t('download.source', lang), icon: 'siGithub' }] : [];
+    return { p, get, links: [...get, ...source] };
+  })
+  .filter((a) => a.links.length > 0)
+  // Things people can install first, source-only games after.
+  .sort((a, b) => Number(b.get.length > 0) - Number(a.get.length > 0));
+---
+
+<BaseLayout lang={lang} title={t('download.metaTitle', lang)} description={t('download.metaDescription', lang)}>
+  <div class="wrap page">
+    <PageHeader eyebrow={t('download.eyebrow', lang)} title={t('download.title', lang)} subtitle={t('download.subtitle', lang)} />
+
+    <ul class="apps">
+      {
+        apps.map(({ p, links }) => {
+          const { title, description, platform, coverSquare, coverImage, coverPosition } = p.data;
+          const cover = coverSquare ?? coverImage;
+          return (
+            <li class="app">
+              <a class="thumb" href={localizedPath(`/projects/${slugOf(p.id)}`, lang)} data-project-modal tabindex="-1" aria-hidden="true">
+                {cover && (
+                  <Image
+                    src={cover}
+                    alt=""
+                    widths={[160, 320]}
+                    sizes="160px"
+                    style={!coverSquare && coverPosition ? `object-position:${coverPosition}` : undefined}
+                  />
+                )}
+              </a>
+              <div class="body">
+                <div class="head">
+                  <h2>
+                    <a href={localizedPath(`/projects/${slugOf(p.id)}`, lang)} data-project-modal>
+                      {title}
+                    </a>
+                  </h2>
+                  <Tag variant="accent">{platform}</Tag>
+                </div>
+                <p>{description}</p>
+                <div class="links">
+                  {links.map((l) => (
+                    <a class="get" href={l.href} target="_blank" rel="noopener noreferrer">
+                      {l.icon ? <BrandIcon name={l.icon} size={16} color={false} /> : <Fragment set:html={l.svg} />}
+                      <span>{l.label}</span>
+                      <span class="arrow" aria-hidden="true">↗</span>
+                    </a>
+                  ))}
+                </div>
+              </div>
+            </li>
+          );
+        })
+      }
+    </ul>
+  </div>
+</BaseLayout>
+
+<style>
+  .page {
+    padding-top: clamp(48px, 8vw, 88px);
+    padding-bottom: clamp(56px, 8vw, 96px);
+  }
+  .apps {
+    display: grid;
+    gap: 12px;
+    max-width: 52rem;
+  }
+  .app {
+    display: grid;
+    grid-template-columns: 112px minmax(0, 1fr);
+    gap: 20px;
+    align-items: start;
+    padding: 18px;
+    border-radius: 16px;
+    border: 1px solid rgb(var(--border));
+    background: rgb(var(--bg-elev));
+  }
+  :global(html[data-theme='light']) .app {
+    box-shadow: var(--shadow);
+  }
+  .thumb {
+    display: block;
+    aspect-ratio: 1;
+    border-radius: 14px;
+    overflow: hidden;
+    background: rgb(var(--bg-elev-2));
+  }
+  .thumb :global(img) {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+  .body {
+    display: grid;
+    gap: 8px;
+    min-width: 0;
+  }
+  .head {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 8px 12px;
+  }
+  h2 {
+    font-size: 1.25rem;
+    font-weight: 500;
+    letter-spacing: -0.02em;
+  }
+  h2 a:hover {
+    color: rgb(var(--accent-1));
+  }
+  p {
+    color: rgb(var(--text-200));
+    font-size: 0.95rem;
+  }
+  .links {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-top: 6px;
+  }
+  .get {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    height: 38px;
+    padding: 0 14px;
+    border-radius: 10px;
+    border: 1px solid rgb(var(--border));
+    background: rgb(var(--bg-elev-2));
+    color: rgb(var(--text-100));
+    font-size: 0.9rem;
+    font-weight: 500;
+    transition: border-color 0.2s, transform 0.1s ease-out;
+  }
+  .get:hover {
+    border-color: rgb(var(--accent-1) / 0.6);
+  }
+  .get:active {
+    transform: scale(0.97);
+  }
+  .arrow {
+    color: rgb(var(--text-300));
+    font-size: 0.8rem;
+  }
+  @media (max-width: 559px) {
+    .app {
+      grid-template-columns: 72px minmax(0, 1fr);
+      gap: 14px;
+      padding: 14px;
+    }
+    .thumb {
+      border-radius: 12px;
+    }
+    .links {
+      grid-column: 1 / -1;
+    }
+  }
+</style>
