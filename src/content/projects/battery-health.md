@@ -17,6 +17,7 @@ techStack:
 links:
   github: "https://github.com/KaanEkimoz/BatteryHealth"
   download: "https://github.com/KaanEkimoz/BatteryHealth/releases/latest/download/BatteryHealth.dmg"
+  downloadNote: "Apple silicon only"
 category: product
 published: false
 coverImage: "../../assets/projects/battery-health/cover-wide.webp"

@@ -28,6 +28,8 @@ const projects = defineCollection({
           website: z.string().url().optional(),
           // Direct file download (e.g. a release DMG), shown on /download.
           download: z.string().url().optional(),
+          // Short requirement shown under the download button ("Apple silicon only").
+          downloadNote: z.string().optional(),
         })
         .default({}),
       featured: z.boolean().default(false),
