@@ -1,7 +1,7 @@
 ---
 /**
- * Download: every project that has somewhere to get it (store, website,
- * itch.io or a direct file), with its links under a Download label. Built
+ * Download: every project that can be installed (store, itch.io or a
+ * direct file; websites don't count), with its links under a Download label. Built
  * from the `links` of the projects collection, so a new link shows up here
  * without touching this page.
  */
@@ -20,9 +20,6 @@ interface Props {
 
 const { lang } = Astro.props;
 
-const GLOBE =
-  '<svg width="16" height="16" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3c2.5 2.5 3.5 5.5 3.5 9s-1 6.5-3.5 9c-2.5-2.5-3.5-5.5-3.5-9s1-6.5 3.5-9z"/></svg>';
-
 type Link = { href: string; label: string; kind: string; icon?: string; svg?: string };
 // Google's official badge (trimmed of its transparent margin only).
 const playBadge = lang === 'tr' ? playTr : playEn;
@@ -36,7 +33,6 @@ const apps = (await getProjects(lang))
       l.appStore && { href: l.appStore, label: 'App Store', kind: 'apple', icon: 'siApple' },
       l.itchio && { href: l.itchio, label: 'itch.io', kind: 'itch', icon: 'siItchdotio' },
       l.download && { href: l.download, label: t('download.mac', lang), kind: 'apple', icon: 'siApple' },
-      l.website && { href: l.website, label: t('download.website', lang), kind: 'web', svg: GLOBE },
     ].filter(Boolean) as Link[];
     return { p, links: get };
   })
@@ -179,9 +175,6 @@ const apps = (await getProjects(lang))
   .badge:active,
   .get:active {
     transform: scale(0.97);
-  }
-  .web {
-    background: rgb(var(--accent-strong));
   }
   .apple {
     background: #000;
