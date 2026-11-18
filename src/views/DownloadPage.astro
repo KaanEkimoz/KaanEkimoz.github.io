@@ -10,6 +10,8 @@ import BaseLayout from '@layouts/BaseLayout.astro';
 import PageHeader from '@components/PageHeader.astro';
 import BrandIcon from '@components/BrandIcon.astro';
 import { getProjects, slugOf } from '@lib/content';
+import playEn from '@/assets/badges/google-play-en.png';
+import playTr from '@/assets/badges/google-play-tr.png';
 import { localizedPath, t, type Lang } from '@lib/i18n';
 
 interface Props {
@@ -21,18 +23,21 @@ const { lang } = Astro.props;
 const GLOBE =
   '<svg width="16" height="16" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3c2.5 2.5 3.5 5.5 3.5 9s-1 6.5-3.5 9c-2.5-2.5-3.5-5.5-3.5-9s1-6.5 3.5-9z"/></svg>';
 
-type Link = { href: string; label: string; icon?: string; svg?: string };
+type Link = { href: string; label: string; kind: string; icon?: string; svg?: string };
+// Google's official badge (trimmed of its transparent margin only).
+const playBadge = lang === 'tr' ? playTr : playEn;
+const playAlt = lang === 'tr' ? "Google Play'den indirin" : 'Get it on Google Play';
 
 const apps = (await getProjects(lang))
   .map((p) => {
     const l = p.data.links;
     const get = [
-      l.googlePlay && { href: l.googlePlay, label: 'Google Play', icon: 'siGoogleplay' },
-      l.appStore && { href: l.appStore, label: 'App Store', icon: 'siAppstore' },
-      l.itchio && { href: l.itchio, label: 'itch.io', icon: 'siItchdotio' },
-      l.website && { href: l.website, label: t('download.website', lang), svg: GLOBE },
+      l.googlePlay && { href: l.googlePlay, label: 'Google Play', kind: 'play' },
+      l.appStore && { href: l.appStore, label: 'App Store', kind: 'apple', icon: 'siApple' },
+      l.itchio && { href: l.itchio, label: 'itch.io', kind: 'itch', icon: 'siItchdotio' },
+      l.website && { href: l.website, label: t('download.website', lang), kind: 'web', svg: GLOBE },
     ].filter(Boolean) as Link[];
-    const source: Link[] = l.github ? [{ href: l.github, label: t('download.source', lang), icon: 'siGithub' }] : [];
+    const source: Link[] = l.github ? [{ href: l.github, label: t('download.source', lang), kind: 'github', icon: 'siGithub' }] : [];
     return { p, get, links: [...get, ...source] };
   })
   .filter((a) => a.links.length > 0)
@@ -51,6 +56,7 @@ const apps = (await getProjects(lang))
           const cover = coverSquare ?? coverImage;
           return (
             <li class="app">
+              <h2>{title}</h2>
               <a class="thumb" href={localizedPath(`/projects/${slugOf(p.id)}`, lang)} data-project-modal aria-label={title}>
                 {cover && (
                   <Image
@@ -63,12 +69,18 @@ const apps = (await getProjects(lang))
                 )}
               </a>
               <div class="links">
-                {links.map((l) => (
-                  <a class="get" href={l.href} target="_blank" rel="noopener noreferrer" aria-label={`${title}: ${l.label}`}>
-                    {l.icon ? <BrandIcon name={l.icon} size={16} color={false} /> : <Fragment set:html={l.svg} />}
-                    <span>{l.label}</span>
-                  </a>
-                ))}
+                {links.map((l) =>
+                  l.kind === 'play' ? (
+                    <a class="badge" href={l.href} target="_blank" rel="noopener noreferrer" aria-label={`${title}: ${playAlt}`}>
+                      <Image src={playBadge} alt={playAlt} widths={[180, 360]} sizes="180px" />
+                    </a>
+                  ) : (
+                    <a class:list={['get', l.kind]} href={l.href} target="_blank" rel="noopener noreferrer" aria-label={`${title}: ${l.label}`}>
+                      {l.icon ? <BrandIcon name={l.icon} size={20} color={false} /> : <Fragment set:html={l.svg} />}
+                      <span>{l.label}</span>
+                    </a>
+                  ),
+                )}
               </div>
             </li>
           );
@@ -86,12 +98,20 @@ const apps = (await getProjects(lang))
   .apps {
     display: grid;
     grid-template-columns: repeat(4, minmax(0, 1fr));
-    gap: 16px;
+    gap: 48px 32px;
   }
   .app {
     display: grid;
-    gap: 10px;
+    gap: 12px;
     align-content: start;
+  }
+  h2 {
+    font-size: 1.12rem;
+    font-weight: 500;
+    letter-spacing: -0.02em;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
   }
   .thumb {
     display: block;
@@ -118,42 +138,77 @@ const apps = (await getProjects(lang))
   }
   .links {
     display: grid;
-    gap: 6px;
+    justify-items: center;
+    gap: 8px;
+    margin-top: 4px;
+  }
+  /* Store badge and the coloured buttons share one size (badge is 3.36:1). */
+  .badge,
+  .get {
+    width: min(100%, 180px);
+    height: auto;
+    aspect-ratio: 3.36;
+    border-radius: 9px;
+    transition: transform 0.1s ease-out, filter 0.2s;
+  }
+  .badge :global(img) {
+    display: block;
+    width: 100%;
+    height: 100%;
   }
   .get {
     display: flex;
     align-items: center;
     justify-content: center;
-    gap: 8px;
-    height: 40px;
+    gap: 9px;
     padding: 0 12px;
-    border-radius: 10px;
-    border: 1px solid rgb(var(--border));
-    background: rgb(var(--bg-elev));
-    color: rgb(var(--text-100));
-    font-size: 0.88rem;
-    font-weight: 500;
+    color: #fff;
+    font-size: 0.95rem;
+    font-weight: 600;
     white-space: nowrap;
-    transition: border-color 0.2s, transform 0.1s ease-out;
   }
+  .badge:hover,
   .get:hover {
-    border-color: rgb(var(--accent-1) / 0.6);
+    filter: brightness(1.12);
   }
+  .badge:active,
   .get:active {
     transform: scale(0.97);
+  }
+  .github {
+    background: #24292f;
+    box-shadow: inset 0 0 0 1px rgb(255 255 255 / 0.14);
+  }
+  .web {
+    background: rgb(var(--accent-strong));
+  }
+  .apple {
+    background: #000;
+    box-shadow: inset 0 0 0 1px #a6a6a6;
+  }
+  .itch {
+    background: #fa5c5c;
   }
   @media (max-width: 1023px) {
     .apps {
       grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 40px 24px;
     }
   }
   @media (max-width: 639px) {
     .apps {
       grid-template-columns: repeat(2, minmax(0, 1fr));
-      gap: 18px 12px;
+      gap: 32px 16px;
     }
     .thumb {
       border-radius: 16px;
+    }
+    h2 {
+      font-size: 1rem;
+    }
+    .get {
+      font-size: 0.82rem;
+      gap: 6px;
     }
   }
 </style>
