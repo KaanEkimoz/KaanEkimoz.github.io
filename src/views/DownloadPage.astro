@@ -9,7 +9,6 @@ import { Image } from 'astro:assets';
 import BaseLayout from '@layouts/BaseLayout.astro';
 import PageHeader from '@components/PageHeader.astro';
 import BrandIcon from '@components/BrandIcon.astro';
-import Tag from '@components/ui/Tag.astro';
 import { getProjects, slugOf } from '@lib/content';
 import { localizedPath, t, type Lang } from '@lib/i18n';
 
@@ -48,40 +47,28 @@ const apps = (await getProjects(lang))
     <ul class="apps">
       {
         apps.map(({ p, links }) => {
-          const { title, description, platform, coverSquare, coverImage, coverPosition } = p.data;
+          const { title, coverSquare, coverImage, coverPosition } = p.data;
           const cover = coverSquare ?? coverImage;
           return (
             <li class="app">
-              <a class="thumb" href={localizedPath(`/projects/${slugOf(p.id)}`, lang)} data-project-modal tabindex="-1" aria-hidden="true">
+              <a class="thumb" href={localizedPath(`/projects/${slugOf(p.id)}`, lang)} data-project-modal aria-label={title}>
                 {cover && (
                   <Image
                     src={cover}
                     alt=""
-                    widths={[160, 320]}
-                    sizes="160px"
+                    widths={[240, 480, 720]}
+                    sizes="(min-width: 1024px) 260px, (min-width: 640px) 33vw, 50vw"
                     style={!coverSquare && coverPosition ? `object-position:${coverPosition}` : undefined}
                   />
                 )}
               </a>
-              <div class="body">
-                <div class="head">
-                  <h2>
-                    <a href={localizedPath(`/projects/${slugOf(p.id)}`, lang)} data-project-modal>
-                      {title}
-                    </a>
-                  </h2>
-                  <Tag variant="accent">{platform}</Tag>
-                </div>
-                <p>{description}</p>
-                <div class="links">
-                  {links.map((l) => (
-                    <a class="get" href={l.href} target="_blank" rel="noopener noreferrer">
-                      {l.icon ? <BrandIcon name={l.icon} size={16} color={false} /> : <Fragment set:html={l.svg} />}
-                      <span>{l.label}</span>
-                      <span class="arrow" aria-hidden="true">↗</span>
-                    </a>
-                  ))}
-                </div>
+              <div class="links">
+                {links.map((l) => (
+                  <a class="get" href={l.href} target="_blank" rel="noopener noreferrer" aria-label={`${title}: ${l.label}`}>
+                    {l.icon ? <BrandIcon name={l.icon} size={16} color={false} /> : <Fragment set:html={l.svg} />}
+                    <span>{l.label}</span>
+                  </a>
+                ))}
               </div>
             </li>
           );
@@ -98,75 +85,55 @@ const apps = (await getProjects(lang))
   }
   .apps {
     display: grid;
-    gap: 12px;
-    max-width: 52rem;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 16px;
   }
   .app {
     display: grid;
-    grid-template-columns: 112px minmax(0, 1fr);
-    gap: 20px;
-    align-items: start;
-    padding: 18px;
-    border-radius: 16px;
-    border: 1px solid rgb(var(--border));
-    background: rgb(var(--bg-elev));
-  }
-  :global(html[data-theme='light']) .app {
-    box-shadow: var(--shadow);
+    gap: 10px;
+    align-content: start;
   }
   .thumb {
     display: block;
     aspect-ratio: 1;
-    border-radius: 14px;
+    border-radius: 20px;
     overflow: hidden;
+    border: 1px solid rgb(var(--border));
     background: rgb(var(--bg-elev-2));
+    transition: transform 0.25s cubic-bezier(0.2, 0.8, 0.2, 1), border-color 0.25s;
+  }
+  :global(html[data-theme='light']) .thumb {
+    box-shadow: var(--shadow);
+  }
+  .thumb:hover {
+    border-color: rgb(var(--accent-1) / 0.5);
+  }
+  .thumb:active {
+    transform: scale(0.98);
   }
   .thumb :global(img) {
     width: 100%;
     height: 100%;
     object-fit: cover;
   }
-  .body {
-    display: grid;
-    gap: 8px;
-    min-width: 0;
-  }
-  .head {
-    display: flex;
-    flex-wrap: wrap;
-    align-items: center;
-    gap: 8px 12px;
-  }
-  h2 {
-    font-size: 1.25rem;
-    font-weight: 500;
-    letter-spacing: -0.02em;
-  }
-  h2 a:hover {
-    color: rgb(var(--accent-1));
-  }
-  p {
-    color: rgb(var(--text-200));
-    font-size: 0.95rem;
-  }
   .links {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 8px;
-    margin-top: 6px;
+    display: grid;
+    gap: 6px;
   }
   .get {
-    display: inline-flex;
+    display: flex;
     align-items: center;
+    justify-content: center;
     gap: 8px;
-    height: 38px;
-    padding: 0 14px;
+    height: 40px;
+    padding: 0 12px;
     border-radius: 10px;
     border: 1px solid rgb(var(--border));
-    background: rgb(var(--bg-elev-2));
+    background: rgb(var(--bg-elev));
     color: rgb(var(--text-100));
-    font-size: 0.9rem;
+    font-size: 0.88rem;
     font-weight: 500;
+    white-space: nowrap;
     transition: border-color 0.2s, transform 0.1s ease-out;
   }
   .get:hover {
@@ -175,21 +142,18 @@ const apps = (await getProjects(lang))
   .get:active {
     transform: scale(0.97);
   }
-  .arrow {
-    color: rgb(var(--text-300));
-    font-size: 0.8rem;
+  @media (max-width: 1023px) {
+    .apps {
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
   }
-  @media (max-width: 559px) {
-    .app {
-      grid-template-columns: 72px minmax(0, 1fr);
-      gap: 14px;
-      padding: 14px;
+  @media (max-width: 639px) {
+    .apps {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 18px 12px;
     }
     .thumb {
-      border-radius: 12px;
-    }
-    .links {
-      grid-column: 1 / -1;
+      border-radius: 16px;
     }
   }
 </style>
