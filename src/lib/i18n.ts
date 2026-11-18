@@ -27,7 +27,8 @@ type Dict = {
     eyebrow: string;
     title: string;
     subtitle: string;
-    source: string;
+    label: string;
+    mac: string;
     website: string;
     details: string;
     metaTitle: string;
@@ -77,12 +78,13 @@ const en: Dict = {
   download: {
     eyebrow: 'Download',
     title: 'Get my apps',
-    subtitle: 'Everything you can install or play today, and the games whose source code is on GitHub.',
-    source: 'Source code',
+    subtitle: 'Everything you can install or play today.',
+    label: 'Download',
+    mac: 'Download for Mac',
     website: 'Website',
     details: 'Details',
     metaTitle: 'Download',
-    metaDescription: 'Store links for my apps and games, and their source code on GitHub.',
+    metaDescription: 'Store links and direct downloads for my apps and games.',
   },
   projectDetail: {
     back: '← Projects',
@@ -135,12 +137,13 @@ const tr: Dict = {
   download: {
     eyebrow: 'İndir',
     title: 'Uygulamalarım',
-    subtitle: "Bugün indirip oynayabileceğin her şey, bir de kaynak kodu GitHub'da olan oyunlarım.",
-    source: 'Kaynak kodu',
+    subtitle: 'Bugün indirip kullanabileceğin her şey.',
+    label: 'İndir',
+    mac: 'Mac için indir',
     website: 'Web sitesi',
     details: 'Detaylar',
     metaTitle: 'İndir',
-    metaDescription: "Uygulamalarımın ve oyunlarımın mağaza bağlantıları, GitHub'daki kaynak kodları.",
+    metaDescription: 'Uygulamalarımın ve oyunlarımın mağaza bağlantıları ve doğrudan indirmeleri.',
   },
   projectDetail: {
     back: '← Projeler',

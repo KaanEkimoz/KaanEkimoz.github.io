@@ -16,6 +16,7 @@ techStack:
   - "Developer ID + notarization"
 links:
   github: "https://github.com/KaanEkimoz/BatteryHealth"
+  download: "https://github.com/KaanEkimoz/BatteryHealth/releases/latest/download/BatteryHealth.dmg"
 category: product
 published: false
 coverImage: "../../assets/projects/battery-health/cover-wide.webp"
