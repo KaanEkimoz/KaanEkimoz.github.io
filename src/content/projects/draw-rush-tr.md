@@ -10,6 +10,7 @@ techStack: ["Unity 6 LTS", "C#", "URP", "Cinemachine", "AI Navigation", "Input S
 links:
   googlePlay: "https://play.google.com/store/apps/details?id=com.ekimozgames.drawrush"
   github: "https://github.com/KaanEkimoz/DrawRush-HyperCasual"
+icon: "../../assets/projects/draw-rush/icon.png"
 coverImage: "../../assets/projects/draw-rush/cover-wide.webp"
 coverSquare: "../../assets/projects/draw-rush/cover-square.webp"
 gallery:

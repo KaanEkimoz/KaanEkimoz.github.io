@@ -1,9 +1,9 @@
 ---
 /**
  * Download: every project that can be installed (store, itch.io or a direct
- * file; websites and source links don't count), centred under two headings,
- * Apps (category product) and Games. Each tile is the name, the square cover
- * and its download buttons under a Download label. Built from the `links` of
+ * file; websites and source links don't count), left-aligned under two
+ * headings, Apps (category product) and Games. Each tile is the name, the app
+ * icon (or square cover) and its download buttons under a Download label. Built from the `links` of
  * the projects collection, so a new link shows up here without touching
  * this page.
  */
@@ -62,19 +62,20 @@ const sections = [
           <h2>{s.title}</h2>
           <ul class="apps">
             {s.items.map(({ p, links }) => {
-              const { title, coverSquare, coverImage, coverPosition } = p.data;
-              const cover = coverSquare ?? coverImage;
+              const { title, icon, coverSquare, coverImage, coverPosition } = p.data;
+              // The app icon when there is one, else the square (or wide) cover.
+              const cover = icon ?? coverSquare ?? coverImage;
               return (
                 <li class="app">
                   <h3>{title}</h3>
-                  <a class="thumb" href={localizedPath(`/projects/${slugOf(p.id)}`, lang)} data-project-modal aria-label={title}>
+                  <a class:list={['thumb', { 'is-icon': icon }]} href={localizedPath(`/projects/${slugOf(p.id)}`, lang)} data-project-modal aria-label={title}>
                     {cover && (
                       <Image
                         src={cover}
                         alt=""
-                        widths={[240, 480, 720]}
-                        sizes="(min-width: 640px) 240px, 50vw"
-                        style={!coverSquare && coverPosition ? `object-position:${coverPosition}` : undefined}
+                        widths={[200, 400, 600]}
+                        sizes="(min-width: 640px) 200px, 50vw"
+                        style={!icon && !coverSquare && coverPosition ? `object-position:${coverPosition}` : undefined}
                       />
                     )}
                   </a>
@@ -130,24 +131,21 @@ const sections = [
   .group {
     display: grid;
     gap: 28px;
-    justify-items: center;
   }
   h2 {
     font-size: clamp(2.3rem, 5vw, 3.4rem);
     line-height: 1.04;
     letter-spacing: -0.045em;
     font-weight: 500;
-    text-align: center;
   }
   .apps {
     display: flex;
     flex-wrap: wrap;
-    justify-content: center;
     gap: 48px 32px;
     width: 100%;
   }
   .app {
-    width: 240px;
+    width: 200px;
     display: grid;
     gap: 12px;
     align-content: start;
@@ -167,7 +165,7 @@ const sections = [
     display: block;
     width: 100%;
     aspect-ratio: 1;
-    border-radius: 20px;
+    border-radius: 22%;
     overflow: hidden;
     border: 1px solid rgb(var(--border));
     background: rgb(var(--bg-elev-2));
@@ -181,6 +179,19 @@ const sections = [
   }
   .thumb:active {
     transform: scale(0.98);
+  }
+  /* App icons bring their own shape (macOS ones even their own shadow). */
+  .thumb.is-icon {
+    border: none;
+    background: none;
+  }
+  /* A soft shadow that follows the icon's own shape keeps light icons off the light ground. */
+  :global(html[data-theme='light']) .thumb.is-icon {
+    box-shadow: none;
+    filter: drop-shadow(0 6px 16px rgb(var(--accent-1) / 0.22));
+  }
+  .thumb.is-icon :global(img) {
+    border-radius: 22%;
   }
   .thumb :global(img) {
     width: 100%;
@@ -264,9 +275,6 @@ const sections = [
     }
     .app {
       width: calc(50% - 8px);
-    }
-    .thumb {
-      border-radius: 16px;
     }
     h3 {
       font-size: 1rem;

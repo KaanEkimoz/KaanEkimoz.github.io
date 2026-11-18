@@ -20,6 +20,7 @@ links:
   downloadNote: "Yalnızca Apple silicon"
 category: product
 published: false
+icon: "../../assets/projects/battery-health/icon.png"
 coverImage: "../../assets/projects/battery-health/cover-wide.webp"
 coverSquare: "../../assets/projects/battery-health/cover-square.webp"
 gallery:
