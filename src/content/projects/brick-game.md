@@ -9,6 +9,7 @@ description: "A polished mobile block-puzzle, built solo end-to-end."
 techStack: ["Unity", "C#", "LevelPlay (ironSource)", "Unity IAP"]
 links:
   googlePlay: "https://play.google.com/store/apps/details?id=com.ekimozgames.brickgame"
+icon: "../../assets/projects/brick-game/icon.png"
 coverImage: "../../assets/projects/brick-game/cover.png"
 gallery:
   - "../../assets/projects/brick-game/gallery/00-title.png"

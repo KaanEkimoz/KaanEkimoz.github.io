@@ -44,6 +44,8 @@ const projects = defineCollection({
       // Square cover for the square cards of the home projects strip; without
       // one the wide cover is shown whole over a blurred copy of itself.
       coverSquare: image().optional(),
+      // App icon (1024 px), shown as the tile on /download.
+      icon: image().optional(),
       // Optional gallery — additional screenshots shown on detail page.
       gallery: z.array(image()).default([]),
       // YouTube video id (just the id, e.g. "0KpRHhH52hQ"). Lazy-embedded.
