@@ -1,15 +1,16 @@
 ---
 /**
- * Download: every project that can be installed (store, itch.io or a
- * direct file; websites don't count), with its links under a Download label. Built
- * from the `links` of the projects collection, so a new link shows up here
- * without touching this page.
+ * Download: every project that can be installed (store, itch.io or a direct
+ * file; websites and source links don't count), centred under two headings,
+ * Apps (category product) and Games. Each tile is the name, the square cover
+ * and its download buttons under a Download label. Built from the `links` of
+ * the projects collection, so a new link shows up here without touching
+ * this page.
  */
 import { Image } from 'astro:assets';
 import BaseLayout from '@layouts/BaseLayout.astro';
-import PageHeader from '@components/PageHeader.astro';
 import BrandIcon from '@components/BrandIcon.astro';
-import { getProjects, slugOf } from '@lib/content';
+import { getProjects, slugOf, type Project } from '@lib/content';
 import playEn from '@/assets/badges/google-play-en.png';
 import playTr from '@/assets/badges/google-play-tr.png';
 import { localizedPath, t, type Lang } from '@lib/i18n';
@@ -20,96 +21,151 @@ interface Props {
 
 const { lang } = Astro.props;
 
-type Link = { href: string; label: string; kind: string; icon?: string; svg?: string };
+// Two-line buttons drawn like the store badges: small line, then the platform.
+type Link = { href: string; kind: string; small: string; big: string; icon: string; note?: string; file?: boolean };
 // Google's official badge (trimmed of its transparent margin only).
 const playBadge = lang === 'tr' ? playTr : playEn;
 const playAlt = lang === 'tr' ? "Google Play'den indirin" : 'Get it on Google Play';
+const tr = lang === 'tr';
 
-const apps = (await getProjects(lang))
-  .map((p) => {
-    const l = p.data.links;
-    const get = [
-      l.googlePlay && { href: l.googlePlay, label: 'Google Play', kind: 'play' },
-      l.appStore && { href: l.appStore, label: 'App Store', kind: 'apple', icon: 'siApple' },
-      l.itchio && { href: l.itchio, label: 'itch.io', kind: 'itch', icon: 'siItchdotio' },
-      l.download && { href: l.download, label: t('download.mac', lang), kind: 'apple', icon: 'siApple' },
-    ].filter(Boolean) as Link[];
-    return { p, links: get };
-  })
-  .filter((a) => a.links.length > 0);
+const linksOf = (p: Project): Link[] => {
+  const l = p.data.links;
+  return [
+    l.googlePlay && { href: l.googlePlay, kind: 'play', small: '', big: 'Google Play', icon: '' },
+    l.appStore && { href: l.appStore, kind: 'apple', small: tr ? 'İndirin' : 'Download on the', big: 'App Store', icon: 'siApple' },
+    l.itchio && { href: l.itchio, kind: 'itch', small: tr ? 'İndirin' : 'Available on', big: 'itch.io', icon: 'siItchdotio' },
+    l.download && {
+      href: l.download,
+      kind: 'apple',
+      small: t('download.macSmall', lang),
+      big: 'macOS',
+      icon: 'siApple',
+      note: l.downloadNote,
+      file: true,
+    },
+  ].filter(Boolean) as Link[];
+};
+
+const all = (await getProjects(lang)).map((p) => ({ p, links: linksOf(p) })).filter((a) => a.links.length > 0);
+const sections = [
+  { title: t('download.apps', lang), items: all.filter((a) => a.p.data.category === 'product') },
+  { title: t('download.games', lang), items: all.filter((a) => a.p.data.category === 'game') },
+].filter((s) => s.items.length > 0);
 ---
 
 <BaseLayout lang={lang} title={t('download.metaTitle', lang)} description={t('download.metaDescription', lang)}>
   <div class="wrap page">
-    <PageHeader eyebrow={t('download.eyebrow', lang)} title={t('download.title', lang)} subtitle={t('download.subtitle', lang)} />
-
-    <ul class="apps">
-      {
-        apps.map(({ p, links }) => {
-          const { title, coverSquare, coverImage, coverPosition } = p.data;
-          const cover = coverSquare ?? coverImage;
-          return (
-            <li class="app">
-              <h2>{title}</h2>
-              <a class="thumb" href={localizedPath(`/projects/${slugOf(p.id)}`, lang)} data-project-modal aria-label={title}>
-                {cover && (
-                  <Image
-                    src={cover}
-                    alt=""
-                    widths={[240, 480, 720]}
-                    sizes="(min-width: 1024px) 260px, (min-width: 640px) 33vw, 50vw"
-                    style={!coverSquare && coverPosition ? `object-position:${coverPosition}` : undefined}
-                  />
-                )}
-              </a>
-              <div class="links" role="group" aria-label={`${title}: ${t('download.label', lang)}`}>
-                <span class="dl-label" aria-hidden="true">{t('download.label', lang)}</span>
-                {links.map((l) =>
-                  l.kind === 'play' ? (
-                    <a class="badge" href={l.href} target="_blank" rel="noopener noreferrer" aria-label={`${title}: ${playAlt}`}>
-                      <Image src={playBadge} alt={playAlt} widths={[180, 360]} sizes="180px" />
-                    </a>
-                  ) : (
-                    <a class:list={['get', l.kind]} href={l.href} target="_blank" rel="noopener noreferrer" aria-label={`${title}: ${l.label}`}>
-                      {l.icon ? <BrandIcon name={l.icon} size={20} color={false} /> : <Fragment set:html={l.svg} />}
-                      <span>{l.label}</span>
-                    </a>
-                  ),
-                )}
-              </div>
-            </li>
-          );
-        })
-      }
-    </ul>
+    <h1 class="sr-only">{t('download.metaTitle', lang)}</h1>
+    {
+      sections.map((s) => (
+        <section class="group">
+          <h2>{s.title}</h2>
+          <ul class="apps">
+            {s.items.map(({ p, links }) => {
+              const { title, coverSquare, coverImage, coverPosition } = p.data;
+              const cover = coverSquare ?? coverImage;
+              return (
+                <li class="app">
+                  <h3>{title}</h3>
+                  <a class="thumb" href={localizedPath(`/projects/${slugOf(p.id)}`, lang)} data-project-modal aria-label={title}>
+                    {cover && (
+                      <Image
+                        src={cover}
+                        alt=""
+                        widths={[240, 480, 720]}
+                        sizes="(min-width: 640px) 240px, 50vw"
+                        style={!coverSquare && coverPosition ? `object-position:${coverPosition}` : undefined}
+                      />
+                    )}
+                  </a>
+                  <div class="links" role="group" aria-label={`${title}: ${t('download.label', lang)}`}>
+                    <span class="dl-label" aria-hidden="true">
+                      {t('download.label', lang)}
+                    </span>
+                    {links.map((l) =>
+                      l.kind === 'play' ? (
+                        <a class="badge" href={l.href} target="_blank" rel="noopener noreferrer" aria-label={`${title}: ${playAlt}`}>
+                          <Image src={playBadge} alt={playAlt} widths={[180, 360]} sizes="180px" />
+                        </a>
+                      ) : (
+                        <>
+                          <a
+                            class:list={['get', l.kind]}
+                            href={l.href}
+                            {...(l.file ? {} : { target: '_blank', rel: 'noopener noreferrer' })}
+                            aria-label={`${title}: ${l.small} ${l.big}${l.note ? ` (${l.note})` : ''}`}
+                          >
+                            <BrandIcon name={l.icon} size={26} color={false} />
+                            <span class="txt">
+                              <span class="small">{l.small}</span>
+                              <span class="big">{l.big}</span>
+                            </span>
+                          </a>
+                          {l.note && (
+                            <span class="note" aria-hidden="true">
+                              {l.note}
+                            </span>
+                          )}
+                        </>
+                      ),
+                    )}
+                  </div>
+                </li>
+              );
+            })}
+          </ul>
+        </section>
+      ))
+    }
   </div>
 </BaseLayout>
 
 <style>
   .page {
-    padding-top: clamp(48px, 8vw, 88px);
+    padding-top: clamp(40px, 7vw, 80px);
     padding-bottom: clamp(56px, 8vw, 96px);
+    display: grid;
+    gap: clamp(56px, 8vw, 88px);
+  }
+  .group {
+    display: grid;
+    gap: 28px;
+    justify-items: center;
+  }
+  h2 {
+    font-size: clamp(2.3rem, 5vw, 3.4rem);
+    line-height: 1.04;
+    letter-spacing: -0.045em;
+    font-weight: 500;
+    text-align: center;
   }
   .apps {
-    display: grid;
-    grid-template-columns: repeat(4, minmax(0, 1fr));
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
     gap: 48px 32px;
+    width: 100%;
   }
   .app {
+    width: 240px;
     display: grid;
     gap: 12px;
     align-content: start;
+    justify-items: center;
   }
-  h2 {
+  h3 {
+    max-width: 100%;
     font-size: 1.12rem;
     font-weight: 500;
     letter-spacing: -0.02em;
+    text-align: center;
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
   }
   .thumb {
     display: block;
+    width: 100%;
     aspect-ratio: 1;
     border-radius: 20px;
     overflow: hidden;
@@ -135,6 +191,7 @@ const apps = (await getProjects(lang))
     display: grid;
     justify-items: center;
     gap: 8px;
+    width: 100%;
     margin-top: 2px;
   }
   .dl-label {
@@ -143,11 +200,10 @@ const apps = (await getProjects(lang))
     text-transform: uppercase;
     color: rgb(var(--text-300));
   }
-  /* Store badge and the coloured buttons share one size (badge is 3.36:1). */
+  /* Store badge and the badge-style buttons share one size (badge is 3.36:1). */
   .badge,
   .get {
     width: min(100%, 180px);
-    height: auto;
     aspect-ratio: 3.36;
     border-radius: 9px;
     transition: transform 0.1s ease-out, filter 0.2s;
@@ -161,12 +217,27 @@ const apps = (await getProjects(lang))
     display: flex;
     align-items: center;
     justify-content: center;
-    gap: 9px;
-    padding: 0 12px;
+    gap: 10px;
+    padding: 0 10px;
     color: #fff;
-    font-size: 0.95rem;
-    font-weight: 600;
+  }
+  .txt {
+    display: grid;
+    text-align: left;
+    line-height: 1;
     white-space: nowrap;
+  }
+  .small {
+    font-size: 0.62rem;
+    font-weight: 500;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+  }
+  .big {
+    margin-top: 3px;
+    font-size: 1.32rem;
+    font-weight: 600;
+    letter-spacing: -0.02em;
   }
   .badge:hover,
   .get:hover {
@@ -183,30 +254,35 @@ const apps = (await getProjects(lang))
   .itch {
     background: #fa5c5c;
   }
-  @media (max-width: 1023px) {
-    .apps {
-      grid-template-columns: repeat(3, minmax(0, 1fr));
-      gap: 40px 24px;
-    }
+  .note {
+    font-size: 0.78rem;
+    color: rgb(var(--text-300));
   }
   @media (max-width: 639px) {
     .apps {
-      grid-template-columns: repeat(2, minmax(0, 1fr));
       gap: 32px 16px;
+    }
+    .app {
+      width: calc(50% - 8px);
     }
     .thumb {
       border-radius: 16px;
     }
-    h2 {
+    h3 {
       font-size: 1rem;
     }
     .get {
-      font-size: 0.82rem;
-      gap: 6px;
-      padding: 0 8px;
-      white-space: normal;
-      line-height: 1.15;
-      text-align: center;
+      gap: 7px;
+    }
+    .get :global(svg) {
+      width: 22px;
+      height: 22px;
+    }
+    .small {
+      font-size: 0.56rem;
+    }
+    .big {
+      font-size: 1.12rem;
     }
   }
 </style>

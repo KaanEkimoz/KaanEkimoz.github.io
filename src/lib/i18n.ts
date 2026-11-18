@@ -24,13 +24,11 @@ type Dict = {
   blogIndex: { eyebrow: string; title: string; subtitle: string; empty: string; back: string; updated: string };
   projectsIndex: { eyebrow: string; title: string; subtitle: string };
   download: {
-    eyebrow: string;
-    title: string;
-    subtitle: string;
+    apps: string;
+    games: string;
     label: string;
     mac: string;
-    website: string;
-    details: string;
+    macSmall: string;
     metaTitle: string;
     metaDescription: string;
   };
@@ -76,13 +74,11 @@ const en: Dict = {
     subtitle: 'Products I build end to end, and the games where I learned how.',
   },
   download: {
-    eyebrow: 'Download',
-    title: 'Get my apps',
-    subtitle: 'Everything you can install or play today.',
+    apps: 'Apps',
+    games: 'Games',
     label: 'Download',
     mac: 'Download for Mac',
-    website: 'Website',
-    details: 'Details',
+    macSmall: 'Download for',
     metaTitle: 'Download',
     metaDescription: 'Store links and direct downloads for my apps and games.',
   },
@@ -135,13 +131,11 @@ const tr: Dict = {
     subtitle: 'Uçtan uca kurduğum ürünler ve bu işi öğrendiğim oyunlar.',
   },
   download: {
-    eyebrow: 'İndir',
-    title: 'Uygulamalarım',
-    subtitle: 'Bugün indirip kullanabileceğin her şey.',
+    apps: 'Uygulamalar',
+    games: 'Oyunlar',
     label: 'İndir',
     mac: 'Mac için indir',
-    website: 'Web sitesi',
-    details: 'Detaylar',
+    macSmall: 'İndirin',
     metaTitle: 'İndir',
     metaDescription: 'Uygulamalarımın ve oyunlarımın mağaza bağlantıları ve doğrudan indirmeleri.',
   },
