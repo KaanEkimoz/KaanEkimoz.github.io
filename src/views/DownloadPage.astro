@@ -1,7 +1,7 @@
 ---
 /**
  * Download: every project that has somewhere to get it (store, website,
- * itch.io) or its source on GitHub, with all of its links under it. Built
+ * itch.io or a direct file), with its links under a Download label. Built
  * from the `links` of the projects collection, so a new link shows up here
  * without touching this page.
  */
@@ -35,14 +35,12 @@ const apps = (await getProjects(lang))
       l.googlePlay && { href: l.googlePlay, label: 'Google Play', kind: 'play' },
       l.appStore && { href: l.appStore, label: 'App Store', kind: 'apple', icon: 'siApple' },
       l.itchio && { href: l.itchio, label: 'itch.io', kind: 'itch', icon: 'siItchdotio' },
+      l.download && { href: l.download, label: t('download.mac', lang), kind: 'apple', icon: 'siApple' },
       l.website && { href: l.website, label: t('download.website', lang), kind: 'web', svg: GLOBE },
     ].filter(Boolean) as Link[];
-    const source: Link[] = l.github ? [{ href: l.github, label: t('download.source', lang), kind: 'github', icon: 'siGithub' }] : [];
-    return { p, get, links: [...get, ...source] };
+    return { p, links: get };
   })
-  .filter((a) => a.links.length > 0)
-  // Things people can install first, source-only games after.
-  .sort((a, b) => Number(b.get.length > 0) - Number(a.get.length > 0));
+  .filter((a) => a.links.length > 0);
 ---
 
 <BaseLayout lang={lang} title={t('download.metaTitle', lang)} description={t('download.metaDescription', lang)}>
@@ -68,7 +66,8 @@ const apps = (await getProjects(lang))
                   />
                 )}
               </a>
-              <div class="links">
+              <div class="links" role="group" aria-label={`${title}: ${t('download.label', lang)}`}>
+                <span class="dl-label" aria-hidden="true">{t('download.label', lang)}</span>
                 {links.map((l) =>
                   l.kind === 'play' ? (
                     <a class="badge" href={l.href} target="_blank" rel="noopener noreferrer" aria-label={`${title}: ${playAlt}`}>
@@ -140,7 +139,13 @@ const apps = (await getProjects(lang))
     display: grid;
     justify-items: center;
     gap: 8px;
-    margin-top: 4px;
+    margin-top: 2px;
+  }
+  .dl-label {
+    font: 500 0.7rem/1 'JetBrains Mono', ui-monospace, monospace;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: rgb(var(--text-300));
   }
   /* Store badge and the coloured buttons share one size (badge is 3.36:1). */
   .badge,
@@ -175,10 +180,6 @@ const apps = (await getProjects(lang))
   .get:active {
     transform: scale(0.97);
   }
-  .github {
-    background: #24292f;
-    box-shadow: inset 0 0 0 1px rgb(255 255 255 / 0.14);
-  }
   .web {
     background: rgb(var(--accent-strong));
   }
@@ -209,6 +210,10 @@ const apps = (await getProjects(lang))
     .get {
       font-size: 0.82rem;
       gap: 6px;
+      padding: 0 8px;
+      white-space: normal;
+      line-height: 1.15;
+      text-align: center;
     }
   }
 </style>

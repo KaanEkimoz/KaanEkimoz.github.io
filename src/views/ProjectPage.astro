@@ -39,6 +39,7 @@ const external = [
   links.googlePlay && { href: links.googlePlay, label: 'Google Play ↗' },
   links.appStore && { href: links.appStore, label: 'App Store ↗' },
   links.itchio && { href: links.itchio, label: 'itch.io ↗' },
+  links.download && { href: links.download, label: `${t('download.mac', lang)} ↓` },
   links.github && { href: links.github, label: 'GitHub ↗' },
 ].filter((l): l is { href: string; label: string } => Boolean(l));
 

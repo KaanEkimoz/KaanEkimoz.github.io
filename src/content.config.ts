@@ -26,6 +26,8 @@ const projects = defineCollection({
           itchio: z.string().url().optional(),
           // For non-game / SaaS entries — the live product URL.
           website: z.string().url().optional(),
+          // Direct file download (e.g. a release DMG), shown on /download.
+          download: z.string().url().optional(),
         })
         .default({}),
       featured: z.boolean().default(false),
