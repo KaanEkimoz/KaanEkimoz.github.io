@@ -30,8 +30,13 @@ const homeHref = localizedPath('/', lang);
           NAV.map((item) => {
             const href = localizedPath(item.href, lang);
             return (
-              <a href={href} aria-current={isActive(href) ? 'page' : undefined}>
-                {t(`nav.${item.key}`, lang)}
+              <a href={href} aria-current={isActive(href) ? 'page' : undefined} class:list={{ dl: item.key === 'download' }}>
+                {item.key === 'download' && (
+                  <svg class="dl-icon" width="18" height="18" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M12 4v11M7 10l5 5 5-5M5 20h14" />
+                  </svg>
+                )}
+                <span class="label">{t(`nav.${item.key}`, lang)}</span>
               </a>
             );
           })
@@ -111,6 +116,9 @@ const homeHref = localizedPath('/', lang);
     color: rgb(var(--text-100));
     background: rgb(var(--bg-elev-2));
   }
+  .dl-icon {
+    display: none;
+  }
   .cta {
     height: 34px;
     padding: 0 14px;
@@ -149,9 +157,24 @@ const homeHref = localizedPath('/', lang);
       display: none;
     }
   }
-  /* Three nav items + toggles don't fit beside the wordmark on phones;
-     keep only the mark there. */
+  /* Four nav items + toggles don't fit beside the wordmark on phones;
+     keep only the mark there, and show Download as an icon. */
   @media (max-width: 560px) {
+    .nav a.dl {
+      display: inline-flex;
+      align-items: center;
+    }
+    .dl-icon {
+      display: block;
+    }
+    .nav a.dl .label {
+      position: absolute;
+      width: 1px;
+      height: 1px;
+      overflow: hidden;
+      clip: rect(0 0 0 0);
+      white-space: nowrap;
+    }
     .word > span {
       position: absolute;
       width: 1px;
@@ -161,7 +184,7 @@ const homeHref = localizedPath('/', lang);
       white-space: nowrap;
     }
   }
-  @media (max-width: 359px) {
+  @media (max-width: 389px) {
     .inner {
       gap: 4px;
     }

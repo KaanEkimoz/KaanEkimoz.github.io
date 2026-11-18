@@ -8,7 +8,6 @@ role: "Solo (kod, görsel, arayüz, ses, monetizasyon)"
 description: "Tek başına baştan sona geliştirilmiş, cilalı bir mobil blok puzzle."
 techStack: ["Unity", "C#", "LevelPlay (ironSource)", "Unity IAP"]
 links:
-  github: "https://github.com/KaanEkimoz/Brick-Game"
   googlePlay: "https://play.google.com/store/apps/details?id=com.ekimozgames.brickgame"
 coverImage: "../../assets/projects/brick-game/cover.png"
 gallery:
