@@ -352,9 +352,20 @@
       wake();
     }, { passive: true });
 
-    // Leaving the window (or entering an iframe, which takes the pointer).
-    document.addEventListener('mouseout', (e) => { if (!e.relatedTarget) flag('seen', false); });
-    addEventListener('blur', () => { down = false; wake(); });
+    // Leaving the window, or entering an iframe (a YouTube player): the frame
+    // takes the pointer, its own cursor shows there and no more moves reach
+    // this page, so hide the arrow instead of leaving it frozen at the edge.
+    // The next move back on the page shows it again (pointermove above).
+    const intoFrame = (el: EventTarget | null) => el instanceof HTMLIFrameElement;
+    const hide = () => { flag('seen', false); hot = false; };
+    document.addEventListener('mouseout', (e) => { if (!e.relatedTarget || intoFrame(e.relatedTarget)) hide(); });
+    document.addEventListener('pointerover', (e) => { if (intoFrame(e.target)) hide(); });
+    addEventListener('blur', () => {
+      down = false;
+      // Clicking inside the player moves focus into it while the pointer is there.
+      if (intoFrame(document.activeElement)) hide();
+      wake();
+    });
     addEventListener('pointerdown', (e) => {
       if (e.pointerType !== 'mouse' || e.button !== 0) return;
       down = true;
